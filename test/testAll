@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+
+basedir=$(dirname "$0")
+
+testFiles=$(find $basedir -type f -name *.py)
+
+for f in $testFiles
+do
+    basename=$(basename $f)
+    echo "## Test : $basename"
+    python $f
+    echo "\n"
+done
