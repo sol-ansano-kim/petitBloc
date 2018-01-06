@@ -37,124 +37,124 @@ class PortTest(unittest.TestCase):
 
 class ChainTest(unittest.TestCase):
     def test_init(self):
-        in_port1 = port.InPort(str)
-        out_port1 = port.OutPort(str)
-        self.assertIsNotNone(chain.Chain(in_port1, out_port1))
-        self.assertIsNone(chain.Chain(out_port1, in_port1))
-        self.assertIsNone(chain.Chain(out_port1, out_port1))
-        self.assertIsNone(chain.Chain(in_port1, in_port1))
+        src_port1 = port.OutPort(str)
+        dst_port1 = port.InPort(str)
+        self.assertIsNotNone(chain.Chain(src_port1, dst_port1))
+        self.assertIsNone(chain.Chain(dst_port1, src_port1))
+        self.assertIsNone(chain.Chain(dst_port1, dst_port1))
+        self.assertIsNone(chain.Chain(src_port1, src_port1))
 
-        in_port2 = port.InPort(int)
-        in_port3 = port.InPort(float)
-        in_port4 = port.InPort(bool)
-        self.assertIsNone(chain.Chain(in_port2, out_port1))
-        self.assertIsNone(chain.Chain(in_port3, out_port1))
-        self.assertIsNone(chain.Chain(in_port4, out_port1))
+        src_port2 = port.OutPort(int)
+        src_port3 = port.OutPort(float)
+        src_port4 = port.OutPort(bool)
+        self.assertIsNone(chain.Chain(src_port2, dst_port1))
+        self.assertIsNone(chain.Chain(src_port3, dst_port1))
+        self.assertIsNone(chain.Chain(src_port4, dst_port1))
 
-        out_port2 = port.OutPort(int)
-        self.assertIsNotNone(chain.Chain(in_port2, out_port2))
-        self.assertIsNotNone(chain.Chain(in_port3, out_port2))
-        self.assertIsNotNone(chain.Chain(in_port4, out_port2))
+        dst_port2 = port.InPort(int)
+        self.assertIsNotNone(chain.Chain(src_port2, dst_port2))
+        self.assertIsNotNone(chain.Chain(src_port3, dst_port2))
+        self.assertIsNotNone(chain.Chain(src_port4, dst_port2))
 
-        out_port3 = port.OutPort(float)
-        self.assertIsNotNone(chain.Chain(in_port2, out_port3))
-        self.assertIsNotNone(chain.Chain(in_port3, out_port3))
-        self.assertIsNotNone(chain.Chain(in_port4, out_port3))
+        dst_port3 = port.InPort(float)
+        self.assertIsNotNone(chain.Chain(src_port2, dst_port3))
+        self.assertIsNotNone(chain.Chain(src_port3, dst_port3))
+        self.assertIsNotNone(chain.Chain(src_port4, dst_port3))
 
-        out_port4 = port.OutPort(bool)
-        self.assertIsNotNone(chain.Chain(in_port2, out_port4))
-        self.assertIsNotNone(chain.Chain(in_port3, out_port4))
-        self.assertIsNotNone(chain.Chain(in_port4, out_port4))
+        dst_port4 = port.InPort(bool)
+        self.assertIsNotNone(chain.Chain(src_port2, dst_port4))
+        self.assertIsNotNone(chain.Chain(src_port3, dst_port4))
+        self.assertIsNotNone(chain.Chain(src_port4, dst_port4))
 
     def test_connect(self):
-        in_port1 = port.InPort(str)
-        out_port1 = port.OutPort(str)
-        chan1 = chain.Chain(in_port1, out_port1)
+        src_port1 = port.OutPort(str)
+        dst_port1 = port.InPort(str)
+        chan1 = chain.Chain(src_port1, dst_port1)
         self.assertIsNotNone(chan1)
         self.assertTrue(chan1.isConnected())
 
-        in_port2 = port.InPort(str)
-        chan2 = chain.Chain(in_port2, out_port1)
+        src_port2 = port.OutPort(str)
+        chan2 = chain.Chain(src_port2, dst_port1)
         self.assertIsNotNone(chan2)
         self.assertTrue(chan2.isConnected())
         self.assertFalse(chan1.isConnected())
 
-        in_port3 = port.InPort(int)
-        chan3 = chain.Chain(in_port3, out_port1)
+        src_port3 = port.OutPort(int)
+        chan3 = chain.Chain(src_port3, dst_port1)
         self.assertIsNone(chan3)
         self.assertTrue(chan2.isConnected())
 
-        out_port2 = port.OutPort(bool)
+        dst_port2 = port.InPort(bool)
 
-        chan4 = chain.Chain(in_port3, out_port2)
+        chan4 = chain.Chain(src_port3, dst_port2)
         self.assertIsNotNone(chan4)
         self.assertTrue(chan4.isConnected())
 
-        in_port4 = port.InPort(bool)
+        src_port4 = port.OutPort(bool)
 
-        chan5 = chain.Chain(in_port4, out_port2)
+        chan5 = chain.Chain(src_port4, dst_port2)
         self.assertIsNotNone(chan5)
         self.assertTrue(chan5.isConnected())
         self.assertFalse(chan4.isConnected())
 
-        out_port3 = port.OutPort(bool)
-        chan6 = chain.Chain(in_port4, out_port3)
+        dst_port3 = port.InPort(bool)
+        chan6 = chain.Chain(src_port4, dst_port3)
         self.assertIsNotNone(chan6)
         self.assertTrue(chan6.isConnected())
 
-        chan7 = chain.Chain(out_port2, out_port3)
+        chan7 = chain.Chain(dst_port2, dst_port3)
         self.assertIsNone(chan7)
 
     def test_send(self):
-        in_port = port.InPort(str)
-        out_port = port.OutPort(str)
-        chain.Chain(in_port, out_port)
-        self.assertTrue(in_port.send("a"))
-        self.assertFalse(out_port.send("b"))
+        src_port = port.OutPort(str)
+        dst_port = port.InPort(str)
+        chain.Chain(src_port, dst_port)
+        self.assertTrue(src_port.send("a"))
+        self.assertFalse(dst_port.send("b"))
 
-        self.assertFalse(in_port.send(1))
-        self.assertFalse(in_port.send(True))
-        self.assertFalse(in_port.send(1.2))
+        self.assertFalse(src_port.send(1))
+        self.assertFalse(src_port.send(True))
+        self.assertFalse(src_port.send(1.2))
 
     def test_send_and_receive(self):
-        in_port = port.InPort(int)
-        out_port = port.OutPort(int)
-        chan1 = chain.Chain(in_port, out_port)
+        src_port = port.OutPort(int)
+        dst_port = port.InPort(int)
+        chan1 = chain.Chain(src_port, dst_port)
 
         for i in range(5):
-            self.assertTrue(in_port.send(i))
+            self.assertTrue(src_port.send(i))
 
-        pack1 = out_port.receive()
+        pack1 = dst_port.receive()
         self.assertEqual(pack1.value(), 0)
         self.assertEqual(pack1.refCount(), 1)
         self.assertTrue(pack1.drop())
 
-        self.assertEqual(out_port.receive().value(), 1)
-        self.assertEqual(out_port.receive().value(), 2)
-        self.assertEqual(out_port.receive().value(), 3)
-        self.assertEqual(out_port.receive().value(), 4)
-        self.assertIsNone(out_port.receive())
+        self.assertEqual(dst_port.receive().value(), 1)
+        self.assertEqual(dst_port.receive().value(), 2)
+        self.assertEqual(dst_port.receive().value(), 3)
+        self.assertEqual(dst_port.receive().value(), 4)
+        self.assertIsNone(dst_port.receive())
 
     def test_send_and_receive2(self):
-        in_port1 = port.InPort(int)
-        in_port2 = port.InPort(int)
-        out_port = port.OutPort(int)
-        chan1 = chain.Chain(in_port1, out_port)
+        src_port1 = port.OutPort(int)
+        src_port2 = port.OutPort(int)
+        dst_port = port.InPort(int)
+        chan1 = chain.Chain(src_port1, dst_port)
 
         for i in range(5):
-            self.assertTrue(in_port1.send(i))
+            self.assertTrue(src_port1.send(i))
 
-        chan2 = chain.Chain(in_port2, out_port)
+        chan2 = chain.Chain(src_port2, dst_port)
         for i in range(5):
-            self.assertFalse(in_port1.send(i))
-            self.assertTrue(in_port2.send(i + 5))
+            self.assertFalse(src_port1.send(i))
+            self.assertTrue(src_port2.send(i + 5))
 
-        self.assertEqual(out_port.receive().value(), 5)
-        self.assertEqual(out_port.receive().value(), 6)
-        self.assertEqual(out_port.receive().value(), 7)
-        self.assertEqual(out_port.receive().value(), 8)
-        self.assertEqual(out_port.receive().value(), 9)
-        self.assertIsNone(out_port.receive())
+        self.assertEqual(dst_port.receive().value(), 5)
+        self.assertEqual(dst_port.receive().value(), 6)
+        self.assertEqual(dst_port.receive().value(), 7)
+        self.assertEqual(dst_port.receive().value(), 8)
+        self.assertEqual(dst_port.receive().value(), 9)
+        self.assertIsNone(dst_port.receive())
 
     def test_request(self):
         class TestComp(object):
@@ -175,17 +175,17 @@ class ChainTest(unittest.TestCase):
 
                 self.__is_terminated = True
                 for t in ["a", "b", "c"]:
-                    self.__in.send(t)
+                    self.__out.send(t)
 
         test_comp = TestComp()
-        sp_chain = chain.Chain(test_comp.inPort(), test_comp.outPort())
-        pc1 = test_comp.outPort().receive()
+        sp_chain = chain.Chain(test_comp.outPort(), test_comp.inPort())
+        pc1 = test_comp.inPort().receive()
         self.assertIsNotNone(pc1)
         self.assertEqual(pc1.value(), "a")
-        self.assertEqual(test_comp.outPort().receive().value(), "b")
-        self.assertEqual(test_comp.outPort().receive().value(), "c")
-        self.assertIsNone(test_comp.outPort().receive())
-        self.assertIsNone(test_comp.outPort().receive())
+        self.assertEqual(test_comp.inPort().receive().value(), "b")
+        self.assertEqual(test_comp.inPort().receive().value(), "c")
+        self.assertIsNone(test_comp.inPort().receive())
+        self.assertIsNone(test_comp.inPort().receive())
 
 
 if __name__ == "__main__":

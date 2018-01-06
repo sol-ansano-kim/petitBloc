@@ -6,13 +6,22 @@ class Port(object):
     In = 0
     Out = 1
 
-    def __init__(self, typeClass, direction, parent=None):
+    def __init__(self, typeClass, direction, name=None, parent=None):
         super(Port, self).__init__()
         self.__direction = direction
         self.__type_class = typeClass
         self.__parent = parent
         self.__out_chains = []
         self.__in_chain = None
+        self.__name = name
+        if name is None:
+            if direction is Port.In:
+                self.__name = "in"
+            else:
+                self.__name = "out"
+
+    def name(self):
+        return self.__name
 
     def match(self, port):
         if self.__type_class == port.typeClass():
@@ -54,7 +63,7 @@ class Port(object):
             self.__out_chains.remove(chain)
 
     def send(self, value):
-        if self.__direction is Port.Out:
+        if self.__direction is Port.In:
             return False
 
         if not self.__out_chains:

@@ -4,10 +4,10 @@ from . import packet
 
 class Chain(object):
     def __new__(self, srcPort, dstPort):
-        if not dstPort.match(srcPort):
+        if not srcPort.isOutPort() or not dstPort.isInPort():
             return None
 
-        if not srcPort.isInPort() or not dstPort.isOutPort():
+        if not dstPort.match(srcPort):
             return None
 
         return super(Chain, self).__new__(self, srcPort, dstPort)
@@ -40,6 +40,7 @@ class Chain(object):
         self.__is_connected = False
 
     def push(self, pack):
+        # TODO : improve on case when packet is passed to other block
         pack.pickUp()
 
         # TODO : thread lock
