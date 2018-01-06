@@ -94,8 +94,9 @@ class Port(object):
         if self.__parent is None:
             return False
 
-        ## TODO : do it on other thread
-        self.__parent.run()
+        if self.__parent.isWaiting():
+            ## TODO : do it on other thread
+            self.__parent.run()
 
         return True
 
