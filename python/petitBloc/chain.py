@@ -1,3 +1,4 @@
+import multiprocessing
 from numbers import Number
 from . import packet
 
@@ -16,48 +17,43 @@ class Chain(object):
         self.__src = srcPort
         self.__dst = dstPort
         self.__need_to_cast = False
-        self.__packets = []
-        self.__is_connected = True
+        self.__packets = multiprocessing.Queue()
 
-        srcPort.addOutput(self)
-        dstPort.setInput(self)
+        srcPort.connect(self)
+        dstPort.connect(self)
 
         if srcPort.typeClass() != dstPort.typeClass():
             self.__need_to_cast = True
 
-    def isConnected(self):
-        return self.__is_connected
+    def closed(self):
+        return self.__packets._closed
+
+    def empty(self):
+        return self.__packets.empty()
 
     def disconnect(self):
-        self.__src.disconnectChain(self)
-        self.__dst.disconnectChain(self)
+        self.__src.disconnect(self)
+        self.__dst.disconnect(self)
         self.__src = None
         self.__dst = None
-        for p in self.__packets:
-            p.drop()
 
-        self.__packets = []
-        self.__is_connected = False
+        while (not self.__packets.empty()):
+            self.__packets.get().drop()
 
-    def push(self, pack):
+        self.__packets.close()
+
+    def send(self, pack):
+        if self.closed():
+            return False
+
         # TODO : improve on case when packet is passed to other block
         pack.pickUp()
 
-        # TODO : thread lock
-        self.__packets.append(pack)
-        # TODO : send packet to dst
+        self.__packets.put(pack)
+        return True
 
-    def pop(self):
-        if not self.__src:
+    def receive(self):
+        if self.closed():
             return None
 
-        if not self.__packets:
-            if not self.__src.request():
-                return None
-
-        # TODO : suspend
-        if not self.__packets:
-            return None
-
-        # TODO : thread lock
-        return self.__packets.pop(0)
+        return self.__packets.get()

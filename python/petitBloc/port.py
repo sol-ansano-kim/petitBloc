@@ -3,22 +3,11 @@ import packet
 
 
 class Port(object):
-    In = 0
-    Out = 1
-
-    def __init__(self, typeClass, direction, name=None, parent=None):
+    def __init__(self, typeClass, name=None, parent=None):
         super(Port, self).__init__()
-        self.__direction = direction
         self.__type_class = typeClass
         self.__parent = parent
-        self.__out_chains = []
-        self.__in_chain = None
         self.__name = name
-        if name is None:
-            if direction is Port.In:
-                self.__name = "in"
-            else:
-                self.__name = "out"
 
     def name(self):
         return self.__name
@@ -32,80 +21,72 @@ class Port(object):
 
         return False
 
-    def direction(self):
-        return self.__direction
-
-    def isInPort(self):
-        return self.__direction is Port.In
-
-    def isOutPort(self):
-        return self.__direction is Port.Out
-
     def typeClass(self):
         return self.__type_class
 
-    def addOutput(self, chain):
-        if chain not in self.__out_chains:
-            self.__out_chains.append(chain)
+    def isInPort(self):
+        return False
 
-    def setInput(self, chain):
+    def isOutPort(self):
+        return False
+
+
+class InPort(Port):
+    def __init__(self, typeClass, name=None, parent=None):
+        super(InPort, self).__init__(typeClass, name=name, parent=parent)
+        self.__in_chain = None
+
+    def isInPort(self):
+        return True
+
+    def connect(self, chain):
         if self.__in_chain:
             self.__in_chain.disconnect()
 
         self.__in_chain = chain
 
-    def disconnectChain(self, chain):
+    def disconnect(self, chain):
         if self.__in_chain == chain:
             self.__in_chain = None
-            return
-
-        if chain in self.__out_chains:
-            self.__out_chains.remove(chain)
-
-    def send(self, value):
-        if self.__direction is Port.In:
-            return False
-
-        if not self.__out_chains:
-            return False
-
-        pack = None
-        if isinstance(value, self.__type_class):
-            pack = packet.Packet(value)
-
-        elif issubclass(self.__type_class, Number) and isinstance(value, Number):
-            pack = packet.Packet(self.__type_class(value))
-
-        if pack is None:
-            return False
-
-        for chain in self.__out_chains:
-            chain.push(pack)
-
-        return True
 
     def receive(self):
         if self.__in_chain is None:
             return None
 
-        return self.__in_chain.pop()
-
-    def request(self):
-        if self.__parent is None:
-            return False
-
-        if self.__parent.isWaiting():
-            ## TODO : do it on other thread
-            self.__parent.run()
-
-        return True
-
-
-class InPort(Port):
-    def __init__(self, typeClass, parent=None):
-        super(InPort, self).__init__(typeClass, Port.In, parent=parent)
+        return self.__in_chain.receive()
 
 
 class OutPort(Port):
-    def __init__(self, typeClass, parent=None):
-        super(OutPort, self).__init__(typeClass, Port.Out, parent=parent)
+    def __init__(self, typeClass, name=None, parent=None):
+        super(OutPort, self).__init__(typeClass, name=name, parent=parent)
+        self.__out_chains = []
+
+    def isOutPort(self):
+        return True
+
+    def connect(self, chain):
+        if chain not in self.__out_chains:
+            self.__out_chains.append(chain)
+
+    def disconnect(self, chain):
+        if chain in self.__out_chains:
+            self.__out_chains.remove(chain)
+
+    def send(self, value):
+        if not self.__out_chains:
+            return False
+
+        pack = None
+        if isinstance(value, self.typeClass()):
+            pack = packet.Packet(value)
+
+        elif issubclass(self.typeClass(), Number) and isinstance(value, Number):
+            pack = packet.CastedPacket(self.typeClass()(value))
+
+        if pack is None:
+            return False
+
+        for chain in self.__out_chains:
+            chain.send(pack)
+
+        return True
