@@ -2,9 +2,9 @@ import unittest
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
-from unitBlock import port
-from unitBlock import packet
-from unitBlock import chain
+from petitBloc import port
+from petitBloc import packet
+from petitBloc import chain
 
 
 class PortTest(unittest.TestCase):
