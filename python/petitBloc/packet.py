@@ -1,6 +1,34 @@
 import copy
 
 
+class EndOfPacketObject(object):
+    __instance = None
+
+    def __new__(cls):
+        if cls.__instance is None:
+            cls.__instance = super(EndOfPacketObject, cls).__new__(cls)
+
+        return cls.__instance
+
+    def __init__(self):
+        super(EndOfPacketObject, self).__init__()
+
+    def __repr__(self):
+        self.__str__()
+
+    def __str__(self):
+        return "Packet<'EndOfPacket'>"
+
+    def pickUp(self):
+        pass
+
+    def drop(self):
+        pass
+
+
+EndOfPacket = EndOfPacketObject()
+
+
 class PacketBase(object):
     def __init__(self, value=None):
         super(PacketBase, self).__init__()
@@ -45,6 +73,7 @@ class Packet(PacketBase):
         return False
 
 
+# TODO : make it clear
 class CastedPacket(PacketBase):
     def __init__(self, packet, typeClass):
         super(CastedPacket, self).__init__(value=typeClass(packet.value()))

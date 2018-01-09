@@ -1,5 +1,5 @@
 from numbers import Number
-import packet
+from . import packet
 
 
 class Port(object):
@@ -12,6 +12,9 @@ class Port(object):
     def name(self):
         return self.__name
 
+    def parent(self):
+        return self.__parent
+
     def match(self, port):
         if self.__type_class == port.typeClass():
             return True
@@ -20,6 +23,12 @@ class Port(object):
             return True
 
         return False
+
+    def isConnected(self):
+        return False
+
+    def getChains(self):
+        return []
 
     def typeClass(self):
         return self.__type_class
@@ -39,6 +48,12 @@ class InPort(Port):
     def isInPort(self):
         return True
 
+    def isConnected(self):
+        return self.__in_chain is not None
+
+    def getChains(self):
+        return [self.__in_chain] if self.__in_chain is not None else []
+
     def connect(self, chain):
         if self.__in_chain:
             self.__in_chain.disconnect()
@@ -51,7 +66,7 @@ class InPort(Port):
 
     def receive(self):
         if self.__in_chain is None:
-            return None
+            return packet.EndOfPacket
 
         return self.__in_chain.receive()
 
@@ -64,6 +79,12 @@ class OutPort(Port):
     def isOutPort(self):
         return True
 
+    def isConnected(self):
+        return len(self.__out_chains) > 0
+
+    def getChains(self):
+        return self.__out_chains
+
     def connect(self, chain):
         if chain not in self.__out_chains:
             self.__out_chains.append(chain)
@@ -71,6 +92,10 @@ class OutPort(Port):
     def disconnect(self, chain):
         if chain in self.__out_chains:
             self.__out_chains.remove(chain)
+
+    def sendEOP(self):
+        for chain in self.__out_chains:
+            chain.send(packet.EndOfPacket)
 
     def send(self, value):
         if not self.__out_chains:
@@ -81,7 +106,7 @@ class OutPort(Port):
             pack = packet.Packet(value)
 
         elif issubclass(self.typeClass(), Number) and isinstance(value, Number):
-            pack = packet.CastedPacket(self.typeClass()(value))
+            pack = packet.Packet(self.typeClass()(value))
 
         if pack is None:
             return False
