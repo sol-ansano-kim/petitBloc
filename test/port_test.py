@@ -4,7 +4,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import port
 from petitBloc import chain
-from petitBloc import packet
 
 
 class PortTest(unittest.TestCase):
@@ -20,7 +19,7 @@ class PortTest(unittest.TestCase):
 
     def test_receive(self):
         in_port = port.InPort(str)
-        self.assertEqual(in_port.receive(), packet.EndOfPacket)
+        self.assertTrue(in_port.receive().isEOP())
 
     def test_direction(self):
         in_port = port.InPort(str)

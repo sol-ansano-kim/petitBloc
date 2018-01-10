@@ -25,6 +25,18 @@ class EndOfPacketObject(object):
     def drop(self):
         pass
 
+    def value(self):
+        return None
+
+    def typeClass(self):
+        return None
+
+    def refCount(self):
+        return None
+
+    def isEOP(self):
+        return True
+
 
 EndOfPacket = EndOfPacketObject()
 
@@ -46,6 +58,9 @@ class PacketBase(object):
 
     def value(self):
         return copy.deepcopy(self.__value)
+
+    def isEOP(self):
+        return False
 
     def _del(self):
         del self.__value

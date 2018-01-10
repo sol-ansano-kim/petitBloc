@@ -4,7 +4,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import block
 from petitBloc import chain
-from petitBloc import packet
 import multiprocessing
 
 
@@ -31,7 +30,7 @@ class SplitString(block.Block):
     def run(self):
         while (True):
             pack = self.input(0).receive()
-            if pack is packet.EndOfPacket:
+            if pack.isEOP():
                 break
 
             output = self.output(0)
@@ -41,6 +40,7 @@ class SplitString(block.Block):
             pack.drop()
 
         self.terminate()
+
 
 class DumpString(block.Block):
     def __init__(self):
@@ -55,7 +55,7 @@ class DumpString(block.Block):
     def run(self):
         while (True):
             pack = self.input().receive()
-            if pack is packet.EndOfPacket:
+            if pack.isEOP():
                 break
 
             self.count += 1
@@ -64,6 +64,7 @@ class DumpString(block.Block):
             pack.drop()
 
         self.terminate()
+
 
 class PacketTest(unittest.TestCase):
     def test_init(self):
