@@ -46,10 +46,18 @@ class Component(object):
 
     def activate(self):
         self.__state = Component.Active
+        for inp in self.__inputs:
+            inp.activate()
+
+        for out in self.__outputs:
+            out.activate()
 
     def terminate(self):
         for out in self.__outputs:
             out.sendEOP()
+
+        for inp in self.__inputs:
+            inp.terminate()
 
         self.__state = Component.Terminated
 
@@ -128,7 +136,7 @@ class Block(Component):
 
     def run(self):
         # override this method
-        self.terminate()
+        pass
 
     def initialize(self):
         # override this method

@@ -1,5 +1,6 @@
 import multiprocessing
 from numbers import Number
+from . import packet
 
 
 class Chain(object):
@@ -16,7 +17,8 @@ class Chain(object):
         self.__src = srcPort
         self.__dst = dstPort
         self.__need_to_cast = False
-        self.__packets = multiprocessing.Queue()
+        self.__packets = None
+        self.__is_activated = False
 
         srcPort.connect(self)
         dstPort.connect(self)
@@ -34,6 +36,9 @@ class Chain(object):
         return (self.__src is not None) and (self.__dst is not None)
 
     def empty(self):
+        if self.__packets is None:
+            return True
+
         return self.__packets.empty()
 
     def disconnect(self):
@@ -42,8 +47,21 @@ class Chain(object):
         self.__src = None
         self.__dst = None
 
-        while (not self.__packets.empty()):
-            self.__packets.get().drop()
+        if self.__packets is not None:
+            while (not self.__packets.empty()):
+                self.__packets.get().drop()
+
+    def activate(self):
+        if not self.__is_activated:
+            self.__is_activated = True
+            self.__packets = multiprocessing.Queue()
+
+    def terminate(self):
+        if self.__is_activated:
+            self.__is_activated = False
+            self.__packets.close()
+            del self.__packets
+            self.__packets = None
 
     def send(self, pack):
         if self.__dst is None:
@@ -55,8 +73,14 @@ class Chain(object):
         self.__packets.put(pack)
         return True
 
+    def sendEOP(self):
+        self.send(packet.EndOfPacket)
+
     def receive(self, timeout=None):
         if self.__src is None:
-            return None
+            return packet.EndOfPacket
+
+        if self.__packets is None:
+            return packet.EndOfPacket
 
         return self.__packets.get(timeout=timeout)

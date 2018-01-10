@@ -17,10 +17,8 @@ class MakeNumbers(block.Block):
         self.addOutput(float)
 
     def run(self):
-        for n in range(5):
+        for n in range(100):
             self.output().send(n)
-
-        self.terminate()
 
 
 class AddOne(block.Block):
@@ -39,8 +37,6 @@ class AddOne(block.Block):
             self.output().send(in_f.value() + 1)
             in_f.drop()
 
-        self.terminate()
-
 
 class Mult(block.Block):
     def __init__(self, name="", parent=None):
@@ -57,8 +53,6 @@ class Mult(block.Block):
                 break
             self.output().send(in_f.value() * 1.1)
             in_f.drop()
-
-        self.terminate()
 
 
 class Dump(block.Block):
@@ -77,8 +71,6 @@ class Dump(block.Block):
             self.dmp.put(in_f.value())
             in_f.drop()
 
-        self.terminate()
-
 
 class BoxTest(unittest.TestCase):
     def test_init(self):
@@ -95,7 +87,7 @@ class BoxTest(unittest.TestCase):
 
         last = num.output()
         aa = None
-        for i in range(128):
+        for i in range(100):
             add = AddOne(name="AddOne{}".format(i))
             if i == 0:
                 aa = add
@@ -107,14 +99,16 @@ class BoxTest(unittest.TestCase):
             last = doub.output()
 
         self.assertTrue(g.connect(last, dmp.input()))
+
         v1 = []
-        for i in range(5):
-            for j in range(128):
+        for i in range(100):
+            for j in range(100):
                 i += 1
                 i *= 1.1
             v1.append(i)
 
         g.run()
+
         v2 = []
         while (not dmp.dmp.empty()):
             v2.append(dmp.dmp.get())

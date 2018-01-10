@@ -39,6 +39,12 @@ class Port(object):
     def isOutPort(self):
         return False
 
+    def activate(self):
+        pass
+
+    def terminate(self):
+        pass
+
 
 class InPort(Port):
     def __init__(self, typeClass, name=None, parent=None):
@@ -70,6 +76,14 @@ class InPort(Port):
 
         return self.__in_chain.receive()
 
+    def activate(self):
+        if self.__in_chain:
+            self.__in_chain.activate()
+
+    def terminate(self):
+        if self.__in_chain:
+            self.__in_chain.terminate()
+
 
 class OutPort(Port):
     def __init__(self, typeClass, name=None, parent=None):
@@ -95,7 +109,7 @@ class OutPort(Port):
 
     def sendEOP(self):
         for chain in self.__out_chains:
-            chain.send(packet.EndOfPacket)
+            chain.sendEOP()
 
     def send(self, value):
         if not self.__out_chains:
@@ -115,3 +129,7 @@ class OutPort(Port):
             chain.send(pack)
 
         return True
+
+    def activate(self):
+        for out in self.__out_chains:
+            out.activate()

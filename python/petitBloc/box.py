@@ -17,9 +17,14 @@ class Box(block.Component):
 
     def __correctDownStreams(self, bloc):
         result = []
-        for db in bloc.downstream():
-            result.append(db)
-            result += self.__correctDownStreams(db)
+
+        cur_blocs = [bloc]
+        while (cur_blocs):
+            dns = []
+            for b in cur_blocs:
+                dns += b.downstream()
+            result += dns
+            cur_blocs = dns
 
         return result
 
@@ -55,9 +60,11 @@ class Box(block.Component):
         while (schedule):
             alives = []
 
-            for p in processes:
+            for p, b in processes:
                 if p.is_alive():
-                    alives.append(p)
+                    alives.append((p, b))
+                else:
+                    b.terminate()
 
             if len(alives) >= max_process:
                 continue
@@ -89,11 +96,20 @@ class Box(block.Component):
             p = multiprocessing.Process(target=next_bloc.run)
             p.daemon = True
             p.start()
-            alives.append(p)
+            alives.append((p, next_bloc))
             processes = alives
 
-        for p in processes:
-            p.join()
+        while (True):
+            working = False
+            for p, b in processes:
+                if p.is_alive():
+                    working = True
+                else:
+                    if not b.isTerminated():
+                        b.terminate()
+
+            if not working:
+                break
 
     def initialize(self):
         pass

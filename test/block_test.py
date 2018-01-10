@@ -57,6 +57,7 @@ class DumpString(block.Block):
             pack = self.input().receive()
             if pack is packet.EndOfPacket:
                 break
+
             self.count += 1
             self.lst.append(pack.value())
             self.dmp.put(pack.value())
@@ -112,9 +113,11 @@ class PacketTest(unittest.TestCase):
         self.assertIsNotNone(c1)
         c2 = chain.Chain(ss.output(), ps.input())
         self.assertIsNotNone(c2)
-
+        ms.activate()
         ms.run()
+        ss.activate()
         ss.run()
+        ps.activate()
         ps.run()
 
         self.assertEqual(ps.lst, ['Hello', 'World.', 'My', 'Name', 'is', 'MakeString'])
@@ -129,17 +132,19 @@ class PacketTest(unittest.TestCase):
         self.assertIsNotNone(c2)
 
         processes = []
-
+        ps.activate()
         p = multiprocessing.Process(target=ps.run)
         p.daemon = True
         p.start()
         processes.append(p)
 
+        ss.activate()
         p = multiprocessing.Process(target=ss.run)
         p.daemon = True
         p.start()
         processes.append(p)
 
+        ms.activate()
         p = multiprocessing.Process(target=ms.run)
         p.daemon = True
         p.start()

@@ -101,6 +101,7 @@ class ChainTest(unittest.TestCase):
         src_port = port.OutPort(str)
         dst_port = port.InPort(str)
         chain.Chain(src_port, dst_port)
+        src_port.activate()
         self.assertTrue(src_port.send("a"))
 
         self.assertFalse(src_port.send(1))
@@ -111,6 +112,7 @@ class ChainTest(unittest.TestCase):
         src_port = port.OutPort(int)
         dst_port = port.InPort(int)
         chan1 = chain.Chain(src_port, dst_port)
+        src_port.activate()
 
         for i in range(5):
             self.assertTrue(src_port.send(i))
@@ -130,12 +132,16 @@ class ChainTest(unittest.TestCase):
         src_port1 = port.OutPort(int)
         src_port2 = port.OutPort(int)
         dst_port = port.InPort(int)
+
         chan1 = chain.Chain(src_port1, dst_port)
+        src_port1.activate()
 
         for i in range(5):
             self.assertTrue(src_port1.send(i))
 
         chan2 = chain.Chain(src_port2, dst_port)
+        src_port2.activate()
+
         for i in range(5):
             self.assertFalse(src_port1.send(i))
             self.assertTrue(src_port2.send(i + 5))
