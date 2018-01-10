@@ -3,7 +3,6 @@ import multiprocessing
 
 def RunSchedule(schedule):
     # TODO : improve process queue
-    # TODO : support subnet
     max_process = multiprocessing.cpu_count() - 1 or 1
     processes = []
 
@@ -27,7 +26,7 @@ def RunSchedule(schedule):
 
             suspend = False
 
-            for up in bloc.upstream(inScope=True):
+            for up in bloc.upstream():
                 if up.isWaiting():
                     suspend = True
                     break
