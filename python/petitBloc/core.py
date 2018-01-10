@@ -81,6 +81,56 @@ class PortBase(object):
         pass
 
 
+class ChainBase(object):
+    def __new__(self, srcPort, dstPort):
+        if not srcPort.isOutPort() or not dstPort.isInPort():
+            return None
+
+        if not dstPort.match(srcPort):
+            return None
+
+        return super(ChainBase, self).__new__(self, srcPort, dstPort)
+
+    def __init__(self, srcPort, dstPort):
+        super(ChainBase, self).__init__()
+        self.__src = srcPort
+        self.__dst = dstPort
+        self.__need_to_cast = False
+
+    def src(self):
+        return self.__src
+
+    def dst(self):
+        return self.__dst
+
+    def isConnected(self):
+        return (self.__src is not None) and (self.__dst is not None)
+
+    def empty(self):
+        return True
+
+    def disconnect(self):
+        self.__src.disconnect(self)
+        self.__dst.disconnect(self)
+        self.__src = None
+        self.__dst = None
+
+    def activate(self):
+        pass
+
+    def terminate(self):
+        pass
+
+    def send(self, pack):
+        return False
+
+    def sendEOP(self):
+        return False
+
+    def receive(self, timeout=None):
+        return None
+
+
 class ComponentBase(object):
     Initialized = 0
     Active = 1
