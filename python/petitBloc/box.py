@@ -52,9 +52,6 @@ class Box(block.Component):
 
         processes = []
 
-        for x in self.__blocks:
-            multiprocessing.Process(target=x.run)
-
         while (schedule):
             alives = []
 
