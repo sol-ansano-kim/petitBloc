@@ -13,7 +13,7 @@ class Component(object):
         self.__class_name = self.__class__.__name__
         self.__inputs = []
         self.__outputs = []
-        self.__state = multiprocessing.Value("i", Component.Initialized)
+        self.__state = Component.Initialized
         self.__parent = parent
         self.initialize()
 
@@ -33,25 +33,25 @@ class Component(object):
         pass
 
     def state(self):
-        return self.__state.value
+        return self.__state
 
     def isWaiting(self):
-        return self.__state.value is Component.Initialized
+        return self.__state is Component.Initialized
 
     def isWorking(self):
-        return self.__state.value is Component.Active
+        return self.__state is Component.Active
 
     def isTerminated(self):
-        return self.__state.value is Component.Terminated
+        return self.__state is Component.Terminated
 
     def activate(self):
-        self.__state.value = Component.Active
+        self.__state = Component.Active
 
     def terminate(self):
         for out in self.__outputs:
             out.sendEOP()
 
-        self.__state.value = Component.Terminated
+        self.__state = Component.Terminated
 
     def addInput(self, typeClass, name=None):
         if name is None or not util.validateName(name):
