@@ -1,8 +1,9 @@
 from . import chain
 from . import block
+from . import component
 
 
-class Box(block.Component):
+class Box(component.Component):
     def __init__(self, name="", parent=None):
         super(Box, self).__init__(name="", parent=parent)
         self.__blocks = []
@@ -24,8 +25,9 @@ class Box(block.Component):
         while (cur_blocs):
             dns = []
             for b in cur_blocs:
-                dns += b.downstream()
-            result += dns
+                result += b.getSchedule()
+                dns += filter(lambda x : x != self, b.downstream())
+
             cur_blocs = dns
 
         return result
@@ -34,13 +36,13 @@ class Box(block.Component):
         schedule = []
         initblocs = []
         blocs = []
+        boxies = []
 
         for bloc in self.__blocks:
-            if bloc.upstream(inScope=True):
+            if filter(lambda x : x != self, bloc.upstream()):
                 blocs.append(bloc)
                 continue
 
-            schedule.append(bloc)
             initblocs.append(bloc)
 
         for intbloc in initblocs:
