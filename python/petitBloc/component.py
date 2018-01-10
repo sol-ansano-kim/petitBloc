@@ -1,57 +1,21 @@
 from . import port
 from . import util
+from . import core
 import multiprocessing
 
 
-class Component(object):
-    Initialized = 0
-    Active = 1
-    Terminated = 2
-
+class Component(core.ComponentBase):
     def __init__(self, name="", parent=None):
-        self.__name = name
-        self.__class_name = self.__class__.__name__
+        super(Component, self).__init__(name=name, parent=parent)
         self.__inputs = []
         self.__outputs = []
-        self.__state = Component.Initialized
-        self.__parent = parent
         self.initialize()
-
-    def __str__(self):
-        return "{}<'{}'>".format(self.__class_name, self.__name)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def name(self):
-        return self.__name
-
-    def hasSubnet(self):
-        return False
 
     def getSchedule(self):
         return [self]
 
-    def run(self):
-        pass
-
-    def initialize(self):
-        pass
-
-    def state(self):
-        return self.__state
-
-    def isWaiting(self):
-        return self.__state is Component.Initialized
-
-    def isWorking(self):
-        return self.__state is Component.Active
-
-    def isTerminated(self):
-        return self.__state is Component.Terminated
-
     def activate(self):
-        self.__state = Component.Active
+        super(Component, self).activate()
         for inp in self.__inputs:
             inp.activate()
 
@@ -65,7 +29,7 @@ class Component(object):
         for inp in self.__inputs:
             inp.terminate()
 
-        self.__state = Component.Terminated
+        super(Component, self).terminate()
 
     def addInput(self, typeClass, name=None):
         if name is None or not util.validateName(name):

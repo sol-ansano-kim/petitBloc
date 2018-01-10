@@ -1,52 +1,9 @@
 from numbers import Number
 from . import packet
+from . import core
 
 
-class Port(object):
-    def __init__(self, typeClass, name=None, parent=None):
-        super(Port, self).__init__()
-        self.__type_class = typeClass
-        self.__parent = parent
-        self.__name = name
-
-    def name(self):
-        return self.__name
-
-    def parent(self):
-        return self.__parent
-
-    def match(self, port):
-        if self.__type_class == port.typeClass():
-            return True
-
-        if issubclass(self.__type_class, Number) and issubclass(port.typeClass(), Number):
-            return True
-
-        return False
-
-    def isConnected(self):
-        return False
-
-    def getChains(self):
-        return []
-
-    def typeClass(self):
-        return self.__type_class
-
-    def isInPort(self):
-        return False
-
-    def isOutPort(self):
-        return False
-
-    def activate(self):
-        pass
-
-    def terminate(self):
-        pass
-
-
-class InPort(Port):
+class InPort(core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(InPort, self).__init__(typeClass, name=name, parent=parent)
         self.__in_chain = None
@@ -85,7 +42,7 @@ class InPort(Port):
             self.__in_chain.terminate()
 
 
-class OutPort(Port):
+class OutPort(core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(OutPort, self).__init__(typeClass, name=name, parent=parent)
         self.__out_chains = []

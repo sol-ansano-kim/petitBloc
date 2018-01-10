@@ -1,7 +1,8 @@
 import copy
+from . import core
 
 
-class EndOfPacketObject(object):
+class EndOfPacketObject(core.PacketBase):
     __instance = None
 
     def __new__(cls):
@@ -11,7 +12,7 @@ class EndOfPacketObject(object):
         return cls.__instance
 
     def __init__(self):
-        super(EndOfPacketObject, self).__init__()
+        super(EndOfPacketObject, self).__init__(value=-1)
 
     def __repr__(self):
         self.__str__()
@@ -32,7 +33,7 @@ class EndOfPacketObject(object):
         return None
 
     def refCount(self):
-        return None
+        return -1
 
     def isEOP(self):
         return True
@@ -41,33 +42,7 @@ class EndOfPacketObject(object):
 EndOfPacket = EndOfPacketObject()
 
 
-class PacketBase(object):
-    def __init__(self, value=None):
-        super(PacketBase, self).__init__()
-        self.__value = value
-        self.__type_class = value.__class__
-
-    def __repr__(self):
-        self.__str__()
-
-    def __str__(self):
-        return "Packet<'{}'>".format(self.__type_class.__name__)
-
-    def typeClass(self):
-        return self.__type_class
-
-    def value(self):
-        return copy.deepcopy(self.__value)
-
-    def isEOP(self):
-        return False
-
-    def _del(self):
-        del self.__value
-        del self
-
-
-class Packet(PacketBase):
+class Packet(core.PacketBase):
     def __init__(self, value=None):
         super(Packet, self).__init__(value=value)
         self.__ref_count = 0
@@ -89,7 +64,7 @@ class Packet(PacketBase):
 
 
 # TODO : make it clear
-class CastedPacket(PacketBase):
+class CastedPacket(core.PacketBase):
     def __init__(self, packet, typeClass):
         super(CastedPacket, self).__init__(value=typeClass(packet.value()))
         self.pickUp = packet.pickUp
