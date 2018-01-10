@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import box
 from petitBloc import block
 from petitBloc import packet
-from petitBloc import packet
+from petitBloc import manager
 import multiprocessing
 
 
@@ -107,7 +107,8 @@ class BoxTest(unittest.TestCase):
                 i *= 1.1
             v1.append(i)
 
-        g.run()
+        schedule = g.getSchedule()
+        manager.RunSchedule(schedule)
 
         v2 = []
         while (not dmp.dmp.empty()):

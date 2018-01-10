@@ -26,6 +26,9 @@ class Component(object):
     def name(self):
         return self.__name
 
+    def hasSubnet(self):
+        return False
+
     def run(self):
         pass
 
@@ -107,23 +110,31 @@ class Component(object):
 
         return self.__inputs[index]
 
-    def upstream(self):
+    def upstream(self, inScope=False):
         upstreams = []
         for inp in self.__inputs:
             for chn in inp.getChains():
                 src = chn.src()
                 up = src.parent()
+
+                if inScope and up.hasSubnet():
+                    continue
+
                 if up:
                     upstreams.append(up)
 
         return upstreams
         
-    def downstream(self):
+    def downstream(self, inScope=False):
         downstreams = []
         for oup in self.__outputs:
             for chn in oup.getChains():
                 dst = chn.dst()
                 down = dst.parent()
+
+                if inScope and down.hasSubnet():
+                    continue
+
                 if down:
                     downstreams.append(down)
 

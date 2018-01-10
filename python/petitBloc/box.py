@@ -1,6 +1,5 @@
 from . import chain
 from . import block
-import multiprocessing
 
 
 class Box(block.Component):
@@ -15,6 +14,9 @@ class Box(block.Component):
     def __str__(self):
         return "Box<'{}'>".format(self.name())
 
+    def hasSubnet(self):
+        return True
+
     def __correctDownStreams(self, bloc):
         result = []
 
@@ -28,18 +30,13 @@ class Box(block.Component):
 
         return result
 
-    def run(self):
-        # TODO : improve process queue
-        # TODO : support subnet
-        max_process = multiprocessing.cpu_count() - 1 or 1
+    def getSchedule(self):
         schedule = []
         initblocs = []
         blocs = []
 
         for bloc in self.__blocks:
-            ups = bloc.upstream()
-
-            if filter(lambda x: not isinstance(x, Box), ups):
+            if bloc.upstream(inScope=True):
                 blocs.append(bloc)
                 continue
 
@@ -55,61 +52,10 @@ class Box(block.Component):
         for bloc in blocs:
             schedule.append(bloc)
 
-        processes = []
+        return schedule
 
-        while (schedule):
-            alives = []
-
-            for p, b in processes:
-                if p.is_alive():
-                    alives.append((p, b))
-                else:
-                    b.terminate()
-
-            if len(alives) >= max_process:
-                continue
-
-            next_bloc = None
-            while (True):
-                bloc = schedule.pop(0)
-                if bloc.isTerminated() or bloc.isWorking():
-                    continue
-
-                suspend = False
-
-                for up in bloc.upstream():
-                    if isinstance(up, Box):
-                        continue
-
-                    if up.isWaiting():
-                        suspend = True
-                        break
-
-                if suspend:
-                    schedule.append(bloc)
-                    continue
-
-                next_bloc = bloc
-                break
-
-            next_bloc.activate()
-            p = multiprocessing.Process(target=next_bloc.run)
-            p.daemon = True
-            p.start()
-            alives.append((p, next_bloc))
-            processes = alives
-
-        while (True):
-            working = False
-            for p, b in processes:
-                if p.is_alive():
-                    working = True
-                else:
-                    if not b.isTerminated():
-                        b.terminate()
-
-            if not working:
-                break
+    def run(self):
+        pass
 
     def initialize(self):
         pass
