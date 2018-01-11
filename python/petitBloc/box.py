@@ -73,6 +73,7 @@ class Box(component.Component):
         if block in self.__blocks:
             return False
 
+        block.setParent(self)
         self.__blocks.append(block)
         return True
 

@@ -10,12 +10,6 @@ class Chain(core.ChainBase):
         self.__packets = None
         self.__is_activated = False
 
-        srcPort.connect(self)
-        dstPort.connect(self)
-
-        if srcPort.typeClass() != dstPort.typeClass():
-            self.__need_to_cast = True
-
     def empty(self):
         if self.__packets is None:
             return True
@@ -35,7 +29,7 @@ class Chain(core.ChainBase):
             self.__packets = multiprocessing.Queue()
 
     def terminate(self):
-        if self.__is_activated:
+        if self.__is_activated and self.__packets.empty():
             self.__is_activated = False
             self.__packets.close()
             del self.__packets
@@ -45,7 +39,6 @@ class Chain(core.ChainBase):
         if self.dst() is None:
             return False
 
-        # TODO : improve on case when packet is passed to other block
         pack.pickUp()
 
         self.__packets.put(pack)
@@ -61,4 +54,8 @@ class Chain(core.ChainBase):
         if self.__packets is None:
             return packet.EndOfPacket
 
-        return self.__packets.get(timeout=timeout)
+        p = self.__packets.get(timeout=timeout)
+        if self.needToCast() and not p.isEOP():
+            p = packet.CastedPacket(p, self.dst().typeClass())
+
+        return p

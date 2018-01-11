@@ -25,8 +25,8 @@ class AddOne(block.Block):
         super(AddOne, self).__init__(name=name, parent=parent)
 
     def initialize(self):
-        self.addInput(float)
-        self.addOutput(float)
+        self.addInput(int)
+        self.addOutput(int)
 
     def run(self):
         while (True):
@@ -102,7 +102,7 @@ class BoxTest(unittest.TestCase):
         v1 = []
         for i in range(100):
             for j in range(100):
-                i += 1
+                i = int(i + 1)
                 i *= 1.1
             v1.append(i)
 
@@ -144,7 +144,7 @@ class BoxTest(unittest.TestCase):
 
         for i in range(100):
             out_value.append(float(i))
-            in_value.append(float(i + 1))
+            in_value.append(int(i + 1))
 
         while (not dmp1.dmp.empty()):
             out_dmp.append(dmp1.dmp.get())

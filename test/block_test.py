@@ -16,6 +16,7 @@ class MakeString(block.Block):
 
     def run(self):
         self.output().send("Hello World. My Name is MakeString")
+        # this is only for testing
         self.terminate()
 
 
@@ -38,7 +39,7 @@ class SplitString(block.Block):
                 output.send(txt)
 
             pack.drop()
-
+        # this is only for testing
         self.terminate()
 
 
@@ -63,6 +64,7 @@ class DumpString(block.Block):
             self.dmp.put(pack.value())
             pack.drop()
 
+        # this is only for testing
         self.terminate()
 
 

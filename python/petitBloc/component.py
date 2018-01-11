@@ -24,7 +24,7 @@ class Component(core.ComponentBase):
 
     def terminate(self):
         for out in self.__outputs:
-            out.sendEOP()
+            out.terminate()
 
         for inp in self.__inputs:
             inp.terminate()
@@ -57,6 +57,20 @@ class Component(core.ComponentBase):
 
         return p
 
+    def removeInput(self, inPort):
+        if inPort in self.__inputs:
+            self.__inputs.remove(inPort)
+            return True
+
+        return False
+
+    def removeOutput(self, outPort):
+        if outPort in self.__outputs:
+            self.__outputs.remove(outPort)
+            return True
+
+        return False
+
     def outputs(self):
         for p in self.__outputs:
             yield p
@@ -70,6 +84,20 @@ class Component(core.ComponentBase):
             return None
 
         return self.__outputs[index]
+
+    def outputFromName(self, name):
+        for p in self.__outputs:
+            if p.name() == name:
+                return p
+
+        return None
+
+    def inputFromName(self, name):
+        for p in self.__inputs:
+            if p.name() == name:
+                return p
+
+        return None
 
     def input(self, index=0):
         if index >= len(self.__inputs) or index < 0:

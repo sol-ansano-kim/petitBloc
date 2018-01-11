@@ -15,7 +15,8 @@ class InPort(core.PortBase):
         return self.__in_chain is not None
 
     def getChains(self):
-        return [self.__in_chain] if self.__in_chain is not None else []
+        if self.__in_chain is not None:
+            yield self.__in_chain
 
     def connect(self, chain):
         if self.__in_chain:
@@ -54,7 +55,8 @@ class OutPort(core.PortBase):
         return len(self.__out_chains) > 0
 
     def getChains(self):
-        return self.__out_chains
+        for c in self.__out_chains:
+            yield c
 
     def connect(self, chain):
         if chain not in self.__out_chains:
@@ -64,7 +66,7 @@ class OutPort(core.PortBase):
         if chain in self.__out_chains:
             self.__out_chains.remove(chain)
 
-    def sendEOP(self):
+    def terminate(self):
         for chain in self.__out_chains:
             chain.sendEOP()
 

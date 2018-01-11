@@ -2,6 +2,72 @@ from numbers import Number
 import copy
 
 
+class Parameter(object):
+    def __new__(self, name, typeClass=None, value=None):
+        if value is None and typeClass is None:
+            return None
+
+        if value is not None:
+            if not isinstance(value, Number) and not isinstance(value, basestring):
+                return None
+
+            if typeClass is not None:
+                if not isinstance(value, typeClass):
+                    if (not issubclass(typeClass, Number) or not isinstance(value, Number)) and (not issubclass(typeClass, basestring) or not isinstance(value, basestring)):
+                        return None
+
+        else:
+            if not issubclass(typeClass, Number) and not issubclass(typeClass, basestring):
+                return None
+
+        return super(Parameter, self).__new__(self, name, typeClass=typeClass, value=value)
+
+    def __init__(self, name, typeClass=None, value=None):
+        super(Parameter, self).__init__()
+        self.__name = name
+        if value is None:
+            self.__value = typeClass()
+            self.__type_class = typeClass
+
+        elif typeClass is None:
+            self.__value = value
+            self.__type_class = value.__class__
+
+        else:
+            self.__value = typeClass(value)
+            self.__type_class = typeClass
+
+    def __str__(self):
+        return "Parameter<'{}'>".format(self.__name)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def name(self):
+        return self.__name
+
+    def typeClass(self):
+        return self.__type_class
+
+    def get(self):
+        return self.__value
+
+    def set(self, value):
+        if isinstance(value, self.__type_class):
+            self.__value = value
+            return True
+
+        if isinstance(value, Number) and issubclass(self.__type_class, Number):
+            self.__value = value
+            return True
+
+        if isinstance(value, basestring) and issubclass(self.__type_class, basestring):
+            self.__value = value
+            return True
+
+        return False
+
+
 class PacketBase(object):
     def __init__(self, value=None):
         super(PacketBase, self).__init__()
@@ -63,7 +129,14 @@ class PortBase(object):
         return False
 
     def getChains(self):
-        return []
+        for i in range(0):
+            yield i
+
+    def send(self):
+        return False
+
+    def receive(self):
+        return None
 
     def typeClass(self):
         return self.__type_class
@@ -78,6 +151,9 @@ class PortBase(object):
         pass
 
     def terminate(self):
+        pass
+
+    def activate(self):
         pass
 
 
@@ -96,6 +172,12 @@ class ChainBase(object):
         self.__src = srcPort
         self.__dst = dstPort
         self.__need_to_cast = False
+
+        srcPort.connect(self)
+        dstPort.connect(self)
+
+        if srcPort.typeClass() != dstPort.typeClass():
+            self.__need_to_cast = True
 
     def src(self):
         return self.__src
@@ -130,6 +212,9 @@ class ChainBase(object):
     def receive(self, timeout=None):
         return None
 
+    def needToCast(self):
+        return self.__need_to_cast
+
 
 class ComponentBase(object):
     Initialized = 0
@@ -150,6 +235,12 @@ class ComponentBase(object):
 
     def name(self):
         return self.__name
+
+    def parent(self):
+        return self.__parent
+
+    def setParent(self, parent):
+        self.__parent = parent
 
     def hasSubnet(self):
         return False
@@ -184,14 +275,28 @@ class ComponentBase(object):
     def addInput(self, typeClass, name=None):
         return None
 
+    def removeInput(self, inPort):
+        return False
+
+    def removeOutput(self, outPort):
+        return False
+
     def addOutput(self, typeClass, name=None):
         return None
 
     def outputs(self):
-        yield None
+        for i in range(0):
+            yield i
+
+    def outputFromName(self, name):
+        return None
+
+    def inputFromName(self, name):
+        return None
 
     def inputs(self):
-        yield None
+        for i in range(0):
+            yield i
 
     def output(self, index=0):
         return None
