@@ -46,7 +46,7 @@ class ParamBlock(component.Component):
 
     def param(self, index_or_name):
         if isinstance(index_or_name, int):
-            if index_or_name <= 0 or index_or_name > len(self.__params):
+            if index_or_name < 0 or index_or_name >= len(self.__params):
                 return None
 
             return self.__params[index_or_name]
