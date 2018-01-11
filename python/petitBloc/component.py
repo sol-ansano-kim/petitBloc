@@ -1,7 +1,6 @@
 from . import port
 from . import util
 from . import core
-import multiprocessing
 
 
 class Component(core.ComponentBase):

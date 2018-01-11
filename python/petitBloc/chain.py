@@ -1,7 +1,7 @@
-import multiprocessing
 from numbers import Number
 from . import core
 from . import packet
+from . import manager
 
 
 class Chain(core.ChainBase):
@@ -26,14 +26,13 @@ class Chain(core.ChainBase):
     def activate(self):
         if not self.__is_activated:
             self.__is_activated = True
-            self.__packets = multiprocessing.Queue()
+            self.__packets = manager.QueueManager.CreateQueue()
 
     def terminate(self):
         if self.__is_activated and self.__packets.empty():
-            self.__is_activated = False
-            self.__packets.close()
-            del self.__packets
-            self.__packets = None
+            self.__packets = manager.QueueManager.DeleteQueue(self.__packets)
+            if self.__packets is None:
+                self.__is_activated = False
 
     def send(self, pack):
         if self.dst() is None:
