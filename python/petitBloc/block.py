@@ -8,11 +8,13 @@ class ParamBlock(component.Component):
         super(ParamBlock, self).__init__(name=name, parent=parent)
         self.__params = []
 
-    def run(self):
+    def process(self):
         for p in self.__params:
             prt = self.outputFromName(p.name())
             if prt is not None:
                 prt.send(p.get())
+
+        return False
 
     def addParam(self, typeClass=None, name=None, value=None):
         if name is None or not util.validateName(name):
@@ -72,9 +74,9 @@ class Block(component.Component):
     def __init__(self, name="", parent=None):
         super(Block, self).__init__(name=name, parent=parent)
 
-    def run(self):
+    def process(self):
         # override this method
-        pass
+        return False
 
     def initialize(self):
         # override this method

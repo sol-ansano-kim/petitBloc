@@ -15,9 +15,11 @@ class MakeNumbers(block.Block):
     def initialize(self):
         self.addOutput(float)
 
-    def run(self):
+    def process(self):
         for n in range(100):
             self.output().send(n)
+
+        return False
 
 
 class AddOne(block.Block):
@@ -28,13 +30,15 @@ class AddOne(block.Block):
         self.addInput(int)
         self.addOutput(int)
 
-    def run(self):
-        while (True):
-            in_f = self.input().receive()
-            if in_f.isEOP():
-                break
-            self.output().send(in_f.value() + 1)
-            in_f.drop()
+    def process(self):
+        in_f = self.input().receive()
+        if in_f.isEOP():
+            return False
+
+        self.output().send(in_f.value() + 1)
+        in_f.drop()
+
+        return True
 
 
 class Mult(block.Block):
@@ -45,13 +49,15 @@ class Mult(block.Block):
         self.addInput(float)
         self.addOutput(float)
 
-    def run(self):
-        while (True):
-            in_f = self.input().receive()
-            if in_f.isEOP():
-                break
-            self.output().send(in_f.value() * 1.1)
-            in_f.drop()
+    def process(self):
+        in_f = self.input().receive()
+        if in_f.isEOP():
+            return False
+
+        self.output().send(in_f.value() * 1.1)
+        in_f.drop()
+
+        return True
 
 
 class Dump(block.Block):
@@ -62,13 +68,15 @@ class Dump(block.Block):
     def initialize(self):
         self.addInput(float)
 
-    def run(self):
-        while (True):
-            in_f = self.input().receive()
-            if in_f.isEOP():
-                break
-            self.dmp.put(in_f.value())
-            in_f.drop()
+    def process(self):
+        in_f = self.input().receive()
+        if in_f.isEOP():
+            return False
+
+        self.dmp.put(in_f.value())
+        in_f.drop()
+
+        return True
 
 
 class BoxTest(unittest.TestCase):

@@ -56,9 +56,6 @@ class Box(component.Component):
 
         return schedule
 
-    def run(self):
-        pass
-
     def initialize(self):
         pass
 

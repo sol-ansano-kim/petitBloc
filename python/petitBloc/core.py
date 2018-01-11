@@ -253,7 +253,16 @@ class ComponentBase(object):
         return []
 
     def run(self):
-        pass
+        while (True):
+            try:
+                if not self.process():
+                    break
+            except Exception as e:
+                # TODO : dump error log
+                break
+
+    def process(self):
+        return False
 
     def initialize(self):
         pass

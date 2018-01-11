@@ -19,13 +19,14 @@ class DmpStr(block.Block):
     def initialize(self):
         self.addInput(str)
 
-    def run(self):
-        while (True):
-            p = self.input().receive()
-            if p.isEOP():
-                break
+    def process(self):
+        p = self.input().receive()
+        if p.isEOP():
+            return False
 
-            self.dmp.put(p.value())
+        self.dmp.put(p.value())
+
+        return True
 
 
 class DmpInt(block.Block):
@@ -36,13 +37,14 @@ class DmpInt(block.Block):
     def initialize(self):
         self.addInput(int)
 
-    def run(self):
-        while (True):
-            p = self.input().receive()
-            if p.isEOP():
-                break
+    def process(self):
+        p = self.input().receive()
+        if p.isEOP():
+            return False
 
-            self.dmp.put(p.value())
+        self.dmp.put(p.value())
+
+        return True
 
 
 class TestParameter(unittest.TestCase):

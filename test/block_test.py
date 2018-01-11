@@ -14,10 +14,9 @@ class MakeString(block.Block):
     def initialize(self):
         self.addOutput(str)
 
-    def run(self):
+    def process(self):
         self.output().send("Hello World. My Name is MakeString")
-        # this is only for testing
-        self.terminate()
+        return False
 
 
 class SplitString(block.Block):
@@ -28,19 +27,18 @@ class SplitString(block.Block):
         self.addInput(str, "input")
         self.addOutput(str, "output")
 
-    def run(self):
-        while (True):
-            pack = self.input(0).receive()
-            if pack.isEOP():
-                break
+    def process(self):
+        pack = self.input(0).receive()
+        if pack.isEOP():
+            return False
 
-            output = self.output(0)
-            for txt in pack.value().split(" "):
-                output.send(txt)
+        output = self.output(0)
+        for txt in pack.value().split(" "):
+            output.send(txt)
 
-            pack.drop()
-        # this is only for testing
-        self.terminate()
+        pack.drop()
+
+        return True
 
 
 class DumpString(block.Block):
@@ -53,19 +51,17 @@ class DumpString(block.Block):
     def initialize(self):
         self.addInput(str, "string")
 
-    def run(self):
-        while (True):
-            pack = self.input().receive()
-            if pack.isEOP():
-                break
+    def process(self):
+        pack = self.input().receive()
+        if pack.isEOP():
+            return False
 
-            self.count += 1
-            self.lst.append(pack.value())
-            self.dmp.put(pack.value())
-            pack.drop()
+        self.count += 1
+        self.lst.append(pack.value())
+        self.dmp.put(pack.value())
+        pack.drop()
 
-        # this is only for testing
-        self.terminate()
+        return True
 
 
 class PacketTest(unittest.TestCase):
@@ -118,10 +114,13 @@ class PacketTest(unittest.TestCase):
         self.assertIsNotNone(c2)
         ms.activate()
         ms.run()
+        ms.terminate()
         ss.activate()
         ss.run()
+        ss.terminate()
         ps.activate()
         ps.run()
+        ps.terminate()
 
         self.assertEqual(ps.lst, ['Hello', 'World.', 'My', 'Name', 'is', 'MakeString'])
 
@@ -139,22 +138,31 @@ class PacketTest(unittest.TestCase):
         p = multiprocessing.Process(target=ps.run)
         p.daemon = True
         p.start()
-        processes.append(p)
+        processes.append((p, ps))
 
         ss.activate()
         p = multiprocessing.Process(target=ss.run)
         p.daemon = True
         p.start()
-        processes.append(p)
+        processes.append((p, ss))
 
         ms.activate()
         p = multiprocessing.Process(target=ms.run)
         p.daemon = True
         p.start()
-        processes.append(p)
+        processes.append((p, ms))
 
-        for p in processes:
-            p.join()
+        while (True):
+            working = False
+            for p, b in processes:
+                if p.is_alive():
+                    working = True
+                else:
+                    if not b.isTerminated():
+                        b.terminate()
+
+            if working is False:
+                break
 
         result = []
         while (not ps.dmp.empty()):
