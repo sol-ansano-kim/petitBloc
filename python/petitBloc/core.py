@@ -246,9 +246,6 @@ class ComponentBase(object):
     def setParent(self, parent):
         self.__parent = parent
 
-    def hasSubnet(self):
-        return False
-
     def getSchedule(self):
         return []
 
