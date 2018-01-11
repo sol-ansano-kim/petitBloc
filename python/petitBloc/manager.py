@@ -1,4 +1,5 @@
 import multiprocessing
+import copy
 
 
 class QueueManager(object):
@@ -109,6 +110,11 @@ def RunSchedule(schedule, maxProcess=0):
     QueueManager.Reset()
     ProcessManager.Reset()
     ProcessManager.SetMaxProcess(maxProcess)
+
+    schedule = copy.copy(schedule)
+
+    for s in schedule:
+        s.resetState()
 
     while (schedule):
         next_bloc = None

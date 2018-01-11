@@ -72,6 +72,25 @@ class Parameter(object):
         return False
 
 
+class ProxyParameter(object):
+    def __init__(self, param, name=None):
+        super(ProxyParameter, self).__init__()
+        self.__name = name if name is not None else param.name()
+        self.__param = param
+
+    def name(self):
+        return self.__name
+
+    def param(self):
+        return self.__param
+
+    def set(self, value):
+        return self.__param.set(value)
+
+    def get(self):
+        return self.__param.get()
+
+
 class PacketBase(object):
     def __init__(self, value=None):
         super(PacketBase, self).__init__()
@@ -275,6 +294,9 @@ class ComponentBase(object):
 
     def isTerminated(self):
         return self.__state is ComponentBase.Terminated
+
+    def resetState(self):
+        self.__state = ComponentBase.Initialized
 
     def activate(self):
         self.__state = ComponentBase.Active

@@ -26,6 +26,8 @@ class DmpStr(block.Block):
 
         self.dmp.put(p.value())
 
+        p.drop()
+
         return True
 
 

@@ -68,6 +68,11 @@ class Dump(block.Block):
     def initialize(self):
         self.addInput(float)
 
+    def flush(self):
+        self.dmp.close()
+        del self.dmp
+        self.dmp = multiprocessing.Queue()
+
     def process(self):
         in_f = self.input(0).receive()
         if in_f.isEOP():
@@ -115,6 +120,18 @@ class BoxTest(unittest.TestCase):
             v1.append(i)
 
         schedule = g.getSchedule()
+        manager.RunSchedule(schedule)
+
+        v2 = []
+        while (not dmp.dmp.empty()):
+            v2.append(dmp.dmp.get())
+
+        self.assertEqual(v1, v2)
+
+        # try it agian
+        dmp.flush()
+        self.assertTrue(dmp.dmp.empty())
+
         manager.RunSchedule(schedule)
 
         v2 = []

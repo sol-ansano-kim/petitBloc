@@ -111,6 +111,9 @@ class Component(core.ComponentBase):
         for inp in self.__inputs:
             for chn in inp.getChains():
                 src = chn.src()
+                if src is None:
+                    continue
+
                 up = src.parent()
 
                 if up:
@@ -124,6 +127,8 @@ class Component(core.ComponentBase):
             for chn in oup.getChains():
                 dst = chn.dst()
                 down = dst.parent()
+                if dst is None:
+                    continue
 
                 if down:
                     downstreams.append(down)

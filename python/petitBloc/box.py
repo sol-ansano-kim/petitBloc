@@ -1,13 +1,16 @@
 from . import chain
 from . import block
 from . import component
+from . import util
+from . import core
 
 
 class Box(component.Component):
     def __init__(self, name="", parent=None):
-        super(Box, self).__init__(name="", parent=parent)
+        super(Box, self).__init__(name=name, parent=parent)
         self.__blocks = []
         self.__chains = []
+        self.__proxy_params = []
 
     def __repr__(self):
         return self.__str__()
@@ -15,28 +18,10 @@ class Box(component.Component):
     def __str__(self):
         return "Box<'{}'>".format(self.name())
 
-    def hasSubnet(self):
-        return True
-
-    def __correctDownStreams(self, bloc):
-        result = []
-
-        cur_blocs = [bloc]
-        while (cur_blocs):
-            dns = []
-            for b in cur_blocs:
-                result += b.getSchedule()
-                dns += filter(lambda x : x != self, b.downstream())
-
-            cur_blocs = dns
-
-        return result
-
     def getSchedule(self):
         schedule = []
         initblocs = []
         blocs = []
-        boxies = []
 
         for bloc in self.__blocks:
             if filter(lambda x : x != self, bloc.upstream()):
@@ -46,13 +31,24 @@ class Box(component.Component):
             initblocs.append(bloc)
 
         for intbloc in initblocs:
-            for db in self.__correctDownStreams(intbloc):
+            all_downstreams = []
+
+            cur_blocs = [intbloc]
+            while (cur_blocs):
+                dns = []
+                for b in cur_blocs:
+                    all_downstreams += b.getSchedule()
+                    dns += filter(lambda x : x in self.__blocks, b.downstream())
+
+                cur_blocs = dns
+
+            for db in all_downstreams:
                 if db in blocs:
                     blocs.remove(db)
                 schedule.append(db)
 
         for bloc in blocs:
-            schedule.append(bloc)
+            schedule.append(bloc.getSchedule())
 
         return schedule
 
@@ -96,3 +92,42 @@ class Box(component.Component):
         self.__chains.append(c)
 
         return True
+
+    def addProxyParam(self, param, name=None):
+        for proxy in self.__proxy_params:
+            if proxy.param() == param:
+                return None
+
+        if name is None or not util.validateName(name):
+            name = param.name()
+
+        all_names = map(lambda x: x.name(), self.__proxy_params)
+
+        name = util.GetUniqueName(name, all_names)
+
+        proxy = core.ProxyParameter(param, name)
+
+        self.__proxy_params.append(proxy)
+
+        return proxy
+
+    def proxyParam(self, index_or_name):
+        if isinstance(index_or_name, int):
+            if index_or_name < 0 or index_or_name >= len(self.__proxy_params):
+                return None
+
+            return self.__proxy_params[index_or_name]
+
+        if isinstance(index_or_name, basestring):
+            for p in self.__proxy_params:
+                if p.name() == index_or_name:
+                    return p
+
+        return None
+
+    def removeProxyParam(self, proxy):
+        if proxy in self.__proxy_params:
+            self.__proxy_params.remove(proxy)
+            return True
+
+        return False
