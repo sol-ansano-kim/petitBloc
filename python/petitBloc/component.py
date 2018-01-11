@@ -78,31 +78,33 @@ class Component(core.ComponentBase):
         for p in self.__inputs:
             yield p
 
-    def output(self, index=0):
-        if index >= len(self.__outputs) or index < 0:
-            return None
+    def output(self, index_or_name):
+        if isinstance(index_or_name, int):
+            if index_or_name >= len(self.__outputs) or index_or_name < 0:
+                return None
 
-        return self.__outputs[index]
+            return self.__outputs[index_or_name]
 
-    def outputFromName(self, name):
-        for p in self.__outputs:
-            if p.name() == name:
-                return p
-
-        return None
-
-    def inputFromName(self, name):
-        for p in self.__inputs:
-            if p.name() == name:
-                return p
+        if isinstance(index_or_name, basestring):
+            for p in self.__outputs:
+                if p.name() == index_or_name:
+                    return p
 
         return None
 
-    def input(self, index=0):
-        if index >= len(self.__inputs) or index < 0:
-            return None
+    def input(self, index_or_name):
+        if isinstance(index_or_name, int):
+            if index_or_name >= len(self.__inputs) or index_or_name < 0:
+                return None
 
-        return self.__inputs[index]
+            return self.__inputs[index_or_name]
+
+        if isinstance(index_or_name, basestring):
+            for p in self.__inputs:
+                if p.name() == index_or_name:
+                    return p
+
+        return None
 
     def upstream(self):
         upstreams = []

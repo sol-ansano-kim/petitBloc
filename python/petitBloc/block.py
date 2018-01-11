@@ -10,7 +10,7 @@ class ParamBlock(component.Component):
 
     def process(self):
         for p in self.__params:
-            prt = self.outputFromName(p.name())
+            prt = self.output(p.name())
             if prt is not None:
                 prt.send(p.get())
 
@@ -33,7 +33,7 @@ class ParamBlock(component.Component):
 
     def removeParam(self, param):
         if param in self.__params:
-            p = self.outputFromName(param.name())
+            p = self.output(param.name())
             super(ParamBlock.removeOutput(p))
             self.__params.remove(param)
             return True
@@ -44,16 +44,17 @@ class ParamBlock(component.Component):
         for p in self.__params:
             yield p
 
-    def param(self, index):
-        if index <= 0 or index > len(self.__params):
-            return None
+    def param(self, index_or_name):
+        if isinstance(index_or_name, int):
+            if index_or_name <= 0 or index_or_name > len(self.__params):
+                return None
 
-        return self.__params[index]
+            return self.__params[index_or_name]
 
-    def paramFromName(self, name):
-        for p in self.__params:
-            if p.name() == name:
-                return p
+        if isinstance(index_or_name, basestring):
+            for p in self.__params:
+                if p.name() == index_or_name:
+                    return p
 
         return None
 

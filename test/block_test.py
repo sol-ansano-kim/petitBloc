@@ -15,7 +15,7 @@ class MakeString(block.Block):
         self.addOutput(str)
 
     def process(self):
-        self.output().send("Hello World. My Name is MakeString")
+        self.output(0).send("Hello World. My Name is MakeString")
         return False
 
 
@@ -52,7 +52,7 @@ class DumpString(block.Block):
         self.addInput(str, "string")
 
     def process(self):
-        pack = self.input().receive()
+        pack = self.input(0).receive()
         if pack.isEOP():
             return False
 
@@ -108,9 +108,9 @@ class PacketTest(unittest.TestCase):
         ms = MakeString()
         ss = SplitString()
         ps = DumpString()
-        c1 = chain.Chain(ms.output(), ss.input())
+        c1 = chain.Chain(ms.output(0), ss.input(0))
         self.assertIsNotNone(c1)
-        c2 = chain.Chain(ss.output(), ps.input())
+        c2 = chain.Chain(ss.output(0), ps.input(0))
         self.assertIsNotNone(c2)
         ms.activate()
         ms.run()
@@ -128,9 +128,9 @@ class PacketTest(unittest.TestCase):
         ms = MakeString()
         ss = SplitString()
         ps = DumpString()
-        c1 = chain.Chain(ms.output(), ss.input())
+        c1 = chain.Chain(ms.output(0), ss.input(0))
         self.assertIsNotNone(c1)
-        c2 = chain.Chain(ss.output(), ps.input())
+        c2 = chain.Chain(ss.output(0), ps.input(0))
         self.assertIsNotNone(c2)
 
         processes = []

@@ -301,20 +301,14 @@ class ComponentBase(object):
         for i in range(0):
             yield i
 
-    def outputFromName(self, name):
-        return None
-
-    def inputFromName(self, name):
-        return None
-
     def inputs(self):
         for i in range(0):
             yield i
 
-    def output(self, index=0):
+    def output(self, index_or_name):
         return None
 
-    def input(self, index=0):
+    def input(self, index_or_name):
         return None
 
     def upstream(self):

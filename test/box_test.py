@@ -17,7 +17,7 @@ class MakeNumbers(block.Block):
 
     def process(self):
         for n in range(100):
-            self.output().send(n)
+            self.output(0).send(n)
 
         return False
 
@@ -31,11 +31,11 @@ class AddOne(block.Block):
         self.addOutput(int)
 
     def process(self):
-        in_f = self.input().receive()
+        in_f = self.input(0).receive()
         if in_f.isEOP():
             return False
 
-        self.output().send(in_f.value() + 1)
+        self.output(0).send(in_f.value() + 1)
         in_f.drop()
 
         return True
@@ -50,11 +50,11 @@ class Mult(block.Block):
         self.addOutput(float)
 
     def process(self):
-        in_f = self.input().receive()
+        in_f = self.input(0).receive()
         if in_f.isEOP():
             return False
 
-        self.output().send(in_f.value() * 1.1)
+        self.output(0).send(in_f.value() * 1.1)
         in_f.drop()
 
         return True
@@ -69,7 +69,7 @@ class Dump(block.Block):
         self.addInput(float)
 
     def process(self):
-        in_f = self.input().receive()
+        in_f = self.input(0).receive()
         if in_f.isEOP():
             return False
 
@@ -92,7 +92,7 @@ class BoxTest(unittest.TestCase):
         self.assertTrue(g.addBlock(dmp))
         self.assertTrue(g.addBlock(num))
 
-        last = num.output()
+        last = num.output(0)
         aa = None
         for i in range(100):
             add = AddOne(name="AddOne{}".format(i))
@@ -101,11 +101,11 @@ class BoxTest(unittest.TestCase):
             doub = Mult(name="Mult{}".format(i))
             self.assertTrue(g.addBlock(doub))
             self.assertTrue(g.addBlock(add))
-            self.assertTrue(g.connect(last, add.input()))
-            self.assertTrue(g.connect(add.output(), doub.input()))
-            last = doub.output()
+            self.assertTrue(g.connect(last, add.input(0)))
+            self.assertTrue(g.connect(add.output(0), doub.input(0)))
+            last = doub.output(0)
 
-        self.assertTrue(g.connect(last, dmp.input()))
+        self.assertTrue(g.connect(last, dmp.input(0)))
 
         v1 = []
         for i in range(100):
@@ -130,7 +130,7 @@ class BoxTest(unittest.TestCase):
         dmp1 = Dump(name="OutSideDmp")
         self.assertTrue(g.addBlock(num1))
         self.assertTrue(g.addBlock(dmp1))
-        self.assertTrue(g.connect(num1.output(), dmp1.input()))
+        self.assertTrue(g.connect(num1.output(0), dmp1.input(0)))
 
         c = box.Box()
         self.assertTrue(g.addBlock(c))
@@ -140,8 +140,8 @@ class BoxTest(unittest.TestCase):
         self.assertTrue(c.addBlock(num2))
         self.assertTrue(c.addBlock(dmp2))
         self.assertTrue(c.addBlock(add))
-        self.assertTrue(c.connect(num2.output(), add.input()))
-        self.assertTrue(c.connect(add.output(), dmp2.input()))
+        self.assertTrue(c.connect(num2.output(0), add.input(0)))
+        self.assertTrue(c.connect(add.output(0), dmp2.input(0)))
 
         manager.RunSchedule(g.getSchedule())
 

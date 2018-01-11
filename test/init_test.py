@@ -20,7 +20,7 @@ class DmpStr(block.Block):
         self.addInput(str)
 
     def process(self):
-        p = self.input().receive()
+        p = self.input(0).receive()
         if p.isEOP():
             return False
 
@@ -38,7 +38,7 @@ class DmpInt(block.Block):
         self.addInput(int)
 
     def process(self):
-        p = self.input().receive()
+        p = self.input(0).receive()
         if p.isEOP():
             return False
 
@@ -103,25 +103,25 @@ class TestInitBlock(unittest.TestCase):
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param")
         self.assertEqual(p.get(), "")
-        self.assertIsNotNone(b.outputFromName(p.name()))
+        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(int)
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param1")
         self.assertEqual(p.get(), 0)
-        self.assertIsNotNone(b.outputFromName(p.name()))
+        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(float)
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param2")
         self.assertEqual(p.get(), 0.0)
-        self.assertIsNotNone(b.outputFromName(p.name()))
+        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(bool)
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param3")
         self.assertEqual(p.get(), False)
-        self.assertIsNotNone(b.outputFromName(p.name()))
+        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(list)
         self.assertIsNone(p)
@@ -131,7 +131,7 @@ class TestInitBlock(unittest.TestCase):
         self.assertEqual(p.name(), "intNumber")
         self.assertEqual(p.typeClass(), int)
         self.assertEqual(p.get(), 1)
-        self.assertIsNotNone(b.outputFromName(p.name()))
+        self.assertIsNotNone(b.output(p.name()))
 
         count = 0
         for p in b.params():
@@ -159,19 +159,19 @@ class TestInitBlock(unittest.TestCase):
         b.addParam(str, "testStr")
         b.addParam(int, "testInt")
 
-        p1 = b.outputFromName("testStr")
+        p1 = b.output("testStr")
         self.assertIsNotNone(p1)
-        p2 = b.outputFromName("testInt")
+        p2 = b.output("testInt")
         self.assertIsNotNone(p2)
 
         dmp_str = DmpStr()
         dmp_int = DmpInt()
 
-        self.assertIsNotNone(chain.Chain(p1, dmp_str.input()))
-        self.assertIsNotNone(chain.Chain(p2, dmp_int.input()))
+        self.assertIsNotNone(chain.Chain(p1, dmp_str.input(0)))
+        self.assertIsNotNone(chain.Chain(p2, dmp_int.input(0)))
 
-        self.assertTrue(b.paramFromName("testStr").set("HELLO"))
-        self.assertTrue(b.paramFromName("testInt").set(23))
+        self.assertTrue(b.param("testStr").set("HELLO"))
+        self.assertTrue(b.param("testInt").set(23))
         b.activate()
         b.run()
         b.terminate()
@@ -210,11 +210,11 @@ class TestInitBlock(unittest.TestCase):
         pb.addParam(str, "string")
         pb.addParam(int, "int")
 
-        self.assertTrue(box1.connect(pb.outputFromName("string"), dmp_str.input()))
-        self.assertTrue(box1.connect(pb.outputFromName("int"), dmp_int.input()))
+        self.assertTrue(box1.connect(pb.output("string"), dmp_str.input(0)))
+        self.assertTrue(box1.connect(pb.output("int"), dmp_int.input(0)))
 
-        pb.paramFromName("string").set("HELLO")
-        pb.paramFromName("int").set(23)
+        pb.param("string").set("HELLO")
+        pb.param("int").set(23)
 
         schedule = box1.getSchedule()
         manager.RunSchedule(schedule)
