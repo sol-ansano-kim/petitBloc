@@ -69,12 +69,12 @@ class Box(component.Component):
     def blockCount(self):
         return len(self.__blocks)
 
-    def addBlock(self, block):
-        if block in self.__blocks:
+    def addBlock(self, bloc):
+        if bloc in self.__blocks:
             return False
 
-        block.setParent(self)
-        self.__blocks.append(block)
+        bloc.setParent(self)
+        self.__blocks.append(bloc)
         return True
 
     def connect(self, srcPort, dstPort):
