@@ -3,7 +3,7 @@ import copy
 
 
 class Parameter(object):
-    def __new__(self, name, typeClass=None, value=None):
+    def __new__(self, name, typeClass=None, value=None, parent=None):
         if value is None and typeClass is None:
             return None
 
@@ -20,11 +20,12 @@ class Parameter(object):
             if not issubclass(typeClass, Number) and not issubclass(typeClass, basestring):
                 return None
 
-        return super(Parameter, self).__new__(self, name, typeClass=typeClass, value=value)
+        return super(Parameter, self).__new__(self, name, typeClass=typeClass, value=value, parent=parent)
 
-    def __init__(self, name, typeClass=None, value=None):
+    def __init__(self, name, typeClass=None, value=None, parent=None):
         super(Parameter, self).__init__()
         self.__name = name
+        self.__parent = parent
         if value is None:
             self.__value = typeClass()
             self.__type_class = typeClass
@@ -42,6 +43,9 @@ class Parameter(object):
 
     def __repr__(self):
         return self.__str__()
+
+    def parent(self):
+        return self.__parent
 
     def name(self):
         return self.__name

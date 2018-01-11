@@ -22,7 +22,7 @@ class ParamBlock(component.Component):
 
         name = util.GetUniqueName(name, all_names)
 
-        p = core.Parameter(name, typeClass=typeClass, value=value)
+        p = core.Parameter(name, typeClass=typeClass, value=value, parent=self)
         if p:
             self.__params.append(p)
             super(ParamBlock, self).addOutput(p.typeClass(), name=p.name())
