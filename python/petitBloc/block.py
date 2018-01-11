@@ -1,6 +1,5 @@
 from . import component
 from . import util
-from . import port
 from . import core
 
 
@@ -11,9 +10,9 @@ class ParamBlock(component.Component):
 
     def run(self):
         for p in self.__params:
-            port = self.outputFromName(p.name())
-            if port is not None:
-                port.send(p.get())
+            prt = self.outputFromName(p.name())
+            if prt is not None:
+                prt.send(p.get())
 
     def addParam(self, typeClass=None, name=None, value=None):
         if name is None or not util.validateName(name):

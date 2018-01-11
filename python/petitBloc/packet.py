@@ -63,7 +63,6 @@ class Packet(core.PacketBase):
         return False
 
 
-# TODO : make it clear
 class CastedPacket(core.PacketBase):
     def __init__(self, packet, typeClass):
         super(CastedPacket, self).__init__(value=typeClass(packet.value()))
