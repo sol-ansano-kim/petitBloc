@@ -22,6 +22,20 @@ class MakeNumbers(block.Block):
         return False
 
 
+class MakeTwoWay(block.Block):
+    def __init__(self, name="", parent=None):
+        super(MakeTwoWay, self).__init__(name=name, parent=parent)
+
+    def initialize(self):
+        self.addOutput(float)
+        self.addOutput(float)
+
+    def process(self):
+        for n in range(10):
+            self.output(0).send(n)
+            self.output(1).send(n * 2)
+
+
 class AddOne(block.Block):
     def __init__(self, name="", parent=None):
         super(AddOne, self).__init__(name=name, parent=parent)
@@ -160,6 +174,43 @@ class BoxTest(unittest.TestCase):
             v2.append(dmp.dmp.get())
 
         self.assertEqual(v1, v2)
+
+    def test_two_way(self):
+        g = box.Box()
+        two = MakeTwoWay()
+        add1 = AddOne()
+        add2 = AddOne()
+        dmp1 = Dump()
+        dmp2 = Dump()
+        g.addBlock(two)
+        g.addBlock(add1)
+        g.addBlock(add2)
+        g.addBlock(dmp1)
+        g.addBlock(dmp2)
+
+        g.connect(two.output(0), add1.input(0))
+        g.connect(two.output(1), add2.input(0))
+        g.connect(add1.output(0), dmp1.input(0))
+        g.connect(add2.output(0), dmp2.input(0))
+
+        manager.RunSchedule(g.getSchedule())
+
+        d1 = []
+        d2 = []
+        while (not dmp1.dmp.empty()):
+            d1.append(dmp1.dmp.get())
+
+        while (not dmp2.dmp.empty()):
+            d2.append(dmp2.dmp.get())
+
+        v1 = []
+        v2 = []
+        for i in range(10):
+            v1.append(float(i + 1))
+            v2.append(float(i * 2) + 1)
+
+        self.assertEqual(d1, v1)
+        self.assertEqual(d2, v2)
 
     def test_subnet(self):
         g = box.Box()
