@@ -1,16 +1,98 @@
 from . import chain
-from . import block
 from . import component
 from . import util
 from . import core
+
+
+class ProxyBlock(core.Proxy, component.Component):
+    In = 0
+    Out = 1
+
+    def __init__(self, direction, name="", parent=None):
+        super(ProxyBlock, self).__init__(name=name, parent=parent)
+        self.__ports = {}
+        self.__direction = direction
+
+    def isInProxy(self):
+        return self.__direction is ProxyBlock.In
+
+    def isOutProxy(self):
+        return self.__direction is ProxyBlock.Out
+
+    def proxies(self):
+        return self.__ports.keys()
+
+    def hasProxy(self, name):
+        return self.__ports.has_key(name)
+
+    def addProxy(self, typeClass, name=None):
+        if name is None or not util.validateName(name):
+            name = "proxy"
+
+        all_names = self.__ports.keys()
+
+        name = util.GetUniqueName(name, all_names)
+
+        in_p = self.addInput(typeClass, name=name)
+        out_p = self.addOutput(typeClass, name=name)
+
+        if in_p is not None and out_p is not None:
+            self.__ports[name] = {"in": in_p, "out": out_p, "end": False}
+            return True
+
+        return False
+
+    def connect(self, name, port, isInside):
+        proxy_side = None
+
+        if self.__direction is ProxyBlock.In:
+            proxy_side = "out" if isInside else "in"
+        else:
+            proxy_side = "in" if isInside else "out"
+
+        c = None
+        proxy_port = self.__ports[name][proxy_side]
+
+        if proxy_side == "in":
+            c = chain.Chain(port, proxy_port)
+        else:
+            c = chain.Chain(proxy_port, port)
+
+        if c is None:
+            return False
+
+        return True
+
+    def activate(self):
+        super(ProxyBlock, self).activate()
+        for values in self.__ports.values():
+            values["end"] = False
+
+    def process(self):
+        keep = False
+        for values in self.__ports.values():
+            if values["end"]:
+                continue
+
+            keep = True
+            p = values["in"].receive()
+
+            if p.isEOP():
+                values["end"] = True
+                continue
+
+            values["out"].send(p.value())
+
+        return keep
 
 
 class Box(component.Component):
     def __init__(self, name="", parent=None):
         super(Box, self).__init__(name=name, parent=parent)
         self.__blocks = []
-        self.__chains = []
         self.__proxy_params = []
+        self.__in_proxy = ProxyBlock(ProxyBlock.In, name="inProxy", parent=self)
+        self.__out_proxy = ProxyBlock(ProxyBlock.Out, name="outProxy", parent=self)
 
     def __repr__(self):
         return self.__str__()
@@ -22,6 +104,8 @@ class Box(component.Component):
         schedule = []
         initblocs = []
         blocs = []
+
+        schedule.append(self.__in_proxy)
 
         for bloc in self.__blocks:
             if filter(lambda x : x != self, bloc.upstream()):
@@ -49,6 +133,8 @@ class Box(component.Component):
 
         for bloc in blocs:
             schedule.append(bloc.getSchedule())
+
+        schedule.append(self.__out_proxy)
 
         return schedule
 
@@ -80,16 +166,9 @@ class Box(component.Component):
         if src_block not in self.__blocks or dst_block not in self.__blocks:
             return False
 
-        if dstPort.isConnected():
-            c = dstPort.getChains()[0]
-            if c in self.__chains:
-                self.__chains.remove(c)
-
         c = chain.Chain(srcPort, dstPort)
         if c is None:
             return False
-
-        self.__chains.append(c)
 
         return True
 
@@ -131,3 +210,61 @@ class Box(component.Component):
             return True
 
         return False
+
+    def addInputProxy(self, typeClass, name=None):
+        return self.__in_proxy.addProxy(typeClass, name=name)
+
+    def addOutputProxy(self, typeClass, name=None):
+        return self.__out_proxy.addProxy(typeClass, name=name)
+
+    def inputProxy(self, name):
+        return self.__in_proxy.input(name)
+
+    def outputProxy(self, name):
+        return self.__out_proxy.output(name)
+
+    def hasInputProxy(self, name):
+        return self.__in_proxy.hasProxy(name)
+
+    def inputProxies(self):
+        return self.__in_proxy.proxies()
+
+    def hasOutputProxy(self, name):
+        return self.__out_proxy.hasProxy(name)
+
+    def outputProxies(self):
+        return self.__out_proxy.proxies()
+
+    def connectInputProxy(self, name, port):
+        if not self.__in_proxy.hasProxy(name):
+            return False
+
+        port_block = port.parent()
+        if not port_block:
+            return False
+
+        is_inside = port_block in self.__blocks
+        if is_inside and not port.isInPort():
+            return False
+
+        if not is_inside and not port.isOutPort():
+            return False
+
+        return self.__in_proxy.connect(name, port, is_inside)
+
+    def connectOutputProxy(self, name, port):
+        if not self.__out_proxy.hasProxy(name):
+            return False
+
+        port_block = port.parent()
+        if not port_block:
+            return False
+
+        is_inside = port_block in self.__blocks
+        if is_inside and not port.isOutPort():
+            return False
+
+        if not is_inside and not port.isInPort():
+            return False
+
+        return self.__out_proxy.connect(name, port, is_inside)

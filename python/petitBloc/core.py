@@ -2,6 +2,10 @@ from numbers import Number
 import copy
 
 
+class Proxy():
+    pass
+
+
 class Parameter(object):
     def __new__(self, name, typeClass=None, value=None, parent=None):
         if value is None and typeClass is None:

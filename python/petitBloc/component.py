@@ -115,6 +115,8 @@ class Component(core.ComponentBase):
                     continue
 
                 up = src.parent()
+                if isinstance(up, core.Proxy):
+                    continue
 
                 if up:
                     upstreams.append(up)
@@ -126,8 +128,14 @@ class Component(core.ComponentBase):
         for oup in self.__outputs:
             for chn in oup.getChains():
                 dst = chn.dst()
+                if dst is None:
+                    continue
+
                 down = dst.parent()
                 if dst is None:
+                    continue
+
+                if isinstance(down, core.Proxy):
                     continue
 
                 if down:
