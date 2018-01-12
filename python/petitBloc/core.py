@@ -155,7 +155,7 @@ class PortBase(object):
     def isConnected(self):
         return False
 
-    def getChains(self):
+    def chains(self):
         for i in range(0):
             yield i
 

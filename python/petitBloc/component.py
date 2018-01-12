@@ -109,7 +109,7 @@ class Component(core.ComponentBase):
     def upstream(self):
         upstreams = []
         for inp in self.__inputs:
-            for chn in inp.getChains():
+            for chn in inp.chains():
                 src = chn.src()
                 if src is None:
                     continue
@@ -126,7 +126,7 @@ class Component(core.ComponentBase):
     def downstream(self):
         downstreams = []
         for oup in self.__outputs:
-            for chn in oup.getChains():
+            for chn in oup.chains():
                 dst = chn.dst()
                 if dst is None:
                     continue

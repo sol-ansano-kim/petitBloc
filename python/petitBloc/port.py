@@ -14,7 +14,7 @@ class InPort(core.PortBase):
     def isConnected(self):
         return self.__in_chain is not None
 
-    def getChains(self):
+    def chains(self):
         if self.__in_chain is not None:
             yield self.__in_chain
 
@@ -54,7 +54,7 @@ class OutPort(core.PortBase):
     def isConnected(self):
         return len(self.__out_chains) > 0
 
-    def getChains(self):
+    def chains(self):
         for c in self.__out_chains:
             yield c
 

@@ -89,6 +89,27 @@ class BoxTest(unittest.TestCase):
         g = box.Box()
         self.assertIsNotNone(g)
 
+    def test_chain_add_remove(self):
+        b = box.Box()
+        mn = MakeNumbers()
+        dp = Dump()
+        mt = Mult()
+        self.assertFalse(b.connect(mn.output(0), dp.input(0)))
+        b.addBlock(mn)
+        b.addBlock(dp)
+        b.addBlock(mt)
+        self.assertTrue(b.connect(mn.output(0), dp.input(0)))
+        chn1 = None
+        for c in b.chains():
+            chn1 = c
+            self.assertTrue(c.isConnected())
+
+        self.assertTrue(b.connect(mt.output(0), dp.input(0)))
+        self.assertEqual(b.chainCount(), 1)
+        self.assertFalse(chn1.isConnected())
+        for c in b.chains():
+            self.assertTrue(c.isConnected())
+
     def test_add_bloc(self):
         g = box.Box()
         num = MakeNumbers(name="MakeNumber")

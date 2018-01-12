@@ -2,6 +2,7 @@ from . import chain
 from . import component
 from . import util
 from . import core
+import copy
 
 
 class ProxyBlock(core.Proxy, component.Component):
@@ -43,25 +44,48 @@ class ProxyBlock(core.Proxy, component.Component):
         return False
 
     def connect(self, name, port, isInside):
-        proxy_side = None
+        chain_parent = None
+        dst_chains = []
+        proxy_port = None
+        is_dst = False
 
         if self.__direction is ProxyBlock.In:
-            proxy_side = "out" if isInside else "in"
+            if isInside:
+                proxy_port = self.__ports[name]["out"]
+                dst_chains = map(lambda x: x, port.chains())
+                chain_parent = self.parent()
+                is_dst = False
+            else:
+                proxy_port = self.__ports[name]["in"]
+                dst_chains = map(lambda x: x, proxy_port.chains())
+                chain_parent = port.parent().parent()
+                is_dst = True
         else:
-            proxy_side = "in" if isInside else "out"
+            if isInside:
+                proxy_port = self.__ports[name]["in"]
+                dst_chains = map(lambda x: x, proxy_port.chains())
+                chain_parent = self.parent()
+                is_dst = True
+            else:
+                proxy_port = self.__ports[name]["out"]
+                dst_chains = map(lambda x: x, port.chains())
+                chain_parent = port.parent().parent()
+                is_dst = False
+
+        if proxy_port is None or chain_parent is None:
+            return False
 
         c = None
-        proxy_port = self.__ports[name][proxy_side]
-
-        if proxy_side == "in":
+        if is_dst:
             c = chain.Chain(port, proxy_port)
         else:
             c = chain.Chain(proxy_port, port)
 
-        if c is None:
-            return False
+        if c:
+            for dc in dst_chains:
+                chain_parent.removeChain(dc)
 
-        return True
+        return chain_parent.addChain(c)
 
     def activate(self):
         super(ProxyBlock, self).activate()
@@ -91,6 +115,7 @@ class Box(component.Component):
         super(Box, self).__init__(name=name, parent=parent)
         self.__blocks = []
         self.__proxy_params = []
+        self.__chains = []
         self.__in_proxy = ProxyBlock(ProxyBlock.In, name="inProxy", parent=self)
         self.__out_proxy = ProxyBlock(ProxyBlock.Out, name="outProxy", parent=self)
 
@@ -99,6 +124,27 @@ class Box(component.Component):
 
     def __str__(self):
         return "Box<'{}'>".format(self.name())
+
+    def chains(self):
+        for c in self.__chains:
+            yield c
+
+    def chainCount(self):
+        return len(self.__chains)
+
+    def addChain(self, chain):
+        if chain not in self.__chains:
+            self.__chains.append(chain)
+            return True
+
+        return False
+
+    def removeChain(self, chain):
+        if chain in self.__chains:
+            self.__chains.remove(chain)
+            return True
+
+        return False
 
     def getSchedule(self):
         schedule = []
@@ -166,9 +212,18 @@ class Box(component.Component):
         if src_block not in self.__blocks or dst_block not in self.__blocks:
             return False
 
+        connected = []
+        for dc in dstPort.chains():
+            connected.append(dc)
+
         c = chain.Chain(srcPort, dstPort)
         if c is None:
             return False
+
+        for dc in connected:
+            self.removeChain(dc)
+
+        self.addChain(c)
 
         return True
 
