@@ -6,7 +6,7 @@ from petitBloc import box
 from petitBloc import block
 from petitBloc import chain
 from petitBloc import port
-from petitBloc import manager
+from petitBloc import processManager
 import multiprocessing
 
 
@@ -231,7 +231,7 @@ class ProxyPortTest(unittest.TestCase):
         self.assertTrue(box2.connectOutputProxy("outFloat", add.input(0)))
         self.assertTrue(box1.connect(add.output(0), dmp.input(0)))
 
-        manager.RunSchedule(box1.getSchedule())
+        processManager.RunSchedule(box1.getSchedule())
 
         vals = []
         for i in range(100):
@@ -274,7 +274,7 @@ class ProxyPortTest(unittest.TestCase):
         self.assertTrue(box3.connectOutputProxy("outFloat", add.output(0)))
         self.assertTrue(box3.connectOutputProxy("outFloat", dmp.input(0)))
 
-        manager.RunSchedule(box1.getSchedule())
+        processManager.RunSchedule(box1.getSchedule())
 
         vals = []
         for i in range(100):

@@ -7,7 +7,7 @@ from petitBloc import chain
 from petitBloc import block
 from petitBloc import core
 from petitBloc import box
-from petitBloc import manager
+from petitBloc import processManager
 import multiprocessing
 
 
@@ -219,7 +219,7 @@ class TestInitBlock(unittest.TestCase):
         pb.param("int").set(23)
 
         schedule = box1.getSchedule()
-        manager.RunSchedule(schedule)
+        processManager.RunSchedule(schedule)
 
         str_val = []
         while (not dmp_str.dmp.empty()):

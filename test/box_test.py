@@ -4,7 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import box
 from petitBloc import block
-from petitBloc import manager
+from petitBloc import processManager
 import multiprocessing
 
 
@@ -155,7 +155,7 @@ class BoxTest(unittest.TestCase):
             v1.append(i)
 
         schedule = g.getSchedule()
-        manager.RunSchedule(schedule)
+        processManager.RunSchedule(schedule)
 
         v2 = []
         while (not dmp.dmp.empty()):
@@ -167,7 +167,7 @@ class BoxTest(unittest.TestCase):
         dmp.flush()
         self.assertTrue(dmp.dmp.empty())
 
-        manager.RunSchedule(schedule)
+        processManager.RunSchedule(schedule)
 
         v2 = []
         while (not dmp.dmp.empty()):
@@ -193,7 +193,7 @@ class BoxTest(unittest.TestCase):
         g.connect(add1.output(0), dmp1.input(0))
         g.connect(add2.output(0), dmp2.input(0))
 
-        manager.RunSchedule(g.getSchedule())
+        processManager.RunSchedule(g.getSchedule())
 
         d1 = []
         d2 = []
@@ -232,7 +232,7 @@ class BoxTest(unittest.TestCase):
         self.assertTrue(c.connect(num2.output(0), add.input(0)))
         self.assertTrue(c.connect(add.output(0), dmp2.input(0)))
 
-        manager.RunSchedule(g.getSchedule())
+        processManager.RunSchedule(g.getSchedule())
 
         out_dmp = []
         out_value = []

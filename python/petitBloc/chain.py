@@ -1,7 +1,7 @@
 from numbers import Number
 from . import core
 from . import packet
-from . import manager
+from . import processManager
 
 
 class Chain(core.ChainBase):
@@ -26,11 +26,11 @@ class Chain(core.ChainBase):
     def activate(self):
         if not self.__is_activated:
             self.__is_activated = True
-            self.__packets = manager.QueueManager.CreateQueue()
+            self.__packets = processManager.QueueManager.CreateQueue()
 
     def terminate(self):
         if self.__is_activated and self.__packets.empty():
-            self.__packets = manager.QueueManager.DeleteQueue(self.__packets)
+            self.__packets = processManager.QueueManager.DeleteQueue(self.__packets)
             if self.__packets is None:
                 self.__is_activated = False
 
