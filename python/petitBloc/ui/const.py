@@ -1,9 +1,0 @@
-UIName = "petitBloc"
-UITitle = "petitBloc"
-BlockWidth = 150
-BlockDefaultHeight = 60
-BlockRound = 10
-BlockNameFontSize = 17
-BlockDepth = 2
-LineWidth = 2
-PortSize = 10
