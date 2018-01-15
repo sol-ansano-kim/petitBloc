@@ -1,3 +1,6 @@
 [submodule "Qt.py"]
 	path = Qt.py
 	url = https://github.com/mottosso/Qt.py.git
+[submodule "Nodz"]
+	path = Nodz
+	url = git@github.com:sol-ansano-kim/Nodz
