@@ -1,0 +1,2 @@
+WindowTitle = "petitBloc"
+ObjectName = "petitBloc"
