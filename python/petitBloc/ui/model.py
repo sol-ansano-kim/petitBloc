@@ -4,7 +4,7 @@ from .. import blockManager
 from .. import workerManager
 import copy
 
-ddd = []
+
 class BoxModel(QtCore.QObject):
     BlockAdded = QtCore.Signal(str)
     BlockRemoved = QtCore.Signal(str)
@@ -84,7 +84,5 @@ class BoxModel(QtCore.QObject):
         return None
 
     def run(self):
-        global ddd
         schedule = self.__box.getSchedule()
-        ddd = schedule
         workerManager.WorkerManager.RunSchedule(schedule)

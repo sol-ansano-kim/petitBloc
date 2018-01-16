@@ -6,7 +6,6 @@ from . import const
 from . import model
 from . import graph
 from . import blockCreator
-from .. import blockManager
 
 
 class MainWindow(QtWidgets.QMainWindow):
