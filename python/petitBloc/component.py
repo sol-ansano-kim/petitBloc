@@ -34,7 +34,7 @@ class Component(core.ComponentBase):
         if name is None or not util.validateName(name):
             name = "input"
 
-        all_names = map(lambda x: x.name(), self.__inputs)
+        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
 
         name = util.GetUniqueName(name, all_names)
 
@@ -47,7 +47,7 @@ class Component(core.ComponentBase):
         if name is None or not util.validateName(name):
             name = "output"
 
-        all_names = map(lambda x: x.name(), self.__outputs)    
+        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
 
         name = util.GetUniqueName(name, all_names)
 

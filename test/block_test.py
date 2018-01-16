@@ -98,11 +98,11 @@ class PacketTest(unittest.TestCase):
 
         out3 = blck.addOutput(int, "test")
         self.assertIsNotNone(out3)
-        self.assertEqual(out3.name(), "test")
+        self.assertEqual(out3.name(), "test2")
 
         out4 = blck.addOutput(int, "test")
         self.assertIsNotNone(out4)
-        self.assertEqual(out4.name(), "test1")
+        self.assertEqual(out4.name(), "test3")
 
     def test_custom_block(self):
         ms = MakeString()

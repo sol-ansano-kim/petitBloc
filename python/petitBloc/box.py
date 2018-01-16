@@ -26,6 +26,12 @@ class ProxyBlock(core.Proxy, component.Component):
     def hasProxy(self, name):
         return self.__ports.has_key(name)
 
+    def proxyIn(self, name):
+        return self.__ports.get(name, {}).get("in")
+
+    def proxyOut(self, name):
+        return self.__ports.get(name, {}).get("out")
+
     def addProxy(self, typeClass, name=None):
         if name is None or not util.validateName(name):
             name = "proxy"
@@ -34,8 +40,8 @@ class ProxyBlock(core.Proxy, component.Component):
 
         name = util.GetUniqueName(name, all_names)
 
-        in_p = self.addInput(typeClass, name=name)
-        out_p = self.addOutput(typeClass, name=name)
+        in_p = self.addInput(typeClass, name=name + "In")
+        out_p = self.addOutput(typeClass, name=name + "Out")
 
         if in_p is not None and out_p is not None:
             self.__ports[name] = {"in": in_p, "out": out_p, "end": False}
@@ -198,6 +204,16 @@ class Box(component.Component):
         if bloc in self.__blocks:
             return False
 
+        name = bloc.name()
+
+        if not name or not util.validateName(name):
+            name = bloc.__class__.__name__
+
+        all_names = map(lambda x: x.name(), self.__blocks)
+
+        name = util.GetUniqueName(name, all_names)
+
+        bloc.rename(name)
         bloc.setParent(self)
         self.__blocks.append(bloc)
         return True
@@ -272,11 +288,17 @@ class Box(component.Component):
     def addOutputProxy(self, typeClass, name=None):
         return self.__out_proxy.addProxy(typeClass, name=name)
 
-    def inputProxy(self, name):
-        return self.__in_proxy.input(name)
+    def inputProxyIn(self, name):
+        return self.__in_proxy.proxyIn(name)
 
-    def outputProxy(self, name):
-        return self.__out_proxy.output(name)
+    def inputProxyOut(self, name):
+        return self.__in_proxy.proxyOut(name)
+
+    def outputProxyIn(self, name):
+        return self.__out_proxy.proxyIn(name)
+
+    def outputProxyOut(self, name):
+        return self.__out_proxy.proxyOut(name)
 
     def hasInputProxy(self, name):
         return self.__in_proxy.hasProxy(name)
