@@ -5,6 +5,7 @@ from Qt import QtCore
 
 
 class Graph(nodz_main.Nodz):
+    KeyPressed = QtCore.Signal(int)
     def __init__(self, model, parent=None):
         self.__model = model
         super(Graph, self).__init__(parent)
@@ -12,6 +13,18 @@ class Graph(nodz_main.Nodz):
         self.signal_PlugDisconnected.connect(self.__portDisconnected)
         self.signal_SocketConnected.connect(self.__portConnected)
         self.signal_SocketDisconnected.connect(self.__portDisconnected)
+        self.installEventFilter(self)
+
+    def eventFilter(self, obj, evnt):
+        if obj != self:
+            return False
+
+        if evnt.type() == QtCore.QEvent.Type.KeyPress:
+            self.KeyPressed.emit(evnt.key())
+            if evnt.key() == QtCore.Qt.Key_Tab:
+                return True
+
+        return False
 
     def __portConnected(self, srcNode, srcPort, dstNode, dstPort):
         if srcNode is None or srcPort is None or dstNode is None or dstPort is None:
