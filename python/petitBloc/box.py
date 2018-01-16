@@ -218,6 +218,25 @@ class Box(component.Component):
         self.__blocks.append(bloc)
         return True
 
+    def isConnected(self, srcPort, dstPort):
+        src_block = srcPort.parent()
+        dst_block = dstPort.parent()
+
+        if src_block is None or dst_block is None:
+            return False
+
+        if src_block not in self.__blocks or dst_block not in self.__blocks:
+            return False
+
+        dst_chain = None
+        for c in dstPort.chains():
+            dst_chain = c
+
+        if dst_chain is None:
+            return False
+
+        return dst_chain.src() == srcPort
+
     def connect(self, srcPort, dstPort):
         src_block = srcPort.parent()
         dst_block = dstPort.parent()
@@ -240,6 +259,31 @@ class Box(component.Component):
             self.removeChain(dc)
 
         self.addChain(c)
+
+        return True
+
+    def disconnect(self, srcPort, dstPort):
+        src_block = srcPort.parent()
+        dst_block = dstPort.parent()
+
+        if src_block is None or dst_block is None:
+            return False
+
+        if src_block not in self.__blocks or dst_block not in self.__blocks:
+            return False
+
+        dst_chain = None
+        for c in dstPort.chains():
+            dst_chain = c
+
+        if dst_chain is None:
+            return False
+
+        if dst_chain.src() != srcPort:
+            return False
+
+        dst_chain.disconnect()
+        self.removeChain(dst_chain)
 
         return True
 
