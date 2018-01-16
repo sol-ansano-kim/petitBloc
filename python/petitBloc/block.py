@@ -1,6 +1,5 @@
 from . import component
 from . import util
-from . import core
 
 
 class Block(component.Component):

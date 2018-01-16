@@ -1,7 +1,6 @@
 import imp
 import os
 from . import core
-from . import block
 from . import box
 
 
