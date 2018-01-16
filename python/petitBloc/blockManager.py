@@ -22,7 +22,6 @@ class BlockManager(object):
         return self.__blocks.get(name)
 
     def __searchBlocks(self):
-        self.__blocks["ParamBlock"] = block.ParamBlock
         self.__blocks["Box"] = box.Box
 
         block_path = os.environ.get("PETITBLOC_BLOCK_PATH", "")
