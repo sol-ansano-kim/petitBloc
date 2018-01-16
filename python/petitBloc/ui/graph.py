@@ -8,6 +8,22 @@ class Graph(nodz_main.Nodz):
     def __init__(self, model, parent=None):
         self.__model = model
         super(Graph, self).__init__(parent)
+        self.signal_PlugConnected.connect(self.__portConnected)
+        self.signal_PlugDisconnected.connect(self.__portDisconnected)
+        self.signal_SocketConnected.connect(self.__portConnected)
+        self.signal_SocketDisconnected.connect(self.__portDisconnected)
+
+    def __portConnected(self, srcNode, srcPort, dstNode, dstPort):
+        if srcNode is None or srcPort is None or dstNode is None or dstPort is None:
+            return
+
+        self.__model.connect(srcNode, srcPort, dstNode, dstPort)
+
+    def __portDisconnected(self, srcNode, srcPort, dstNode, dstPort):
+        if srcNode is None or srcPort is None or dstNode is None or dstPort is None:
+            return
+
+        self.__model.disconnect(srcNode, srcPort, dstNode, dstPort)
 
     def boxModel(self):
         return self.__model

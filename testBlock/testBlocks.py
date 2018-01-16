@@ -1,5 +1,5 @@
 from petitBloc import block
-import multiprocessing
+import sys
 
 
 class MakeNumbers(block.Block):
@@ -9,11 +9,9 @@ class MakeNumbers(block.Block):
     def initialize(self):
         self.addOutput(float)
 
-    def process(self):
-        for n in range(100):
+    def run(self):
+        for n in range(10):
             self.output(0).send(n)
-
-        return False
 
 
 class AddOne(block.Block):
@@ -35,9 +33,9 @@ class AddOne(block.Block):
         return True
 
 
-class Mult(block.Block):
+class MultTwo(block.Block):
     def __init__(self, name="", parent=None):
-        super(Mult, self).__init__(name=name, parent=parent)
+        super(MultTwo, self).__init__(name=name, parent=parent)
 
     def initialize(self):
         self.addInput(float)
@@ -48,41 +46,36 @@ class Mult(block.Block):
         if in_f.isEOP():
             return False
 
-        self.output(0).send(in_f.value() * 1.1)
+        self.output(0).send(in_f.value() * 2)
         in_f.drop()
 
         return True
 
 
-class Dump(block.Block):
+class Print(block.Block):
     def __init__(self, name="", parent=None):
-        super(Dump, self).__init__(name=name, parent=parent)
-        self.dmp = multiprocessing.Queue()
+        super(Print, self).__init__(name=name, parent=parent)
+        self.__values = []
 
     def initialize(self):
         self.addInput(float)
 
-    def flush(self):
-        while (not self.dmp.empty()):
-            print self.dmp.get()
-
-        self.dmp.close()
-        del self.dmp
-        self.dmp = multiprocessing.Queue()
-
     def run(self):
+        self.__values = []
         while (True):
             if not self.process():
                 break
 
-        self.flush()
+        print(self.__values)
+        sys.stdout.flush()
 
     def process(self):
         in_f = self.input(0).receive()
         if in_f.isEOP():
             return False
 
-        self.dmp.put(in_f.value())
+        self.__values.append(in_f.value())
+
         in_f.drop()
 
         return True
