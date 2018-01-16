@@ -331,6 +331,16 @@ class ComponentBase(object):
         for i in range(0):
             yield i
 
+    def addParam(self, typeClass=None, name=None, value=None):
+        return None
+
+    def params(self):
+        for i in range(0):
+            yield i
+
+    def param(self, index_or_name):
+        return None
+
     def output(self, index_or_name):
         return None
 

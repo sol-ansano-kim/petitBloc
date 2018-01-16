@@ -83,9 +83,9 @@ class DmpFloat(block.Block):
 class ProxyParamTest(unittest.TestCase):
     def test_init(self):
         box1 = box.Box()
-        param_bloc = block.ParamBlock("test")
-        box1.addBlock(param_bloc)
-        p = param_bloc.addParam(str, "testStr")
+        bloc = block.Block()
+        box1.addBlock(bloc)
+        p = bloc.addParam(str, "testStr")
 
         self.assertIsNotNone(box1.addProxyParam(p))
         self.assertIsNone(box1.addProxyParam(p))

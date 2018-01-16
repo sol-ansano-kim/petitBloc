@@ -8,6 +8,7 @@ class Component(core.ComponentBase):
         super(Component, self).__init__(name=name, parent=parent)
         self.__inputs = []
         self.__outputs = []
+        self.__params = []
         self.initialize()
 
     def getSchedule(self):
@@ -142,3 +143,35 @@ class Component(core.ComponentBase):
                     downstreams.append(down)
 
         return downstreams
+
+    def addParam(self, typeClass=None, name=None, value=None):
+        if name is None or not util.validateName(name):
+            name = "param"
+
+        all_names = map(lambda x: x.name(), self.__params)
+
+        name = util.GetUniqueName(name, all_names)
+
+        p = core.Parameter(name, typeClass=typeClass, value=value, parent=self)
+        if p:
+            self.__params.append(p)
+
+        return p
+
+    def params(self):
+        for p in self.__params:
+            yield p
+
+    def param(self, index_or_name):
+        if isinstance(index_or_name, int):
+            if index_or_name < 0 or index_or_name >= len(self.__params):
+                return None
+
+            return self.__params[index_or_name]
+
+        if isinstance(index_or_name, basestring):
+            for p in self.__params:
+                if p.name() == index_or_name:
+                    return p
+
+        return None
