@@ -10,7 +10,6 @@ class QueueManager(object):
     @staticmethod
     def Reset():
         for q in QueueManager.__Queues:
-            q.close()
             del q
 
         QueueManager.__Queues = []
