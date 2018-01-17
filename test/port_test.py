@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import port
 from petitBloc import chain
 from petitBloc import workerManager
+import time
 
 
 class PortTest(unittest.TestCase):
@@ -17,6 +18,7 @@ class PortTest(unittest.TestCase):
     def test_send(self):
         out_port = port.OutPort(str)
         self.assertFalse(out_port.send("a"))
+        time.sleep(0.01)
 
     def test_receive(self):
         in_port = port.InPort(str)
@@ -116,7 +118,7 @@ class ChainTest(unittest.TestCase):
 
         for i in range(5):
             self.assertTrue(src_port.send(i))
-
+            time.sleep(0.01)
         pack1 = dst_port.receive()
         self.assertEqual(pack1.value(), 0)
         self.assertEqual(pack1.refCount(), 1)
@@ -138,6 +140,7 @@ class ChainTest(unittest.TestCase):
 
         for i in range(5):
             self.assertTrue(src_port1.send(i))
+            time.sleep(0.01)
 
         chan2 = chain.Chain(src_port2, dst_port)
         src_port1.terminate()
@@ -146,6 +149,7 @@ class ChainTest(unittest.TestCase):
         for i in range(5):
             self.assertFalse(src_port1.send(i))
             self.assertTrue(src_port2.send(i + 5))
+            time.sleep(0.01)
 
         self.assertEqual(dst_port.receive().value(), 5)
         self.assertEqual(dst_port.receive().value(), 6)
@@ -204,7 +208,9 @@ class ChainTest(unittest.TestCase):
         src_port.activate()
         dst_port.activate()
         src_port.send(1)
+        time.sleep(0.01)
         src_port.send(2)
+        time.sleep(0.01)
         dst_port.receive()
         src_port.terminate()
         dst_port.terminate()

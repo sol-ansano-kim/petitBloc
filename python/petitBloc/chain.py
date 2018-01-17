@@ -44,6 +44,7 @@ class Chain(core.ChainBase):
         pack.pickUp()
 
         self.__packets.put(pack)
+
         return True
 
     def sendEOP(self):
