@@ -15,6 +15,12 @@ class Graph(nodz_main.Nodz):
         self.signal_SocketDisconnected.connect(self.__portDisconnected)
         self.installEventFilter(self)
 
+    def renameNode(self, old_name, new_name):
+        for k, v in self.scene().nodes.iteritems():
+            if k == old_name:
+                self.editNode(v, new_name)
+                break
+
     def eventFilter(self, obj, evnt):
         if obj != self:
             return False

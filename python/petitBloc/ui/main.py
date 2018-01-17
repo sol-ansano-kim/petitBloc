@@ -48,6 +48,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.KeyPressed.connect(self.__key_press)
         self.__run.clicked.connect(self.__graph.boxModel().run)
         self.__graph.signal_NodeSelected.connect(self.__nodeSelected)
+        self.__parm_editor.BlockRenamed.connect(self.__graph.renameNode)
 
     def __nodeSelected(self, nodes):
         if not nodes:

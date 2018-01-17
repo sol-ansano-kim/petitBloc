@@ -1,6 +1,7 @@
 from Qt import QtWidgets
 from Qt import QtCore
 from . import const
+from .. import util
 import re
 
 
@@ -86,6 +87,8 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 
 
 class ParamEditor(QtWidgets.QWidget):
+    BlockRenamed = QtCore.Signal(str, str)
+
     def __init__(self, parent=None):
         super(ParamEditor, self).__init__()
         self.__bloc = None
@@ -116,12 +119,46 @@ class ParamEditor(QtWidgets.QWidget):
 
         self.setLayout(main_layout)
 
+        self.__block_name.editingFinished.connect(self.__renameBloc)
+        self.__block_name.textEdited.connect(self.__nameCheck)
+
+    def __nameCheck(self, txt):
+        self.__block_name.setText(util.ReForbiddenName.sub("", txt))
+
+    def __renameBloc(self):
+        if not self.__bloc:
+            self.__block_name.setText(self.__block.name())
+
+        parent_box = self.__bloc.parent()
+
+        if not parent_box:
+            self.__block_name.setText(self.__block.name())
+
+        old_name = self.__bloc.name()
+        new_name = self.__block_name.text()
+
+        if old_name == new_name:
+            return
+
+        if not util.ValidateName(new_name):
+            self.__block_name.setText(old_name)
+            return
+
+        uniq_name = parent_box.getUniqueName(self.__bloc, new_name)
+        self.__bloc.rename(uniq_name)
+
+        self.BlockRenamed.emit(old_name, uniq_name)
+
     def __refresh(self):
         self.__clearLayout(self.__param_layout)
         if self.__bloc is None:
             self.__block_type_label.setText("")
             self.__block_name.setText("")
+            self.__block_type_label.hide()
+            self.__block_name.hide()
         else:
+            self.__block_type_label.show()
+            self.__block_name.show()
             self.__block_name.setText(self.__bloc.name())
             self.__block_type_label.setText(self.__bloc.__class__.__name__)
 

@@ -32,7 +32,7 @@ class Component(core.ComponentBase):
         super(Component, self).terminate()
 
     def addInput(self, typeClass, name=None):
-        if name is None or not util.validateName(name):
+        if name is None or not util.ValidateName(name):
             name = "input"
 
         all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
@@ -45,7 +45,7 @@ class Component(core.ComponentBase):
         return p
 
     def addOutput(self, typeClass, name=None):
-        if name is None or not util.validateName(name):
+        if name is None or not util.ValidateName(name):
             name = "output"
 
         all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
@@ -145,7 +145,7 @@ class Component(core.ComponentBase):
         return downstreams
 
     def addParam(self, typeClass=None, name=None, value=None):
-        if name is None or not util.validateName(name):
+        if name is None or not util.ValidateName(name):
             name = "param"
 
         all_names = map(lambda x: x.name(), self.__params)

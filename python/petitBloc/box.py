@@ -33,7 +33,7 @@ class ProxyBlock(core.Proxy, component.Component):
         return self.__ports.get(name, {}).get("out")
 
     def addProxy(self, typeClass, name=None):
-        if name is None or not util.validateName(name):
+        if name is None or not util.ValidateName(name):
             name = "proxy"
 
         all_names = self.__ports.keys()
@@ -200,20 +200,22 @@ class Box(component.Component):
     def blockCount(self):
         return len(self.__blocks)
 
+    def getUniqueName(self, bloc, name):
+        if bloc in self.__blocks:
+            return name
+
+        if not name or not util.ValidateName(name):
+            name = bloc.__class__.__name__
+
+        all_names = map(lambda x: x.name(), filter(lambda y: y != bloc, self.__blocks))
+
+        return util.GetUniqueName(name, all_names)
+
     def addBlock(self, bloc):
         if bloc in self.__blocks:
             return False
 
-        name = bloc.name()
-
-        if not name or not util.validateName(name):
-            name = bloc.__class__.__name__
-
-        all_names = map(lambda x: x.name(), self.__blocks)
-
-        name = util.GetUniqueName(name, all_names)
-
-        bloc.rename(name)
+        bloc.rename(self.getUniqueName(bloc, bloc.name()))
         bloc.setParent(self)
         self.__blocks.append(bloc)
         return True
@@ -292,7 +294,7 @@ class Box(component.Component):
             if proxy.param() == param:
                 return None
 
-        if name is None or not util.validateName(name):
+        if name is None or not util.ValidateName(name):
             name = param.name()
 
         all_names = map(lambda x: x.name(), self.__proxy_params)

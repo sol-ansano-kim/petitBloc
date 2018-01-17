@@ -14,7 +14,7 @@ class BoxModel(QtCore.QObject):
         self.__manager = blockManager.BlockManager()
         self.__name = name
         self.__box = box.Box(name)
-        self.__blocs = {}
+        self.__blocs = []
 
     def blockClassNames(self):
         return self.__manager.blockNames()
@@ -77,7 +77,7 @@ class BoxModel(QtCore.QObject):
                 return None
 
             self.__box.addBlock(bi)
-            self.__blocs[bi.name()] = bi
+            self.__blocs.append(bi)
 
             return bi
 
