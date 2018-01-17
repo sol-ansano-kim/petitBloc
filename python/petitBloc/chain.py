@@ -8,7 +8,6 @@ class Chain(core.ChainBase):
     def __init__(self, srcPort, dstPort):
         super(Chain, self).__init__(srcPort, dstPort)
         self.__packets = None
-        self.__is_activated = False
 
     def empty(self):
         if self.__packets is None:
@@ -27,15 +26,16 @@ class Chain(core.ChainBase):
             self.__packets = None
 
     def activate(self):
-        if not self.__is_activated:
-            self.__is_activated = True
+        if self.__packets is None:
             self.__packets = workerManager.WorkerManager.CreateQueue()
 
     def terminate(self):
-        if self.__is_activated and self.__packets is not None and self.__packets.empty():
+        if self.__packets is not None:
+            while (not self.__packets.empty()):
+                self.__packets.get().drop()
+
             workerManager.WorkerManager.DeleteQueue(self.__packets)
             self.__packets = None
-            self.__is_activated = False
 
     def send(self, pack):
         if self.dst() is None:

@@ -1,5 +1,6 @@
 import multiprocessing
 import copy
+import time
 
 
 class QueueManager(object):
@@ -33,6 +34,7 @@ class QueueManager(object):
         QueueManager.__Queues.remove(q)
         q.close()
         del q
+        time.sleep(0.001)
 
 
 class ProcessWorker(multiprocessing.Process):

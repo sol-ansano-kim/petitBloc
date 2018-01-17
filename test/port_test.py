@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import port
 from petitBloc import chain
+from petitBloc import workerManager
 
 
 class PortTest(unittest.TestCase):
@@ -139,6 +140,7 @@ class ChainTest(unittest.TestCase):
             self.assertTrue(src_port1.send(i))
 
         chan2 = chain.Chain(src_port2, dst_port)
+        src_port1.terminate()
         src_port2.activate()
 
         for i in range(5):
@@ -151,6 +153,65 @@ class ChainTest(unittest.TestCase):
         self.assertEqual(dst_port.receive().value(), 8)
         self.assertEqual(dst_port.receive().value(), 9)
         self.assertTrue(chan2.empty())
+        src_port2.terminate()
+
+    def test_port_queue1(self):
+        src_port1 = port.OutPort(int)
+        dst_port = port.InPort(int)
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
+        src_port1.activate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 1)
+        src_port1.terminate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
+
+        chan1 = chain.Chain(src_port1, dst_port)
+        src_port1.activate()
+        dst_port.activate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 3)
+        src_port1.terminate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 2)
+        dst_port.receive()
+        dst_port.terminate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
+
+    def test_port_queue2(self):
+        src_port1 = port.OutPort(int)
+        src_port2 = port.OutPort(int)
+        dst_port = port.InPort(int)
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
+
+        chan1 = chain.Chain(src_port1, dst_port)
+        src_port1.activate()
+        dst_port.activate()
+        chan2 = chain.Chain(src_port2, dst_port)
+        src_port2.activate()
+
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 4)
+        src_port1.terminate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 3)
+        src_port2.terminate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 2)
+        dst_port.receive()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 2)
+        dst_port.terminate()
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
+
+    def test_packetInfo(self):
+        src_port = port.OutPort(int)
+        dst_port = port.InPort(int)
+
+        chan = chain.Chain(src_port, dst_port)
+        src_port.activate()
+        dst_port.activate()
+        src_port.send(1)
+        src_port.send(2)
+        dst_port.receive()
+        src_port.terminate()
+        dst_port.terminate()
+
+        self.assertEqual(src_port.packetInfo(), [1, 2])
+        self.assertEqual(dst_port.packetInfo(), [1])
+        self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
 
 
 if __name__ == "__main__":
