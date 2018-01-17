@@ -23,16 +23,19 @@ class Chain(core.ChainBase):
             while (not self.__packets.empty()):
                 self.__packets.get().drop()
 
+            workerManager.WorkerManager.DeleteQueue(self.__packets)
+            self.__packets = None
+
     def activate(self):
         if not self.__is_activated:
             self.__is_activated = True
             self.__packets = workerManager.WorkerManager.CreateQueue()
 
     def terminate(self):
-        if self.__is_activated and self.__packets.empty():
-            self.__packets = workerManager.WorkerManager.DeleteQueue(self.__packets)
-            if self.__packets is None:
-                self.__is_activated = False
+        if self.__is_activated and self.__packets is not None and self.__packets.empty():
+            workerManager.WorkerManager.DeleteQueue(self.__packets)
+            self.__packets = None
+            self.__is_activated = False
 
     def send(self, pack):
         if self.dst() is None:

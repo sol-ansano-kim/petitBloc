@@ -76,7 +76,7 @@ class Parameter(object):
         return False
 
 
-class ProxyParameter(object):
+class ProxyParameter(Proxy, object):
     def __init__(self, param, name=None):
         super(ProxyParameter, self).__init__()
         self.__name = name if name is not None else param.name()
@@ -182,6 +182,9 @@ class PortBase(object):
 
     def activate(self):
         pass
+
+    def packetInfo(self):
+        return []
 
 
 class ChainBase(object):

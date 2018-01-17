@@ -8,12 +8,8 @@ class WorkerManager(object):
     @staticmethod
     def SetUseProcess(value):
         if WorkerManager.__UseProcess != value:
-            if WorkerManager.__UseProcess:
-                processManager.QueueManager.Reset()
-                processManager.ProcessManager.Reset()
-            else:
-                threadManager.QueueManager.Reset()
-                threadManager.ThreadManager.Reset()
+            WorkerManager.ResetQueue()
+            WorkerManager.ResetProcess()
 
         WorkerManager.__UseProcess = value
 
@@ -31,9 +27,9 @@ class WorkerManager(object):
     @staticmethod
     def DeleteQueue(q):
         if WorkerManager.UseProcess():
-            return processManager.QueueManager.DeleteQueue(q)
+            processManager.QueueManager.DeleteQueue(q)
         else:
-            return threadManager.QueueManager.DeleteQueue(q)
+            threadManager.QueueManager.DeleteQueue(q)
 
     @staticmethod
     def RunSchedule(schedule, maxProcess=0):
@@ -42,5 +38,30 @@ class WorkerManager(object):
         else:
             threadManager.RunSchedule(schedule, maxProcess=0)
 
+    @staticmethod
+    def QueueCount():
+        if WorkerManager.UseProcess():
+            return processManager.QueueManager.Count()
+        else:
+            return threadManager.QueueManager.Count()
 
+    @staticmethod
+    def ProcessCount():
+        if WorkerManager.UseProcess():
+            return processManager.ProcessManager.Count()
+        else:
+            return threadManager.ThreadManager.Count()
 
+    @staticmethod
+    def ResetQueue():
+        if WorkerManager.__UseProcess:
+            processManager.QueueManager.Reset()
+        else:
+            threadManager.QueueManager.Reset()
+
+    @staticmethod
+    def ResetProcess():
+        if WorkerManager.__UseProcess:
+            processManager.ProcessManager.Reset()
+        else:
+            threadManager.ThreadManager.Reset()

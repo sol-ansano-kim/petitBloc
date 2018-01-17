@@ -29,13 +29,9 @@ class QueueManager(object):
 
     @staticmethod
     def DeleteQueue(q):
-        if q.empty():
-            QueueManager.__Count -= 1
-            QueueManager.__Queues.remove(q)
-            del q
-            return None
-
-        return q
+        QueueManager.__Count -= 1
+        QueueManager.__Queues.remove(q)
+        del q
 
 
 class ProcessWorker(threading.Thread):
