@@ -283,7 +283,7 @@ class ProxyPortTest(unittest.TestCase):
         while (not dmp.dmp.empty()):
             dmped.append(dmp.dmp.get())
 
-        # self.assertEqual(vals, dmped)
+        self.assertEqual(vals, dmped)
 
 
 if __name__ == "__main__":
