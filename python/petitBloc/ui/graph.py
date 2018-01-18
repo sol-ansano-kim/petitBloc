@@ -26,17 +26,22 @@ class Graph(nodz_main.Nodz):
         self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
 
+    def boxModel(self):
+        return self.__model
+
     def mouseDoubleClickEvent(self, evnt):
         itm = self.itemAt(evnt.pos())
         if itm is not None:
             if itm.block().hasNetwork():
                 self.ItemDobleClicked.emit(itm.block())
 
-    def renameNode(self, old_name, new_name):
-        for k, v in self.scene().nodes.iteritems():
-            if k == old_name:
-                self.editNode(v, new_name)
-                break
+    def renameNode(self, bloc, new_name):
+        for node in self.scene().nodes.values():
+            if node.block() == bloc:
+                self.editNode(node, new_name)
+                return True
+
+        return False
 
     def eventFilter(self, obj, evnt):
         if obj != self:

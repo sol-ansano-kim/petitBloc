@@ -54,11 +54,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__run.clicked.connect(self.__runPressed)
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
-        self.__parm_editor.BlockRenamed.connect(self.__graph.renameNode)
+        self.__parm_editor.BlockRenamed.connect(self.__blockRenamed)
         self.__graph_tabs.tabCloseRequested.connect(self.__closeGraphRequest)
         self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
         self.__graph.BlockDeleted.connect(self.__closeDeletedGrapgTab)
         self.__graph_tabs.currentChanged.connect(self.__currentGraphTabChanged)
+
+    def __blockRenamed(self, bloc, oldName, newName):
+        res = self.__graph.renameNode(bloc, newName)
+        if res:
+            return
+
+        for subt in self.__subnets.values():
+            if subt["widget"].renameNode(bloc, newName):
+                return
+
+        raise Exception, "Failed to find the node : {}".format(oldName)
 
     def __currentGraphTabChanged(self, index):
         widget = None
@@ -76,6 +87,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def __showGraphTab(self, bloc):
         if self.__subnets.has_key(bloc):
             index = self.__subnets[bloc]["index"]
+            if index is None:
+                index = self.__graph_tabs.addTab(self.__subnets[bloc]["widget"], bloc.name())
+                self.__subnets[bloc]["index"] = index
 
         else:
             grph = graph.Graph(boxObject=bloc, parent=self)
@@ -98,28 +112,35 @@ class MainWindow(QtWidgets.QMainWindow):
         widget = vals["widget"]
         widget.close()
         del widget
+
+        if vals["index"] is not None:
+            self.__graph_tabs.removeTab(vals["index"])
+
         self.__subnets.pop(bloc)
-        self.__graph_tabs.removeTab(vals["index"])
 
     def __closeGraphRequest(self, index):
         if index <= 0:
             return
 
-        widget = None
-        creator = None
-        t_bloc = None
         for bloc, vals in self.__subnets.iteritems():
             if vals["index"] == index:
-                widget = vals["widget"]
-                t_bloc = bloc
+                vals["index"] = None
 
-        widget.close()
-        del widget
-        self.__subnets.pop(t_bloc)
         self.__graph_tabs.removeTab(index)
 
     def __runPressed(self):
-        self.__graph.boxModel().run(perProcessCallback=self.__graph.viewport().update)
+        graph = None
+        index = self.__graph_tabs.currentIndex()
+        if index == 0:
+            graph = self.__graph
+
+        if graph is None:
+            for vals in self.__subnets.values():
+                if vals["index"] == index:
+                    graph = vals["widget"]
+                    break
+
+        self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
         self.__packet_history.refresh()
 
     def __currentBlockChanged(self, bloc):

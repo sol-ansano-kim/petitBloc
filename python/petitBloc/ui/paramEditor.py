@@ -87,7 +87,7 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 
 
 class ParamEditor(QtWidgets.QWidget):
-    BlockRenamed = QtCore.Signal(str, str)
+    BlockRenamed = QtCore.Signal(object, str)
 
     def __init__(self, parent=None):
         super(ParamEditor, self).__init__()
@@ -147,7 +147,7 @@ class ParamEditor(QtWidgets.QWidget):
         uniq_name = parent_box.getUniqueName(self.__bloc, new_name)
         self.__bloc.rename(uniq_name)
 
-        self.BlockRenamed.emit(old_name, uniq_name)
+        self.BlockRenamed.emit(self.__bloc, uniq_name)
 
     def __refresh(self):
         self.__clearLayout(self.__param_layout)
