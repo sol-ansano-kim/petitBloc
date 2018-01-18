@@ -130,3 +130,24 @@ class DumpPrint(block.Block):
         in_f.drop()
 
         return True
+
+
+class RaiseError(block.Block):
+    def __init__(self, name="", parent=None):
+        super(RaiseError, self).__init__(name=name, parent=parent)
+
+    def initialize(self):
+        self.addInput(int)
+        self.addParam(int, "value")
+
+    def process(self):
+        in_i = self.input(0).receive()
+        if in_i.isEOP():
+            return False
+
+        if in_i.value() == self.param("value").get():
+            raise Exception, "Raise ERROR for testing"
+
+        in_i.drop()
+
+        return True

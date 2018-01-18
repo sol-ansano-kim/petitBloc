@@ -250,6 +250,7 @@ class ComponentBase(object):
     Initialized = 0
     Active = 1
     Terminated = 2
+    Failed = 3
 
     def __init__(self, name="", parent=None):
         self.__name = name
@@ -280,11 +281,7 @@ class ComponentBase(object):
 
     def run(self):
         while (True):
-            try:
-                if not self.process():
-                    break
-            except Exception as e:
-                # TODO : dump error log
+            if not self.process():
                 break
 
     def process(self):
@@ -305,14 +302,20 @@ class ComponentBase(object):
     def isTerminated(self):
         return self.__state is ComponentBase.Terminated
 
+    def isFailed(self):
+        return self.__state is ComponentBase.Failed
+
     def resetState(self):
         self.__state = ComponentBase.Initialized
 
     def activate(self):
         self.__state = ComponentBase.Active
 
-    def terminate(self):
-        self.__state = ComponentBase.Terminated
+    def terminate(self, success=True):
+        if success:
+            self.__state = ComponentBase.Terminated
+        else:
+            self.__state = ComponentBase.Failed
 
     def addInput(self, typeClass, name=None):
         return None

@@ -2,6 +2,39 @@ import multiprocessing
 import copy
 
 
+class ValueManager(object):
+    __Count = 0
+    __Values = []
+
+    @staticmethod
+    def Reset():
+        for v in ValueManager.__Values:
+            del v
+
+    @staticmethod
+    def Count():
+        return ValueManager.__Count
+
+    @staticmethod
+    def CreateValue(valueType, defaultValue=None):
+        ValueManager.__Count += 1
+
+        if defaultValue is not None:
+            v = multiprocessing.Value(valueType, defaultValue)
+        else:
+            v = multiprocessing.Value(valueType)
+
+        ValueManager.__Values.append(v)
+
+        return v
+
+    @staticmethod
+    def DeleteValue(v):
+        ValueManager.__Count -= 1
+        ValueManager.__Values.remove(v)
+        del v
+
+
 class QueueManager(object):
     __Count = 0
     __Queues = []
@@ -37,9 +70,16 @@ class QueueManager(object):
 
 class ProcessWorker(multiprocessing.Process):
     def __init__(self, obj, args=(), kwargs={}):
-        super(ProcessWorker, self).__init__(target=obj.run, args=args, kwargs=kwargs)
+        super(ProcessWorker, self).__init__()
         self.daemon = True
         self.__obj = obj
+        self.__has_error = ValueManager.CreateValue("i", 0)
+
+    def run(self):
+        try:
+            self.__obj.run()
+        except Exception as e:
+            self.__has_error.value = 1
 
     def start(self):
         self.__obj.activate()
@@ -47,7 +87,9 @@ class ProcessWorker(multiprocessing.Process):
 
     def terminate(self):
         if not self.__obj.isTerminated():
-            self.__obj.terminate()
+            self.__obj.terminate(self.__has_error.value == 0)
+
+        ValueManager.DeleteValue(self.__has_error)
 
         super(ProcessWorker, self).terminate()
 
@@ -103,6 +145,7 @@ class ProcessManager(object):
 
 
 def RunSchedule(schedule, maxProcess=0):
+    ValueManager.Reset()
     QueueManager.Reset()
     ProcessManager.Reset()
     ProcessManager.SetMaxProcess(maxProcess)
@@ -116,7 +159,7 @@ def RunSchedule(schedule, maxProcess=0):
         next_bloc = None
         while (True):
             bloc = schedule.pop(0)
-            if bloc.isTerminated() or bloc.isWorking():
+            if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
                 continue
 
             suspend = False
@@ -137,5 +180,6 @@ def RunSchedule(schedule, maxProcess=0):
 
     ProcessManager.Join()
 
+    ValueManager.Reset()
     QueueManager.Reset()
     ProcessManager.Reset()

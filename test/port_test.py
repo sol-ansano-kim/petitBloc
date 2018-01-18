@@ -200,25 +200,6 @@ class ChainTest(unittest.TestCase):
         dst_port.terminate()
         self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
 
-    def test_packetInfo(self):
-        src_port = port.OutPort(int)
-        dst_port = port.InPort(int)
-
-        chan = chain.Chain(src_port, dst_port)
-        src_port.activate()
-        dst_port.activate()
-        src_port.send(1)
-        time.sleep(0.01)
-        src_port.send(2)
-        time.sleep(0.01)
-        dst_port.receive()
-        src_port.terminate()
-        dst_port.terminate()
-
-        self.assertEqual(src_port.packetInfo(), [1, 2])
-        self.assertEqual(dst_port.packetInfo(), [1])
-        self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
-
 
 if __name__ == "__main__":
     unittest.main()

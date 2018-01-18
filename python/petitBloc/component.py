@@ -22,14 +22,14 @@ class Component(core.ComponentBase):
         for out in self.__outputs:
             out.activate()
 
-    def terminate(self):
+    def terminate(self, success=True):
         for out in self.__outputs:
             out.terminate()
 
         for inp in self.__inputs:
             inp.terminate()
 
-        super(Component, self).terminate()
+        super(Component, self).terminate(success=success)
 
     def addInput(self, typeClass, name=None):
         if name is None or not util.ValidateName(name):
