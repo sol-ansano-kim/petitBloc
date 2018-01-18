@@ -5,6 +5,14 @@ from . import box
 
 
 class BlockManager(object):
+    __Instance = None
+
+    def __new__(self):
+        if BlockManager.__Instance is None:
+            BlockManager.__Instance = super(BlockManager, self).__new__(self)
+
+        return BlockManager.__Instance
+
     def __init__(self):
         super(BlockManager, self).__init__()
         self.__blocks = {}
