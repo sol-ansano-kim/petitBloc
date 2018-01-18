@@ -128,15 +128,15 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     ThreadManager.SetMaxProcess(maxProcess)
     ThreadManager.SetPerProcessCallback(perProcessCallback)
 
-    schedule = copy.copy(schedule)
+    work_schedule = copy.copy(schedule)
 
-    for s in schedule:
+    for s in work_schedule:
         s.resetState()
 
-    while (schedule):
+    while (work_schedule):
         next_bloc = None
         while (True):
-            bloc = schedule.pop(0)
+            bloc = work_schedule.pop(0)
             if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
                 continue
 
@@ -148,7 +148,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
                     break
 
             if suspend:
-                schedule.append(bloc)
+                work_schedule.append(bloc)
                 continue
 
             next_bloc = bloc
@@ -157,6 +157,21 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         ThreadManager.Submit(next_bloc)
 
     ThreadManager.Join()
+
+    for s in schedule:
+        if not s.hasNetwork():
+            continue
+
+        success = True
+        for ss in s.getSchedule():
+            if ss.isFailed():
+                success = False
+                break
+
+        s.terminate(success)
+
+    if perProcessCallback is not None:
+        perProcessCallback()
 
     QueueManager.Reset()
     ThreadManager.Reset()

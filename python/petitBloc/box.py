@@ -122,8 +122,8 @@ class Box(component.Component):
         self.__blocks = []
         self.__proxy_params = []
         self.__chains = []
-        self.__in_proxy = ProxyBlock(ProxyBlock.In, name="inProxy", parent=self)
-        self.__out_proxy = ProxyBlock(ProxyBlock.Out, name="outProxy", parent=self)
+        self.__in_proxy = ProxyBlock(ProxyBlock.In, name="in", parent=self)
+        self.__out_proxy = ProxyBlock(ProxyBlock.Out, name="out", parent=self)
 
     def __repr__(self):
         return self.__str__()
@@ -190,6 +190,7 @@ class Box(component.Component):
             schedule.append(bloc.getSchedule())
 
         schedule.append(self.__out_proxy)
+        schedule.append(self)
 
         return schedule
 
@@ -355,6 +356,12 @@ class Box(component.Component):
 
     def addOutputProxy(self, typeClass, name=None):
         return self.__out_proxy.addProxy(typeClass, name=name)
+
+    def inProxyBlock(self):
+        return self.__in_proxy
+
+    def outProxyBlock(self):
+        return self.__out_proxy
 
     def inputProxyIn(self, name):
         return self.__in_proxy.proxyIn(name)
