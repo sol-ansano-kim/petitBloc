@@ -6,9 +6,6 @@ import copy
 
 
 class BoxModel(QtCore.QObject):
-    BlockAdded = QtCore.Signal(str)
-    BlockRemoved = QtCore.Signal(str)
-
     def __init__(self, name):
         super(BoxModel, self).__init__()
         self.__manager = blockManager.BlockManager()
@@ -19,47 +16,55 @@ class BoxModel(QtCore.QObject):
     def blockClassNames(self):
         return self.__manager.blockNames()
 
-    def connect(self, srcNode, srcPort, dstNode, dstPort):
-        src_node = self.block(srcNode)
-        if src_node is None:
-            raise Exception, "Failed to find the srcNode : {}".format(srcNode)
+    def connect(self, srcBloc, srcPort, dstBloc, dstPort):
+        src_bloc = self.block(srcBloc)
+        if src_bloc is None:
+            raise Exception, "Failed to find the srcBloc : {}".format(srcBloc)
 
-        dst_node = self.block(dstNode)
-        if dst_node is None:
-            raise Exception, "Failed to find the dstNode : {}".format(dstNode)
+        dst_bloc = self.block(dstBloc)
+        if dst_bloc is None:
+            raise Exception, "Failed to find the dstBloc : {}".format(dstBloc)
 
-        src_port = src_node.output(srcPort)
+        src_port = src_bloc.output(srcPort)
         if src_port is None:
-            raise Exception, "Failed to find the srcPort : {}.{}".format(srcNode, srcPort)
+            raise Exception, "Failed to find the srcPort : {}.{}".format(srcBloc, srcPort)
 
-        dst_port = dst_node.input(dstPort)
+        dst_port = dst_bloc.input(dstPort)
         if dst_port is None:
-            raise Exception, "Failed to find the dstPort : {}.{}".format(dstNode, dstPort)
+            raise Exception, "Failed to find the dstPort : {}.{}".format(dstBloc, dstPort)
 
         res = self.__box.connect(src_port, dst_port)
         if not res:
-            raise Exception, "Failed to connect ports : {}.{} > {}.{}".format(srcNode, srcPort, dstNode, dstPort)
+            raise Exception, "Failed to connect ports : {}.{} > {}.{}".format(srcBloc, srcPort, dstBloc, dstPort)
 
-    def disconnect(self, srcNode, srcPort, dstNode, dstPort):
-        src_node = self.block(srcNode)
-        if src_node is None:
-            raise Exception, "Failed to find the srcNode : {}".format(srcNode)
+    def disconnect(self, srcBloc, srcPort, dstBloc, dstPort):
+        src_bloc = self.block(srcBloc)
+        if src_bloc is None:
+            raise Exception, "Failed to find the srcBloc : {}".format(srcBloc)
 
-        dst_node = self.block(dstNode)
-        if dst_node is None:
-            raise Exception, "Failed to find the dstNode : {}".format(dstNode)
+        dst_bloc = self.block(dstBloc)
+        if dst_bloc is None:
+            raise Exception, "Failed to find the dstBloc : {}".format(dstBloc)
 
-        src_port = src_node.output(srcPort)
+        src_port = src_bloc.output(srcPort)
         if src_port is None:
-            raise Exception, "Failed to find the srcPort : {}.{}".format(srcNode, srcPort)
+            raise Exception, "Failed to find the srcPort : {}.{}".format(srcBloc, srcPort)
 
-        dst_port = dst_node.input(dstPort)
+        dst_port = dst_bloc.input(dstPort)
         if dst_port is None:
-            raise Exception, "Failed to find the dstPort : {}.{}".format(dstNode, dstPort)
+            raise Exception, "Failed to find the dstPort : {}.{}".format(dstBloc, dstPort)
 
         if self.__box.isConnected(src_port, dst_port):
             if not self.__box.disconnect(src_port, dst_port):
-                raise Exception, "Failed to disconnect ports : {}.{} > {}.{}".format(srcNode, srcPort, dstNode, dstPort)
+                raise Exception, "Failed to disconnect ports : {}.{} > {}.{}".format(srcBloc, srcPort, dstBloc, dstPort)
+
+    def deleteNode(self, nodeName):
+        bloc = self.block(nodeName)
+        if bloc is None:
+            raise Exception, "Failed to find the block : {}".format(nodeName)
+
+        if not self.__box.deleteBlock(bloc):
+            raise Exception, "Failed to delete the block : {}".format(nodeName)
 
     def block(self, name):
         for b in self.__box.blocks():

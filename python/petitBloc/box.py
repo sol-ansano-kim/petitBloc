@@ -220,6 +220,25 @@ class Box(component.Component):
         self.__blocks.append(bloc)
         return True
 
+    def deleteBlock(self, bloc):
+        if bloc not in self.__blocks:
+            return False
+
+        self.__blocks.remove(bloc)
+        bloc.setParent(None)
+
+        for ip in bloc.inputs():
+            for c in ip.chains():
+                c.disconnect()
+                self.removeChain(c)
+
+        for op in bloc.inputs():
+            for c in op.chains():
+                c.disconnect()
+                self.removeChain(c)
+
+        return True
+
     def isConnected(self, srcPort, dstPort):
         src_block = srcPort.parent()
         dst_block = dstPort.parent()

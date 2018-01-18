@@ -13,6 +13,7 @@ class Graph(nodz_main.Nodz):
         self.signal_PlugDisconnected.connect(self.__portDisconnected)
         self.signal_SocketConnected.connect(self.__portConnected)
         self.signal_SocketDisconnected.connect(self.__portDisconnected)
+        self.signal_NodeDeleted.connect(self.__nodeDeleted)
         self.installEventFilter(self)
 
     def renameNode(self, old_name, new_name):
@@ -31,6 +32,10 @@ class Graph(nodz_main.Nodz):
                 return True
 
         return False
+
+    def __nodeDeleted(self, deletedNodes):
+        for n in deletedNodes:
+            self.__model.deleteNode(n)
 
     def __portConnected(self, srcNode, srcPort, dstNode, dstPort):
         if srcNode is None or srcPort is None or dstNode is None or dstPort is None:
