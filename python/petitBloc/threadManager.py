@@ -41,14 +41,14 @@ class ProcessWorker(threading.Thread):
         self.__obj = obj
         self.__args = args
         self.__kwargs = kwargs
-        self.__has_error = False
+        self.__success = True
         self.__error_log = ""
 
     def run(self):
         try:
             self.__obj.run()
         except Exception as e:
-            self.__has_error = True
+            self.__success = False
             self.__error_log = e
 
     def start(self):
@@ -57,8 +57,7 @@ class ProcessWorker(threading.Thread):
 
     def terminate(self):
         if not self.__obj.isTerminated():
-            self.__obj.terminate(self.__has_error)
-
+            self.__obj.terminate(self.__success)
 
 class ThreadManager(object):
     __Threads = []
