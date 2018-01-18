@@ -183,7 +183,7 @@ class PortBase(object):
     def activate(self):
         pass
 
-    def packetInfo(self):
+    def packetHistory(self):
         return []
 
 

@@ -12,7 +12,7 @@ class InPort(core.PortBase):
         self.__values = []
         self.__value_queue = None
 
-    def packetInfo(self):
+    def packetHistory(self):
         return copy.copy(self.__values)
 
     def isInPort(self):
@@ -76,7 +76,7 @@ class OutPort(core.PortBase):
         self.__values = []
         self.__value_queue = None
 
-    def packetInfo(self):
+    def packetHistory(self):
         return copy.copy(self.__values)
 
     def isOutPort(self):

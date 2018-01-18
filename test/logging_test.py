@@ -53,7 +53,7 @@ class RaiseError(block.Block):
 
 
 class LoggingTest(unittest.TestCase):
-    def test_packetInfo(self):
+    def test_packetHistory(self):
         src_port = port.OutPort(int)
         dst_port = port.InPort(int)
 
@@ -69,8 +69,8 @@ class LoggingTest(unittest.TestCase):
         src_port.terminate()
         dst_port.terminate()
 
-        self.assertEqual(src_port.packetInfo(), [1, 2])
-        self.assertEqual(dst_port.packetInfo(), [1])
+        self.assertEqual(src_port.packetHistory(), [1, 2])
+        self.assertEqual(dst_port.packetHistory(), [1])
         self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
 
     def test_error(self):
