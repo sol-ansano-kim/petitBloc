@@ -131,6 +131,9 @@ class Box(component.Component):
     def __str__(self):
         return "Box<'{}'>".format(self.name())
 
+    def hasNetwork(self):
+        return True
+
     def chains(self):
         for c in self.__chains:
             yield c

@@ -2,19 +2,35 @@ from .Nodz import nodz_main
 from .Nodz import nodz_utils
 from Qt import QtGui
 from Qt import QtCore
+from . import model
+from . import blockCreator
 
 
 class Graph(nodz_main.Nodz):
     KeyPressed = QtCore.Signal(int)
-    def __init__(self, model, parent=None):
-        self.__model = model
+    ItemDobleClicked = QtCore.Signal(object)
+    BlockDeleted = QtCore.Signal(object)
+    CurrentNodeChanged = QtCore.Signal(object)
+
+    def __init__(self, name="", boxObject=None, parent=None):
         super(Graph, self).__init__(parent)
+        self.__model = model.BoxModel(name=name, boxObject=boxObject)
+        self.__current_block = None
+        self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames())
+        self.__creator.BlockCreatorEnd.connect(self.addBlock)
         self.signal_PlugConnected.connect(self.__portConnected)
         self.signal_PlugDisconnected.connect(self.__portDisconnected)
         self.signal_SocketConnected.connect(self.__portConnected)
         self.signal_SocketDisconnected.connect(self.__portDisconnected)
         self.signal_NodeDeleted.connect(self.__nodeDeleted)
+        self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
+
+    def mouseDoubleClickEvent(self, evnt):
+        itm = self.itemAt(evnt.pos())
+        if itm is not None:
+            if itm.block().hasNetwork():
+                self.ItemDobleClicked.emit(itm.block())
 
     def renameNode(self, old_name, new_name):
         for k, v in self.scene().nodes.iteritems():
@@ -29,12 +45,27 @@ class Graph(nodz_main.Nodz):
         if evnt.type() == QtCore.QEvent.Type.KeyPress:
             self.KeyPressed.emit(evnt.key())
             if evnt.key() == QtCore.Qt.Key_Tab:
+                self.__creator.show(self.mapFromGlobal(QtGui.QCursor.pos()))
                 return True
 
         return False
 
+    def currentBlock(self):
+        return self.__current_block
+
+    def __nodeSelected(self, selectedNodes):
+        if not selectedNodes:
+            self.__current_block = None
+            self.CurrentNodeChanged.emit(None)
+            return
+
+        node = selectedNodes[0]
+        self.__current_block = self.__model.block(node)
+        self.CurrentNodeChanged.emit(self.__current_block)
+
     def __nodeDeleted(self, deletedNodes):
         for n in deletedNodes:
+            self.BlockDeleted.emit(self.__model.block(n))
             self.__model.deleteNode(n)
 
     def __portConnected(self, srcNode, srcPort, dstNode, dstPort):
@@ -48,9 +79,6 @@ class Graph(nodz_main.Nodz):
             return
 
         self.__model.disconnect(srcNode, srcPort, dstNode, dstPort)
-
-    def boxModel(self):
-        return self.__model
 
     def addBlock(self, blockName):
         bloc = self.__model.addBlock(blockName)
@@ -106,12 +134,20 @@ class Graph(nodz_main.Nodz):
         self.signal_AttrCreated.emit(node.name, index)
 
 
+class SubNet(Graph):
+    def __init__(self, model, parent=None):
+        super(SubNet, self).__init__(model, parent=painter)
+
+
 class BlocItem(nodz_main.NodeItem):
     def __init__(self, bloc, alternate, preset, config):
         super(BlocItem, self).__init__(bloc.name(), alternate, preset, config)
         self.__block = bloc
         self.__error_pen = QtGui.QPen(QtGui.QColor(242, 38, 94))
         self.__error_brush = QtGui.QBrush(QtGui.QColor(75, 0, 0, 125))
+
+    def block(self):
+        return self.__block
 
     def _createAttribute(self, port, index, preset, plug, socket, dataType):
         if port in self.attrs:

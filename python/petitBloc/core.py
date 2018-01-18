@@ -264,6 +264,9 @@ class ComponentBase(object):
     def __repr__(self):
         return self.__str__()
 
+    def hasNetwork(self):
+        return False
+
     def rename(self, name):
         self.__name = name
 

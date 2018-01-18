@@ -6,11 +6,19 @@ import copy
 
 
 class BoxModel(QtCore.QObject):
-    def __init__(self, name):
+    def __init__(self, name="", boxObject=None):
         super(BoxModel, self).__init__()
+        if not name and not boxObject:
+            raise Exception, "Failed to create BoxModel. Specify the name for a new box or a box object"
+
+        if boxObject is not None:
+            self.__box = boxObject
+            self.__name = boxObject.name()
+        else:
+            self.__name = name
+            self.__box = box.Box(name)
+
         self.__manager = blockManager.BlockManager()
-        self.__name = name
-        self.__box = box.Box(name)
         self.__blocs = []
 
     def blockClassNames(self):
