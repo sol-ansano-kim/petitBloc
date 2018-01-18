@@ -34,7 +34,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph_tabs.setTabsClosable(True)
 
         self.__graph = graph.Graph(name="scene", parent=self)
-        self.__graph.initialize()
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
 
@@ -60,7 +59,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.BlockDeleted.connect(self.__closeDeletedGrapgTab)
         self.__graph_tabs.currentChanged.connect(self.__currentGraphTabChanged)
 
-    def __blockRenamed(self, bloc, oldName, newName):
+    def __blockRenamed(self, bloc, newName):
         res = self.__graph.renameNode(bloc, newName)
         if res:
             return
@@ -85,24 +84,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__currentBlockChanged(widget.currentBlock())
 
     def __showGraphTab(self, bloc):
+        widget_created = False
+
         if self.__subnets.has_key(bloc):
             index = self.__subnets[bloc]["index"]
             if index is None:
                 index = self.__graph_tabs.addTab(self.__subnets[bloc]["widget"], bloc.name())
                 self.__subnets[bloc]["index"] = index
-
         else:
-            grph = graph.Graph(boxObject=bloc, parent=self)
-            grph.initialize()
-            index = self.__graph_tabs.addTab(grph, bloc.name())
-
-            self.__subnets[bloc] = {}
-            self.__subnets[bloc]["index"] = index
-            self.__subnets[bloc]["widget"] = grph
+            widget_created = True
+            grph = graph.SubNet(boxObject=bloc, parent=self)
             grph.ItemDobleClicked.connect(self.__showGraphTab)
             grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
 
+            index = self.__graph_tabs.addTab(grph, bloc.name())
+            self.__subnets[bloc] = {}
+            self.__subnets[bloc]["index"] = index
+            self.__subnets[bloc]["widget"] = grph
+
         self.__graph_tabs.setCurrentIndex(index)
+
+        if widget_created:
+            self.__subnets[bloc]["widget"].moveProxiesToCenter()
 
     def __closeDeletedGrapgTab(self, bloc):
         vals = self.__subnets.get(bloc, {})

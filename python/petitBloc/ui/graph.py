@@ -25,6 +25,7 @@ class Graph(nodz_main.Nodz):
         self.signal_NodeDeleted.connect(self.__nodeDeleted)
         self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
+        self.initialize()
 
     def boxModel(self):
         return self.__model
@@ -68,6 +69,17 @@ class Graph(nodz_main.Nodz):
         self.__current_block = self.__model.block(node)
         self.CurrentNodeChanged.emit(self.__current_block)
 
+    def _deleteSelectedNodes(self):
+        selected_nodes = list()
+        for node in self.scene().selectedItems():
+            if isinstance(node, ProxyItem):
+                continue
+
+            selected_nodes.append(node.name)
+            node._remove()
+
+        self.signal_NodeDeleted.emit(selected_nodes)
+
     def __nodeDeleted(self, deletedNodes):
         for n in deletedNodes:
             self.BlockDeleted.emit(self.__model.block(n))
@@ -88,8 +100,7 @@ class Graph(nodz_main.Nodz):
     def addBlock(self, blockName):
         bloc = self.__model.addBlock(blockName)
         if bloc:
-            # TODO : set position QtGui.QCursor.pos()
-            node = self.createNode(bloc, position=None)
+            node = self.createNode(bloc, position=self.mapToScene(self.mapFromGlobal(QtGui.QCursor.pos())))
 
             # TODO : preset
             for ip in bloc.inputs():
@@ -140,8 +151,18 @@ class Graph(nodz_main.Nodz):
 
 
 class SubNet(Graph):
-    def __init__(self, model, parent=None):
-        super(SubNet, self).__init__(model, parent=painter)
+    def __init__(self, name="", boxObject=None, parent=None):
+        super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
+        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), False, "node_default", self.config)
+        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), False, "node_default", self.config)
+
+        self.scene().addItem(self.__proxy_in)
+        self.scene().addItem(self.__proxy_out)
+
+    def moveProxiesToCenter(self):
+        position = self.mapToScene(self.viewport().rect().center())
+        self.__proxy_in.setPos(position - self.__proxy_in.nodeCenter - QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
+        self.__proxy_out.setPos(position - self.__proxy_in.nodeCenter + QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
 
 
 class BlocItem(nodz_main.NodeItem):
@@ -292,6 +313,14 @@ class BlocItem(nodz_main.NodeItem):
             textRect = QtCore.QRect(0, 0, self.baseWidth, self.height)
             painter.drawText(textRect, QtCore.Qt.AlignCenter, "ERROR")
 
+
+class ProxyItem(BlocItem):
+    def __init__(self, bloc, alternate, preset, config):
+        super(ProxyItem, self).__init__(bloc, alternate, preset, config)
+        self.__bloc = bloc
+
+    def _remove(self):
+        pass
 
 
 class OutputPort(nodz_main.PlugItem):

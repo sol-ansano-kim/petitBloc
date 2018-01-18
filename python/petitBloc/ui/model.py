@@ -21,6 +21,12 @@ class BoxModel(QtCore.QObject):
         self.__manager = blockManager.BlockManager()
         self.__blocs = []
 
+    def inProxyBlock(self):
+        return self.__box.inProxyBlock()
+
+    def outProxyBlock(self):
+        return self.__box.outProxyBlock()
+
     def blockClassNames(self):
         return self.__manager.blockNames()
 
