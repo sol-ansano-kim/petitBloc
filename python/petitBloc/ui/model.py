@@ -83,6 +83,6 @@ class BoxModel(QtCore.QObject):
 
         return None
 
-    def run(self):
+    def run(self, perProcessCallback=None):
         schedule = self.__box.getSchedule()
-        workerManager.WorkerManager.RunSchedule(schedule)
+        workerManager.WorkerManager.RunSchedule(schedule, perProcessCallback=perProcessCallback)

@@ -102,9 +102,11 @@ class Graph(nodz_main.Nodz):
 
 
 class BlocItem(nodz_main.NodeItem):
-    def __init__(self, node, alternate, preset, config):
-        super(BlocItem, self).__init__(node.name(), alternate, preset, config)
-        self.__node = node
+    def __init__(self, bloc, alternate, preset, config):
+        super(BlocItem, self).__init__(bloc.name(), alternate, preset, config)
+        self.__block = bloc
+        self.__error_pen = QtGui.QPen(QtGui.QColor(242, 38, 94))
+        self.__error_brush = QtGui.QBrush(QtGui.QColor(75, 0, 0, 125))
 
     def _createAttribute(self, port, index, preset, plug, socket, dataType):
         if port in self.attrs:
@@ -180,7 +182,6 @@ class BlocItem(nodz_main.NodeItem):
                          QtCore.Qt.AlignCenter,
                          self.name)
 
-
         # Attributes.
         offset = 0
         for attr in self.attrs:
@@ -233,6 +234,18 @@ class BlocItem(nodz_main.NodeItem):
             painter.drawText(textRect, QtCore.Qt.AlignVCenter, name)
 
             offset += self.attrHeight
+
+        if self.__block.isFailed():
+            painter.setBrush(self.__error_brush)
+            painter.drawRoundedRect(0, 0, self.baseWidth, self.height, self.radius, self.radius)
+            self.__error_pen
+            painter.setPen(self.__error_pen)
+            font = QtGui.QFont(self._nodeTextFont)
+            font.setPointSize(30)
+            painter.setFont(font)
+            textRect = QtCore.QRect(0, 0, self.baseWidth, self.height)
+            painter.drawText(textRect, QtCore.Qt.AlignCenter, "ERROR")
+
 
 
 class OutputPort(nodz_main.PlugItem):

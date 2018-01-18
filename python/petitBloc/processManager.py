@@ -97,6 +97,16 @@ class ProcessWorker(multiprocessing.Process):
 class ProcessManager(object):
     __Processes = []
     __MaxProcess = multiprocessing.cpu_count() - 1 or 1
+    __PerProcessCallback = None
+
+    @staticmethod
+    def SetPerProcessCallback(callback):
+        ProcessManager.__PerProcessCallback = callback
+
+    @staticmethod
+    def RunPerProcessCallback():
+        if ProcessManager.__PerProcessCallback is not None:
+            ProcessManager.__PerProcessCallback()
 
     @staticmethod
     def SetMaxProcess(num):
@@ -113,6 +123,7 @@ class ProcessManager(object):
 
         ProcessManager.__Processes = []
         ProcessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+        ProcessManager.__PerProcessCallback = None
 
     @staticmethod
     def Count():
@@ -125,6 +136,7 @@ class ProcessManager(object):
                 if p.is_alive():
                     continue
                 else:
+                    ProcessManager.RunPerProcessCallback()
                     ProcessManager.DeleteProcess(p)
 
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
@@ -141,14 +153,16 @@ class ProcessManager(object):
         while (ProcessManager.__Processes):
             for p in ProcessManager.__Processes:
                 if not p.is_alive():
+                    ProcessManager.RunPerProcessCallback()
                     ProcessManager.DeleteProcess(p)
 
 
-def RunSchedule(schedule, maxProcess=0):
+def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     ValueManager.Reset()
     QueueManager.Reset()
     ProcessManager.Reset()
     ProcessManager.SetMaxProcess(maxProcess)
+    ProcessManager.SetPerProcessCallback(perProcessCallback)
 
     schedule = copy.copy(schedule)
 

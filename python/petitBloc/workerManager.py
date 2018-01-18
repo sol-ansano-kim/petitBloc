@@ -32,11 +32,11 @@ class WorkerManager(object):
             threadManager.QueueManager.DeleteQueue(q)
 
     @staticmethod
-    def RunSchedule(schedule, maxProcess=0):
+    def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         if WorkerManager.UseProcess():
-            processManager.RunSchedule(schedule, maxProcess=0)
+            processManager.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
         else:
-            threadManager.RunSchedule(schedule, maxProcess=0)
+            threadManager.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
 
     @staticmethod
     def QueueCount():

@@ -45,10 +45,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__tab = blockCreator.BlockCreator(self.__graph, md.blockClassNames())
 
         self.__tab.BlockCreatorEnd.connect(self.addBlock)
-        self.__graph.KeyPressed.connect(self.__key_press)
-        self.__run.clicked.connect(self.__graph.boxModel().run)
+        self.__graph.KeyPressed.connect(self.__keyPressed)
+        self.__run.clicked.connect(self.__runPressed)
         self.__graph.signal_NodeSelected.connect(self.__nodeSelected)
         self.__parm_editor.BlockRenamed.connect(self.__graph.renameNode)
+
+    def __runPressed(self):
+        self.__graph.boxModel().run(perProcessCallback=self.__graph.viewport().update)
 
     def __nodeSelected(self, nodes):
         if not nodes:
@@ -63,7 +66,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__parm_editor.setBlock(bloc)
 
-    def __key_press(self, key):
+    def __keyPressed(self, key):
         if key == QtCore.Qt.Key_Tab:
             self.__tab.show(self.__graph.mapFromGlobal(QtGui.QCursor.pos()))
 

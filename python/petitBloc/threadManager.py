@@ -62,6 +62,16 @@ class ProcessWorker(threading.Thread):
 class ThreadManager(object):
     __Threads = []
     __MaxThreads = 999
+    __PerProcessCallback = None
+
+    @staticmethod
+    def SetPerProcessCallback(callback):
+        ThreadManager.__PerProcessCallback = callback
+
+    @staticmethod
+    def RunPerProcessCallback():
+        if ThreadManager.__PerProcessCallback is not None:
+            ThreadManager.__PerProcessCallback()
 
     @staticmethod
     def SetMaxProcess(num):
@@ -78,6 +88,7 @@ class ThreadManager(object):
 
         ThreadManager.__Threads = []
         ThreadManager.__MaxThreads = 999
+        ThreadManager.__PerProcessCallback = None
 
     @staticmethod
     def Count():
@@ -90,6 +101,7 @@ class ThreadManager(object):
                 if p.is_alive():
                     continue
                 else:
+                    ThreadManager.RunPerProcessCallback()
                     ThreadManager.DeleteProcess(p)
 
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
@@ -106,13 +118,15 @@ class ThreadManager(object):
         while (ThreadManager.__Threads):
             for p in ThreadManager.__Threads:
                 if not p.is_alive():
+                    ThreadManager.RunPerProcessCallback()
                     ThreadManager.DeleteProcess(p)
 
 
-def RunSchedule(schedule, maxProcess=0):
+def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     QueueManager.Reset()
     ThreadManager.Reset()
     ThreadManager.SetMaxProcess(maxProcess)
+    ThreadManager.SetPerProcessCallback(perProcessCallback)
 
     schedule = copy.copy(schedule)
 
