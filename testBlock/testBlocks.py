@@ -70,7 +70,7 @@ class Multiply(block.Block):
     def initialize(self):
         self.addInput(float)
         self.addOutput(float)
-        self.addParam(float, "value", 0.0)
+        self.addParam(float, "value", 1.0)
 
     def process(self):
         in_f = self.input(0).receive()
@@ -90,7 +90,7 @@ class Divide(block.Block):
     def initialize(self):
         self.addInput(float)
         self.addOutput(float)
-        self.addParam(float, "value", 0.0)
+        self.addParam(float, "value", 1.0)
 
     def process(self):
         in_f = self.input(0).receive()
