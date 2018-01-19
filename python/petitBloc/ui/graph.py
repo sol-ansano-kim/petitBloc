@@ -193,6 +193,9 @@ class SubNet(Graph):
             if p in self.__proxy_out.attrs:
                 self.deleteAttribute(self.__proxy_out, self.__proxy_out.attrs.index(p))
 
+        self.__proxy_in.scene().updateScene()
+        self.__proxy_out.scene().updateScene()
+
     def addInputProxy(self, typeClass, name):
         return self.boxModel().addInputProxy(typeClass, name)
 
