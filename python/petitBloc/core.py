@@ -340,6 +340,9 @@ class ComponentBase(object):
         for i in range(0):
             yield i
 
+    def hasConnection(self, port):
+        return False
+
     def addParam(self, typeClass=None, name=None, value=None):
         return None
 

@@ -21,6 +21,47 @@ class BoxModel(QtCore.QObject):
         self.__manager = blockManager.BlockManager()
         self.__blocs = []
 
+    def box(self):
+        return self.__box
+
+    def cleanUpInputProxies(self):
+        deleted = []
+        for proxy in self.__box.inputProxies():
+            inp = self.__box.inputProxyIn(proxy)
+            outp = self.__box.inputProxyOut(proxy)
+            if not inp.isConnected() and not outp.isConnected():
+                self.__box.removeInputProxy(proxy)
+                deleted.append(inp.name())
+                deleted.append(outp.name())
+
+        return deleted
+
+    def cleanUpOutputProxies(self):
+        deleted = []
+        for proxy in self.__box.outputProxies():
+            inp = self.__box.outputProxyIn(proxy)
+            outp = self.__box.outputProxyOut(proxy)
+            if not inp.isConnected() and not outp.isConnected():
+                self.__box.removeOutputProxy(proxy)
+                deleted.append(inp.name())
+                deleted.append(outp.name())
+
+        return deleted
+
+    def addInputProxy(self, typeClass, name):
+        return self.__box.addInputProxy(typeClass, name)
+
+    def addOutputProxy(self, typeClass, name):
+        return self.__box.addOutputProxy(typeClass, name)
+
+    def removeInputProxy(self, port):
+        if not self.__box.removeInputProxyPort(port):
+            raise Exception, "Failed to remote to inProxy : {}".format(port.name())
+
+    def removeOutputProxy(self, port):
+        if not self.__box.removeOutputProxyPort(port):
+            raise Exception, "Failed to remote to outProxy : {}".format(port.name())
+
     def inProxyBlock(self):
         return self.__box.inProxyBlock()
 
@@ -29,6 +70,22 @@ class BoxModel(QtCore.QObject):
 
     def blockClassNames(self):
         return self.__manager.blockNames()
+
+    def connectInProxy(self, proxyPort, port):
+        if not self.__box.connectInputProxyPort(proxyPort, port):
+            raise Exception, "Failed to connect to inProxy : {}".format(port.name())
+
+    def connectOutProxy(self, proxyPort, port):
+        if not self.__box.connectOutputProxyPort(proxyPort, port):
+            raise Exception, "Failed to connect to outProxy : {}".format(port.name())
+
+    def disconnectInProxy(self, proxyPort, port):
+        if not self.__box.disconnectInputProxyPort(proxyPort, port):
+            raise Exception, "Failed to disconnect to inProxy : {}".format(port.name())
+
+    def disconnectOutProxy(self, proxyPort, port):
+        if not self.__box.disconnectOutputProxyPort(proxyPort, port):
+            raise Exception, "Failed to disconnect to outProxy : {}".format(port.name())
 
     def connect(self, srcBloc, srcPort, dstBloc, dstPort):
         src_bloc = self.block(srcBloc)

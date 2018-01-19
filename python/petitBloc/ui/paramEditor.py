@@ -146,6 +146,10 @@ class ParamEditor(QtWidgets.QWidget):
 
         uniq_name = parent_box.getUniqueName(self.__bloc, new_name)
         self.__bloc.rename(uniq_name)
+        self.__block_name.setText(uniq_name)
+
+        if old_name == uniq_name:
+            return
 
         self.BlockRenamed.emit(self.__bloc, uniq_name)
 

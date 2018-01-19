@@ -120,16 +120,19 @@ class MainWindow(QtWidgets.QMainWindow):
             self.__graph_tabs.removeTab(vals["index"])
 
         self.__subnets.pop(bloc)
+        self.__resetTabIndice()
 
     def __closeGraphRequest(self, index):
         if index <= 0:
             return
 
-        for bloc, vals in self.__subnets.iteritems():
-            if vals["index"] == index:
-                vals["index"] = None
-
         self.__graph_tabs.removeTab(index)
+        self.__resetTabIndice()
+
+    def __resetTabIndice(self):
+        for vals in self.__subnets.values():
+            index = self.__graph_tabs.indexOf(vals["widget"])
+            vals["index"] = None if index < 0 else index
 
     def __runPressed(self):
         graph = None

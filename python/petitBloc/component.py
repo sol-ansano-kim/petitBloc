@@ -107,6 +107,19 @@ class Component(core.ComponentBase):
 
         return None
 
+    def hasConnection(self, port):
+        for p in self.__inputs:
+            for c in p.chains():
+                if c.dst() == port:
+                    return True
+
+        for p in self.__outputs:
+            for c in p.chains():
+                if c.src() == port:
+                    return True
+
+        return False
+
     def upstream(self):
         upstreams = []
         for inp in self.__inputs:

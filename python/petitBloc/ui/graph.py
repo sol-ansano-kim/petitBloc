@@ -2,6 +2,7 @@ from .Nodz import nodz_main
 from .Nodz import nodz_utils
 from Qt import QtGui
 from Qt import QtCore
+from Qt import QtWidgets
 from . import model
 from . import blockCreator
 
@@ -133,7 +134,7 @@ class Graph(nodz_main.Nodz):
 
         return nodeItem
 
-    def createAttribute(self, node, port, index=-1, preset='attr_default', plug=True, socket=True, dataType=None):
+    def createAttribute(self, node, port, index=-1, preset='attr_default', plug=True, socket=True, dataType=None, isProxy=False):
         if not node in self.scene().nodes.values():
             print('Node object does not exist !')
             print('Attribute creation aborted !')
@@ -144,7 +145,7 @@ class Graph(nodz_main.Nodz):
             print('Attribute creation aborted !')
             return
 
-        node._createAttribute(port, index=index, preset=preset, plug=plug, socket=socket, dataType=dataType)
+        node._createAttribute(port, index=index, preset=preset, plug=plug, socket=socket, dataType=dataType, isProxy=isProxy)
 
         # Emit signal.
         self.signal_AttrCreated.emit(node.name, index)
@@ -153,11 +154,74 @@ class Graph(nodz_main.Nodz):
 class SubNet(Graph):
     def __init__(self, name="", boxObject=None, parent=None):
         super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
-        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), False, "node_default", self.config)
-        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), False, "node_default", self.config)
+        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, "node_default", self.config)
+        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, "node_default", self.config)
 
+        self.scene().nodes[self.__proxy_in.block().name()] = self.__proxy_in
+        self.scene().nodes[self.__proxy_out.block().name()] = self.__proxy_out
         self.scene().addItem(self.__proxy_in)
         self.scene().addItem(self.__proxy_out)
+
+        self.BlockDeleted.connect(self.cleanUpProxies)
+
+    def createConnection(self, sourceNode, sourceAttr, targetNode, targetAttr):
+        plug = self.scene().nodes[sourceNode].plugs[sourceAttr]
+        socket = self.scene().nodes[targetNode].sockets[targetAttr]
+
+        connection = ChainItem(plug.center(), socket.center(), plug, socket)
+
+        connection.plugNode = plug.parentItem().name
+        connection.plugAttr = plug.attribute
+        connection.socketNode = socket.parentItem().name
+        connection.socketAttr = socket.attribute
+
+        plug.connect(socket, connection)
+        socket.connect(plug, connection)
+
+        connection.updatePath()
+
+        self.scene().addItem(connection)
+
+        return connection
+
+    def cleanUpProxies(self):
+        for p in self.boxModel().cleanUpInputProxies():
+            if p in self.__proxy_in.attrs:
+                self.deleteAttribute(self.__proxy_in, self.__proxy_in.attrs.index(p))
+
+        for p in self.boxModel().cleanUpOutputProxies():
+            if p in self.__proxy_out.attrs:
+                self.deleteAttribute(self.__proxy_out, self.__proxy_out.attrs.index(p))
+
+    def addInputProxy(self, typeClass, name):
+        return self.boxModel().addInputProxy(typeClass, name)
+
+    def addOutputProxy(self, typeClass, name):
+        return self.boxModel().addOutputProxy(typeClass, name)
+
+    def removeInputProxy(self, port):
+        self.boxModel().removeInputProxy(port)
+
+    def removeOutputProxy(self, port):
+        self.boxModel().removeOutputProxy(port)
+
+    def inProxyNode(self):
+        return self.__proxy_in
+
+    def outProxyNode(self):
+        return self.__proxy_out
+
+    def inProxyConnected(self, proxyPort, port):
+        self.boxModel().connectInProxy(proxyPort, port)
+
+    def outProxyConnected(self, proxyPort, port):
+        self.boxModel().connectOutProxy(proxyPort, port)
+
+    def inProxyDisConnected(self, proxyPort, port):
+        self.boxModel().disconnectInProxy(proxyPort, port)
+
+    def outProxyDisConnected(self, proxyPort, port):
+        self.boxModel().disconnectOutProxy(proxyPort, port)
 
     def moveProxiesToCenter(self):
         position = self.mapToScene(self.viewport().rect().center())
@@ -169,13 +233,30 @@ class BlocItem(nodz_main.NodeItem):
     def __init__(self, bloc, alternate, preset, config):
         super(BlocItem, self).__init__(bloc.name(), alternate, preset, config)
         self.__block = bloc
+        # TODO : set style from config
         self.__error_pen = QtGui.QPen(QtGui.QColor(242, 38, 94))
         self.__error_brush = QtGui.QBrush(QtGui.QColor(75, 0, 0, 125))
+        self.__hl_pen = QtGui.QPen(QtGui.QColor(98, 215, 234))
+        self.__hl_pen.setStyle(QtCore.Qt.SolidLine)
+        self.__hl_pen.setWidth(self.border + 2)
+        self.__emphasize = False
+
+    @property
+    def pen(self):
+        if self.__emphasize:
+            return self.__hl_pen
+        if self.isSelected():
+            return self._penSel
+
+        return self._pen
+
+    def emphasize(self, value):
+        self.__emphasize = value
 
     def block(self):
         return self.__block
 
-    def _createAttribute(self, port, index, preset, plug, socket, dataType):
+    def _createAttribute(self, port, index, preset, plug, socket, dataType, isProxy=False):
         if port in self.attrs:
             print('An attribute with the same name already exists on this node : {0}'.format(port))
             print('Attribute creation aborted !')
@@ -184,22 +265,37 @@ class BlocItem(nodz_main.NodeItem):
         self.attrPreset = preset
 
         if plug:
-            plugInst = OutputPort(parent=self,
-                                port=port,
-                                index=self.attrCount,
-                                preset=preset,
-                                dataType=dataType)
+            if isProxy:
+                plugInst = OutputProxyPortItem(parent=self,
+                                               port=port,
+                                               index=self.attrCount,
+                                               preset=preset,
+                                               dataType=dataType)
+
+            else:
+                plugInst = OutputPortItem(parent=self,
+                                          port=port,
+                                          index=self.attrCount,
+                                          preset=preset,
+                                          dataType=dataType)
 
             self.plugs[port.name()] = plugInst
 
         if socket:
-            socketInst = InputPort(parent=self,
-                                    port=port,
-                                    index=self.attrCount,
-                                    preset=preset,
-                                    dataType=dataType)
+            if isProxy:
+                socketInst = InputProxyPortItem(parent=self,
+                                                port=port,
+                                                index=self.attrCount,
+                                                preset=preset,
+                                                dataType=dataType)
+            else:
+                socketInst = InputPortItem(parent=self,
+                                           port=port,
+                                           index=self.attrCount,
+                                           preset=preset,
+                                           dataType=dataType)
 
-            self.sockets[port] = socketInst
+            self.sockets[port.name()] = socketInst
 
         self.attrCount += 1
 
@@ -315,17 +411,37 @@ class BlocItem(nodz_main.NodeItem):
 
 
 class ProxyItem(BlocItem):
-    def __init__(self, bloc, alternate, preset, config):
+    In = 0
+    Out = 1
+    def __init__(self, bloc, direction, alternate, preset, config):
         super(ProxyItem, self).__init__(bloc, alternate, preset, config)
         self.__bloc = bloc
+        self.__direction = direction
+
+    def isInProxy(self):
+        return self.__direction is ProxyItem.In
+
+    def isOutProxy(self):
+        return self.__direction is ProxyItem.Out
 
     def _remove(self):
         pass
 
+    def paint(self, painter, option, widget):
+        nodzInst = self.scene().views()[0]
+        self.emphasize(False)
 
-class OutputPort(nodz_main.PlugItem):
+        if nodzInst.drawingConnection:
+            if self == nodzInst.currentHoveredNode:
+                if (self.isOutProxy() and nodzInst.sourceSlot.slotType == 'plug') or ((self.isInProxy() and nodzInst.sourceSlot.slotType == 'socket')):
+                    self.emphasize(True)
+
+        super(ProxyItem, self).paint(painter, option, widget)
+
+
+class OutputPortItem(nodz_main.PlugItem):
     def __init__(self, parent, port, index, preset, dataType):
-        super(OutputPort, self).__init__(parent, port.name(), index, preset, dataType)
+        super(OutputPortItem, self).__init__(parent, port.name(), index, preset, dataType)
         self.__port = port
 
     def port(self):
@@ -352,6 +468,160 @@ class OutputPort(nodz_main.PlugItem):
 
         painter.drawEllipse(self.boundingRect())
 
+    def connect(self, socket_item, connection):
+        """
+        Connect to the given socket_item.
+
+        """
+        # Populate connection.
+        connection.socketItem = socket_item
+        connection.plugNode = self.parentItem().name
+        connection.plugAttr = self.attribute
+
+        # Add socket to connected slots.
+        if socket_item in self.connected_slots:
+            self.connected_slots.remove(socket_item)
+        self.connected_slots.append(socket_item)
+
+        # Add connection.
+        if connection not in self.connections:
+            self.connections.append(connection)
+
+        # Emit signal.
+        nodzInst = self.scene().views()[0]
+
+        if isinstance(self, OutputProxyPortItem):
+            if self.parentItem().isInProxy():
+                nodzInst.inProxyConnected(self.port(), socket_item.port())
+            else:
+                nodzInst.outProxyConnected(self.port(), socket_item.port())
+
+            return
+
+        if isinstance(socket_item, InputProxyPortItem):
+            if socket_item.parentItem().isInProxy():
+                nodzInst.inProxyConnected(socket_item.port(), self.port())
+            else:
+                nodzInst.outProxyConnected(socket_item.port(), self.port())
+
+            return
+
+        nodzInst.signal_PlugConnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+
+    def disconnect(self, connection):
+        """
+        Disconnect the given connection from this plug item.
+
+        """
+        # Emit signal.
+        socket_item = connection.socketItem
+
+        nodzInst = self.scene().views()[0]
+
+        if socket_item is not None:
+            if isinstance(self, OutputProxyPortItem):
+                if self.parentItem().isInProxy():
+                    nodzInst.inProxyDisConnected(self.port(), socket_item.port())
+                else:
+                    nodzInst.outProxyDisConnected(self.port(), socket_item.port())
+
+            elif isinstance(socket_item, InputProxyPortItem):
+                if socket_item.parentItem().block().isInProxy():
+                    nodzInst.inProxyDisConnected(socket_item.port(), self.port())
+                else:
+                    nodzInst.outProxyDisConnected(socket_item.port(), self.port())
+
+            else:
+                nodzInst.signal_PlugDisconnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+
+        # Remove connected socket from plug
+        if connection.socketItem in self.connected_slots:
+            self.connected_slots.remove(connection.socketItem)
+        # Remove connection
+        self.connections.remove(connection)
+
+    def mouseReleaseEvent(self, event):
+        nodzInst = self.scene().views()[0]
+        if event.button() == QtCore.Qt.LeftButton:
+            nodzInst.drawingConnection = False
+            nodzInst.currentDataType = None
+
+            target = self.scene().itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+
+            if not isinstance(target, nodz_main.SlotItem) and not isinstance(target, ProxyItem):
+                self.newConnection._remove()
+                super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                return
+
+            if isinstance(self.parentItem(), ProxyItem) and (isinstance(target, ProxyItem) or isinstance(target.parentItem(), ProxyItem)):
+                self.newConnection._remove()
+                super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                return
+
+            if isinstance(target, ProxyItem):
+                if target.isInProxy():
+                    self.newConnection._remove()
+                    super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                    return
+                else:
+                    if target.block().hasConnection(self.__port):
+                        self.newConnection._remove()
+                        super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                        return
+                    else:
+                        ip, op = nodzInst.addOutputProxy(self.port().typeClass(), self.port().name())
+                        proxy_node = nodzInst.outProxyNode()
+                        nodzInst.createAttribute(node=proxy_node, port=ip, plug=False, socket=True, preset="attr_preset_1", dataType=ip.typeClass(), isProxy=True)
+                        target_port = proxy_node.sockets[ip.name()]
+                        self.newConnection.target = target_port
+                        self.newConnection.source = self
+                        self.newConnection.target_point = target_port.center()
+                        self.newConnection.source_point = self.center()
+
+                        self.connect(target_port, self.newConnection)
+                        target_port.connect(self, self.newConnection)
+
+                        self.newConnection.updatePath()
+            else:
+                if target.accepts(self):
+                    self.newConnection.target = target
+                    self.newConnection.source = self
+                    self.newConnection.target_point = target.center()
+                    self.newConnection.source_point = self.center()
+
+                    # Perform the ConnectionItem.
+                    self.connect(target, self.newConnection)
+                    target.connect(self, self.newConnection)
+
+                    self.newConnection.updatePath()
+                else:
+                    self.newConnection._remove()
+        else:
+            super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+        nodzInst.currentHoveredNode = None
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.newConnection = ChainItem(self.center(),
+                                           self.mapToScene(event.pos()),
+                                           self,
+                                           None)
+
+            self.connections.append(self.newConnection)
+            self.scene().addItem(self.newConnection)
+
+            nodzInst = self.scene().views()[0]
+            nodzInst.drawingConnection = True
+            nodzInst.sourceSlot = self
+            nodzInst.currentDataType = self.dataType
+        else:
+            super(SlotItem, self).mousePressEvent(event)
+
     def accepts(self, socket_item):
         if isinstance(socket_item, nodz_main.SocketItem):
             if self.parentItem() != socket_item.parentItem():
@@ -366,9 +636,9 @@ class OutputPort(nodz_main.PlugItem):
             return False
 
 
-class InputPort(nodz_main.SocketItem):
+class InputPortItem(nodz_main.SocketItem):
     def __init__(self, parent, port, index, preset, dataType):
-        super(InputPort, self).__init__(parent, port.name(), index, preset, dataType)
+        super(InputPortItem, self).__init__(parent, port.name(), index, preset, dataType)
         self.__port = port
 
     def port(self):
@@ -395,6 +665,165 @@ class InputPort(nodz_main.SocketItem):
 
         painter.drawEllipse(self.boundingRect())
 
+    def connect(self, plug_item, connection):
+        """
+        Connect to the given plug item.
+
+        """
+        if len(self.connected_slots) > 0:
+            # Already connected.
+            self.connections[0]._remove()
+            self.connected_slots = list()
+
+        # Populate connection.
+        connection.plugItem = plug_item
+        connection.socketNode = self.parentItem().name
+        connection.socketAttr = self.attribute
+
+        # Add plug to connected slots.
+        self.connected_slots.append(plug_item)
+
+        # Add connection.
+        if connection not in self.connections:
+            self.connections.append(connection)
+
+        # Emit signal.
+        nodzInst = self.scene().views()[0]
+
+        if isinstance(self, InputProxyPortItem):
+            if self.parentItem().isInProxy():
+                nodzInst.inProxyConnected(self.port(), plug_item.port())
+            else:
+                nodzInst.outProxyConnected(self.port(), plug_item.port())
+
+            return
+
+        if isinstance(plug_item, OutputProxyPortItem):
+            if plug_item.parentItem().isInProxy():
+                nodzInst.inProxyConnected(plug_item.port(), self.port())
+            else:
+                nodzInst.outProxyConnected(plug_item.port(), self.port())
+
+            return
+
+        nodzInst.signal_SocketConnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+
+    def disconnect(self, connection):
+        """
+        Disconnect the given connection from this socket item.
+
+        """
+        # Emit signal.
+        plug_item = connection.plugItem
+
+        nodzInst = self.scene().views()[0]
+
+        if plug_item is not None:
+            if isinstance(self, InputProxyPortItem):
+                if self.parentItem().isInProxy():
+                    nodzInst.inProxyDisConnected(self.port(), plug_item.port())
+                else:
+                    nodzInst.outProxyDisConnected(self.port(), plug_item.port())
+
+            elif isinstance(plug_item, OutputProxyPortItem):
+                if plug_item.parentItem().isInProxy():
+                    nodzInst.inProxyDisConnected(plug_item.port(), self.port())
+                else:
+                    nodzInst.outProxyDisConnected(plug_item.port(), self.port())
+
+            else:
+                nodzInst.signal_SocketDisconnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+
+        # Remove connected plugs
+        if connection.plugItem in self.connected_slots:
+            self.connected_slots.remove(connection.plugItem)
+        # Remove connections
+        self.connections.remove(connection)
+
+    def mouseReleaseEvent(self, event):
+        nodzInst = self.scene().views()[0]
+        if event.button() == QtCore.Qt.LeftButton:
+            nodzInst.drawingConnection = False
+            nodzInst.currentDataType = None
+
+            target = self.scene().itemAt(event.scenePos().toPoint(), QtGui.QTransform())
+
+            if not isinstance(target, nodz_main.SlotItem) and not isinstance(target, ProxyItem):
+                self.newConnection._remove()
+                super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                return
+
+            if isinstance(self.parentItem(), ProxyItem) and (isinstance(target, ProxyItem) or isinstance(target.parentItem(), ProxyItem)):
+                self.newConnection._remove()
+                super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                return
+
+            if isinstance(target, ProxyItem):
+                if target.isOutProxy():
+                    self.newConnection._remove()
+                    super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                    return
+                else:
+                    proxy_bloc = target.block()
+                    if proxy_bloc.hasConnection(self.__port):
+                        self.newConnection._remove()
+                        super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                        return
+
+                    else:
+                        ip, op = nodzInst.addInputProxy(self.port().typeClass(), self.port().name())
+                        proxy_node = nodzInst.inProxyNode()
+                        nodzInst.createAttribute(node=proxy_node, port=op, plug=True, socket=False, preset="attr_preset_1", dataType=op.typeClass(), isProxy=True)
+                        target_port = proxy_node.plugs[op.name()]
+                        self.newConnection.target = target_port
+                        self.newConnection.source = self
+                        self.newConnection.target_point = target_port.center()
+                        self.newConnection.source_point = self.center()
+
+                        self.connect(target_port, self.newConnection)
+                        target_port.connect(self, self.newConnection)
+
+                        self.newConnection.updatePath()
+
+            else:
+                if target.accepts(self):
+                    self.newConnection.target = target
+                    self.newConnection.source = self
+                    self.newConnection.target_point = target.center()
+                    self.newConnection.source_point = self.center()
+
+                    self.connect(target, self.newConnection)
+                    target.connect(self, self.newConnection)
+
+                    self.newConnection.updatePath()
+                else:
+                    self.newConnection._remove()
+        else:
+            super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+        nodzInst.currentHoveredNode = None
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.newConnection = ChainItem(self.center(),
+                                           self.mapToScene(event.pos()),
+                                           self,
+                                           None)
+
+            self.connections.append(self.newConnection)
+            self.scene().addItem(self.newConnection)
+
+            nodzInst = self.scene().views()[0]
+            nodzInst.drawingConnection = True
+            nodzInst.sourceSlot = self
+            nodzInst.currentDataType = self.dataType
+        else:
+            super(SlotItem, self).mousePressEvent(event)
+
     def accepts(self, plug_item):
         if isinstance(plug_item, nodz_main.PlugItem):
             if (self.parentItem() != plug_item.parentItem() and
@@ -408,3 +837,24 @@ class InputPort(nodz_main.SocketItem):
                 return False
         else:
             return False
+
+
+class OutputProxyPortItem(OutputPortItem):
+    def __init__(self, parent, port, index, preset, dataType):
+        super(OutputProxyPortItem, self).__init__(parent, port, index, preset, dataType)
+
+
+class InputProxyPortItem(InputPortItem):
+    def __init__(self, parent, port, index, preset, dataType):
+        super(InputProxyPortItem, self).__init__(parent, port, index, preset, dataType)
+
+
+
+class ChainItem(nodz_main.ConnectionItem):
+    def __init__(self, source_point, target_point, source, target):
+        super(ChainItem, self).__init__(source_point, target_point, source, target)
+
+    def mouseReleaseEvent(self, evnt):
+        nodzInst = self.scene().views()[0]
+        super(ChainItem, self).mouseReleaseEvent(evnt)
+        nodzInst.cleanUpProxies()

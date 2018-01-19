@@ -14,6 +14,20 @@ class ProxyBlock(core.Proxy, component.Component):
         self.__ports = {}
         self.__direction = direction
 
+    def hasConnection(self, port):
+        if self.isInProxy():
+            for o in self.outputs():
+                for c in o.chains():
+                    if c.dst() == port:
+                        return True
+        else:
+            for i in self.outputs():
+                for c in i.chains():
+                    if c.src() == port:
+                        return True
+
+        return False
+
     def isInProxy(self):
         return self.__direction is ProxyBlock.In
 
@@ -32,6 +46,15 @@ class ProxyBlock(core.Proxy, component.Component):
     def proxyOut(self, name):
         return self.__ports.get(name, {}).get("out")
 
+    def proxyName(self, port):
+        for name, ports in self.__ports.iteritems():
+            if ports["in"] == port:
+                return name
+            if ports["out"] == port:
+                return name
+
+        return None
+
     def addProxy(self, typeClass, name=None):
         if name is None or not util.ValidateName(name):
             name = "proxy"
@@ -45,9 +68,76 @@ class ProxyBlock(core.Proxy, component.Component):
 
         if in_p is not None and out_p is not None:
             self.__ports[name] = {"in": in_p, "out": out_p, "end": False}
+            return (in_p, out_p)
+
+        return (in_p, out_p)
+
+    def removeProxy(self, name):
+        ports = self.__ports.pop(name, {})
+        if not ports:
+            return False
+
+        if self.__direction is ProxyBlock.In:
+            for c in ports["in"].chains():
+                c.src().parent().removeChain(c)
+                c.disconnect()
+            for c in ports["out"].chains():
+                self.parent().removeChain(c)
+                c.disconnect()
+        else:
+            for c in ports["in"].chains():
+                self.parent().removeChain(c)
+                c.disconnect()
+            for c in ports["out"].chains():
+                c.src().parent().removeChain(c)
+                c.disconnect()
+
+        return True
+
+    def disconnect(self, name, port, isInside):
+        chain_parent = None
+        remove_chain = None
+
+        if self.__direction is ProxyBlock.In:
+            if isInside:
+                for dst in port.chains():
+                    if dst.src() == self.__ports[name]["out"]:
+                        remove_chain = dst
+                        break
+
+                chain_parent = self.parent()
+
+            else:
+                for dst in self.__ports[name]["in"].chains():
+                    if dst.src() == port:
+                        remove_chain = dst
+                        break
+
+                chain_parent = port.parent().parent()
+
+        else:
+            if isInside:
+                for dst in self.__ports[name]["in"].chains():
+                    if dst.src() == port:
+                        remove_chain = dst
+                        break
+
+                chain_parent = self.parent()
+
+            else:
+                for dst in port.chains():
+                    if dst.src() == self.__ports[name]["out"]:
+                        remove_chain = dst
+                        break
+
+                chain_parent = port.parent().parent()
+
+        if chain_parent is None or remove_chain is None:
             return True
 
-        return False
+        remove_chain.disconnect()
+
+        return chain_parent.removeChain(remove_chain)
 
     def connect(self, name, port, isInside):
         chain_parent = None
@@ -59,22 +149,38 @@ class ProxyBlock(core.Proxy, component.Component):
             if isInside:
                 proxy_port = self.__ports[name]["out"]
                 dst_chains = map(lambda x: x, port.chains())
+                for dst in dst_chains:
+                    if dst.src() == proxy_port:
+                        return True
+
                 chain_parent = self.parent()
                 is_dst = False
             else:
                 proxy_port = self.__ports[name]["in"]
                 dst_chains = map(lambda x: x, proxy_port.chains())
+                for dst in dst_chains:
+                    if dst.src() == port:
+                        return True
+
                 chain_parent = port.parent().parent()
                 is_dst = True
         else:
             if isInside:
                 proxy_port = self.__ports[name]["in"]
                 dst_chains = map(lambda x: x, proxy_port.chains())
+                for dst in dst_chains:
+                    if dst.src() == port:
+                        return True
+
                 chain_parent = self.parent()
                 is_dst = True
             else:
                 proxy_port = self.__ports[name]["out"]
                 dst_chains = map(lambda x: x, port.chains())
+                for dst in dst_chains:
+                    if dst.src() == proxy_port:
+                        return True
+
                 chain_parent = port.parent().parent()
                 is_dst = False
 
@@ -205,13 +311,10 @@ class Box(component.Component):
         return len(self.__blocks)
 
     def getUniqueName(self, bloc, name):
-        if bloc in self.__blocks:
-            return name
-
         if not name or not util.ValidateName(name):
             name = bloc.__class__.__name__
 
-        all_names = map(lambda x: x.name(), filter(lambda y: y != bloc, self.__blocks))
+        all_names = ["in", "out"] + map(lambda x: x.name(), filter(lambda y: y != bloc, self.__blocks))
 
         return util.GetUniqueName(name, all_names)
 
@@ -357,6 +460,26 @@ class Box(component.Component):
     def addOutputProxy(self, typeClass, name=None):
         return self.__out_proxy.addProxy(typeClass, name=name)
 
+    def removeInputProxyPort(self, proxyPort):
+        name = self.__in_proxy.proxyName(proxyPort)
+        if name is None:
+            return False
+
+        return self.removeInputProxy(name)
+
+    def removeOutputProxyPort(self, proxyPort):
+        name = self.__out_proxy.proxyName(proxyPort)
+        if name is None:
+            return False
+
+        return self.removeOutputProxy(name)
+
+    def removeInputProxy(self, name):
+        return self.__in_proxy.removeProxy(name)
+
+    def removeOutputProxy(self, name):
+        return self.__out_proxy.removeProxy(name)
+
     def inProxyBlock(self):
         return self.__in_proxy
 
@@ -386,6 +509,20 @@ class Box(component.Component):
 
     def outputProxies(self):
         return self.__out_proxy.proxies()
+
+    def connectInputProxyPort(self, proxyPort, port):
+        name = self.__in_proxy.proxyName(proxyPort)
+        if name is None:
+            return False
+
+        return self.connectInputProxy(name, port)
+
+    def connectOutputProxyPort(self, proxyPort, port):
+        name = self.__out_proxy.proxyName(proxyPort)
+        if name is None:
+            return False
+
+        return self.connectOutputProxy(name, port)
 
     def connectInputProxy(self, name, port):
         if not self.__in_proxy.hasProxy(name):
@@ -420,3 +557,51 @@ class Box(component.Component):
             return False
 
         return self.__out_proxy.connect(name, port, is_inside)
+
+    def disconnectInputProxyPort(self, proxyPort, port):
+        name = self.__in_proxy.proxyName(proxyPort)
+        if name is None:
+            return False
+
+        return self.disconnectInputProxy(name, port)
+
+    def disconnectOutputProxyPort(self, proxyPort, port):
+        name = self.__out_proxy.proxyName(proxyPort)
+        if name is None:
+            return False
+
+        return self.disconnectOutputProxy(name, port)
+
+    def disconnectInputProxy(self, name, port):
+        if not self.__in_proxy.hasProxy(name):
+            return False
+
+        port_block = port.parent()
+        if not port_block:
+            return False
+
+        is_inside = port_block in self.__blocks
+        if is_inside and not port.isInPort():
+            return False
+
+        if not is_inside and not port.isOutPort():
+            return False
+
+        return self.__in_proxy.disconnect(name, port, is_inside)
+
+    def disconnectOutputProxy(self, name, port):
+        if not self.__out_proxy.hasProxy(name):
+            return False
+
+        port_block = port.parent()
+        if not port_block:
+            return False
+
+        is_inside = port_block in self.__blocks
+        if is_inside and not port.isOutPort():
+            return False
+
+        if not is_inside and not port.isInPort():
+            return False
+
+        return self.__out_proxy.disconnect(name, port, is_inside)
