@@ -67,23 +67,28 @@ class PacketModel(QtCore.QAbstractTableModel):
         self.__col = 0
 
         if self.__bloc is not None:
-            for ip in self.__bloc.inputs():
-                self.__ports.append(ip.name())
+            ports = []
+
+            if self.__bloc.hasNetwork():
+                for p in self.__bloc.inputProxies():
+                    ports.append(self.__bloc.inputProxyIn(p))
+                for p in self.__bloc.outputProxies():
+                    ports.append(self.__bloc.outputProxyOut(p))
+
+            else:
+                for p in self.__bloc.inputs():
+                    ports.append(p)
+                for p in self.__bloc.outputs():
+                    ports.append(p)
+
+            for p in ports:
+                self.__ports.append(p.name())
                 self.__col += 1
 
-                vals = ip.packetHistory()
+                vals = p.packetHistory()
                 if len(vals) > self.__row:
                     self.__row = len(vals)
-                self.__packets[ip.name()] = vals
-
-            for op in self.__bloc.outputs():
-                self.__ports.append(op.name())
-                self.__col += 1
-
-                vals = op.packetHistory()
-                if len(vals) > self.__row:
-                    self.__row = len(vals)
-                self.__packets[op.name()] = vals
+                self.__packets[p.name()] = vals
 
         self.endResetModel()
 

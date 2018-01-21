@@ -25,28 +25,32 @@ class BoxModel(QtCore.QObject):
         return self.__box
 
     def cleanUpInputProxies(self):
-        deleted = []
+        inputs = []
+        outputs = []
+
         for proxy in self.__box.inputProxies():
             inp = self.__box.inputProxyIn(proxy)
             outp = self.__box.inputProxyOut(proxy)
             if not inp.isConnected() and not outp.isConnected():
                 self.__box.removeInputProxy(proxy)
-                deleted.append(inp.name())
-                deleted.append(outp.name())
+                inputs.append(inp.name())
+                outputs.append(outp.name())
 
-        return deleted
+        return (inputs, outputs)
 
     def cleanUpOutputProxies(self):
-        deleted = []
+        inputs = []
+        outputs = []
+
         for proxy in self.__box.outputProxies():
             inp = self.__box.outputProxyIn(proxy)
             outp = self.__box.outputProxyOut(proxy)
             if not inp.isConnected() and not outp.isConnected():
                 self.__box.removeOutputProxy(proxy)
-                deleted.append(inp.name())
-                deleted.append(outp.name())
+                inputs.append(inp.name())
+                outputs.append(outp.name())
 
-        return deleted
+        return (inputs, outputs)
 
     def addInputProxy(self, typeClass, name):
         return self.__box.addInputProxy(typeClass, name)
