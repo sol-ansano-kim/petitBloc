@@ -88,6 +88,9 @@ class ProxyParameter(Proxy, object):
     def param(self):
         return self.__param
 
+    def typeClass(self):
+        return self.param().typeClass()
+
     def set(self, value):
         return self.__param.set(value)
 

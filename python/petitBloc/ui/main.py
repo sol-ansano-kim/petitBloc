@@ -74,9 +74,11 @@ class MainWindow(QtWidgets.QMainWindow):
         raise Exception, "Failed to find the node : {}".format(oldName)
 
     def __currentGraphTabChanged(self, index):
+        allowProxy = True
         widget = None
         if index == 0:
             widget = self.__graph
+            allowProxy = False
 
         if widget is None:
             for bloc, vals in self.__subnets.iteritems():
@@ -84,6 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     widget = vals["widget"]
                     break
 
+        self.__parm_editor.allowProxy(allowProxy)
         self.__currentBlockChanged(widget.currentBlock())
 
     def __showGraphTab(self, parent, bloc):

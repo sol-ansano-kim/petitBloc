@@ -447,6 +447,26 @@ class Box(component.Component):
 
         return None
 
+    def proxyParams(self):
+        for proxy in self.__proxy_params:
+            yield proxy
+
+    def hasProxyParam(self, param):
+        for proxy in self.__proxy_params:
+            if proxy.param() == param:
+                return True
+
+        return False
+
+    def removeProxyParamFromParam(self, param):
+        target_proxy = None
+        for proxy in self.__proxy_params:
+            if proxy.param() == param:
+                target_proxy = proxy
+                break
+
+        return self.removeProxyParam(target_proxy)
+
     def removeProxyParam(self, proxy):
         if proxy in self.__proxy_params:
             self.__proxy_params.remove(proxy)
