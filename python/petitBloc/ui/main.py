@@ -54,6 +54,23 @@ class MainWindow(QtWidgets.QMainWindow):
         main_layout.addWidget(self.__run)
         self.__resetTabIndice()
 
+        menubar = self.menuBar()
+        file_menu = QtWidgets.QMenu("file")
+        save_action = QtWidgets.QAction("Save", file_menu)
+        save_as_action = QtWidgets.QAction("Save As", file_menu)
+        load_action = QtWidgets.QAction("Load", file_menu)
+        import_action = QtWidgets.QAction("Import Box", file_menu)
+        file_menu.addAction(save_action)
+        file_menu.addAction(save_as_action)
+        file_menu.addAction(load_action)
+        file_menu.addAction(import_action)
+        save_action.triggered.connect(self.__save)
+        save_as_action.triggered.connect(self.__saveAs)
+        load_action.triggered.connect(self.__load)
+        import_action.triggered.connect(self.__importBox)
+
+        menubar.addMenu(file_menu)
+
         self.__run.clicked.connect(self.__runPressed)
 
         self.__graph_tabs.tabCloseRequested.connect(self.__closeGraphRequest)
@@ -199,6 +216,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
         self.__packet_history.refresh()
+
+    def __save(self):
+        print "SAVE"
+
+    def __saveAs(self):
+        print "SAVE AS"
+
+    def __load(self):
+        print "LOAD"
+
+    def __importBox(self):
+        print "IMPORT BOX"
 
     def __currentBlockChanged(self, bloc):
         if not bloc:
