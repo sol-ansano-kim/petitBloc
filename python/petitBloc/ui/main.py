@@ -18,6 +18,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__run = None
         self.__parm_editor = None
         self.__subnets = {}
+        self.__removed_subnets = []
         self.__initialize()
 
     def __initialize(self):
@@ -60,7 +61,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
         self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
-        self.__graph.BoxDeleted.connect(self.__closeDeletedGraphTab)
+        self.__graph.BoxDeleted.connect(self.__boxDeleted)
+
+        self.__graph.BoxCreated.connect(self.__boxCreated)
 
     def __blockRenamed(self, bloc, newName):
         res = self.__graph.renameNode(bloc, newName)
@@ -82,54 +85,68 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if widget is None:
             for bloc, vals in self.__subnets.iteritems():
-                if vals["index"] == index:
+                if vals.get("index", None) == index:
                     widget = vals["widget"]
                     break
 
         self.__parm_editor.allowProxy(allowProxy)
         self.__currentBlockChanged(widget.currentBlock())
 
-    def __showGraphTab(self, parent, bloc):
+    def __boxCreated(self, boxBloc, parent, init=True):
+        if self.__subnets.has_key(boxBloc):
+            return
+
+        grph = graph.SubNet(boxObject=boxBloc, parent=parent)
+        grph.ItemDobleClicked.connect(self.__showGraphTab)
+        grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        grph.BoxDeleted.connect(self.__boxDeleted)
+        grph.ProxyPortAdded.connect(self.__addProxyPort)
+        grph.ProxyPortRemoved.connect(self.__removeProxyPort)
+        grph.BoxCreated.connect(self.__boxCreated)
+
+        self.__subnets[boxBloc] = {"parentWidget": parent, "widget": grph, "init": init}
+
+    def __showGraphTab(self, bloc):
         widget_created = False
 
-        if self.__subnets.has_key(bloc):
-            index = self.__subnets[bloc]["index"]
-            if index is None:
-                index = self.__graph_tabs.addTab(self.__subnets[bloc]["widget"], bloc.name())
-                self.__subnets[bloc]["index"] = index
-        else:
+        box_data = self.__subnets[bloc]
+
+        if box_data.get("index") is None:
             widget_created = True
-            grph = graph.SubNet(boxObject=bloc, parent=self)
-            grph.ItemDobleClicked.connect(self.__showGraphTab)
-            grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
-            grph.BoxDeleted.connect(self.__closeDeletedGraphTab)
-            grph.ProxyPortAdded.connect(self.__addProxyPort)
-            grph.ProxyPortRemoved.connect(self.__removeProxyPort)
-
-            index = self.__graph_tabs.addTab(grph, bloc.name())
-            self.__subnets[bloc] = {}
+            index = self.__graph_tabs.addTab(self.__subnets[bloc]["widget"], bloc.name())
             self.__subnets[bloc]["index"] = index
-            self.__subnets[bloc]["widget"] = grph
-            self.__subnets[bloc]["parent"] = parent
 
-        self.__graph_tabs.setCurrentIndex(index)
+        self.__graph_tabs.setCurrentIndex(self.__subnets[bloc]["index"])
 
-        if widget_created:
+        if self.__subnets[bloc]["init"]:
             self.__subnets[bloc]["widget"].moveProxiesToCenter()
+            self.__subnets[bloc]["init"] = False
+
+    def __boxDeleted(self, bloc):
+        self.__removed_subnets = [bloc]
+
+        self.__closeDeletedGraphTab(bloc)
+
+        for s in self.__removed_subnets:
+            self.__subnets.pop(s)
 
     def __closeDeletedGraphTab(self, bloc):
         vals = self.__subnets.get(bloc, {})
         if not vals:
             return
 
-        widget = vals["widget"]
+        widget = vals.get("widget")
+
+        for sub_bloc, sub_vals in self.__subnets.iteritems():
+            if sub_vals["parentWidget"] == widget:
+                self.__closeDeletedGraphTab(sub_bloc)
+
         widget.close()
         del widget
 
-        if vals["index"] is not None:
+        if vals.get("index", None) is not None:
             self.__graph_tabs.removeTab(vals["index"])
 
-        self.__subnets.pop(bloc)
         self.__resetTabIndice()
 
     def __closeGraphRequest(self, index):
@@ -141,11 +158,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __resetTabIndice(self):
         for vals in self.__subnets.values():
-            index = self.__graph_tabs.indexOf(vals["widget"])
+            index = self.__graph_tabs.indexOf(vals.get("widget"))
             vals["index"] = None if index < 0 else index
 
     def __addProxyPort(self, boxBloc, proxyNode, port):
-        par_grp = self.__subnets.get(boxBloc, {}).get("parent")
+        par_grp = self.__subnets.get(boxBloc, {}).get("parentWidget")
         if not par_grp:
             return
 
@@ -157,7 +174,7 @@ class MainWindow(QtWidgets.QMainWindow):
             par_grp.createAttribute(node=node, port=port, plug=True, socket=False, preset="attr_preset_1", dataType=port.typeClass(), proxyNode=proxyNode)
 
     def __removeProxyPort(self, boxBloc, proxyNode, name):
-        par_grp = self.__subnets.get(boxBloc, {}).get("parent")
+        par_grp = self.__subnets.get(boxBloc, {}).get("parentWidget")
         if not par_grp:
             return
 

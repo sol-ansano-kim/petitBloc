@@ -9,8 +9,9 @@ from . import blockCreator
 
 class Graph(nodz_main.Nodz):
     KeyPressed = QtCore.Signal(int)
-    ItemDobleClicked = QtCore.Signal(object, object)
+    ItemDobleClicked = QtCore.Signal(object)
     BlockDeleted = QtCore.Signal(object)
+    BoxCreated = QtCore.Signal(object, object)
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
 
@@ -39,7 +40,7 @@ class Graph(nodz_main.Nodz):
         itm = self.itemAt(evnt.pos())
         if itm is not None:
             if itm.block().hasNetwork():
-                self.ItemDobleClicked.emit(self, itm.block())
+                self.ItemDobleClicked.emit(itm.block())
 
     def findNode(self, bloc):
         for node in self.scene().nodes.values():
@@ -116,6 +117,9 @@ class Graph(nodz_main.Nodz):
         bloc = self.__model.addBlock(blockName)
         if bloc:
             node = self.createNode(bloc, position=self.mapToScene(self.mapFromGlobal(QtGui.QCursor.pos())))
+
+            if bloc.hasNetwork():
+                self.BoxCreated.emit(bloc, self)
 
             # TODO : preset
             for ip in bloc.inputs():
