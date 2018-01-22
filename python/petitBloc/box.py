@@ -217,6 +217,15 @@ class Box(component.Component):
                 c.disconnect()
                 self.removeChain(c)
 
+        params = map(lambda x: x, bloc.params())
+        delete_proxies = []
+        for p in self.proxyParams():
+            if p.param() in params:
+                delete_proxies.append(p)
+
+        for d in delete_proxies:
+            self.removeProxyParam(d)
+
         return True
 
     def addProxyParam(self, param, name=None):
