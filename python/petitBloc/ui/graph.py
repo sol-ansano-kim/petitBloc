@@ -11,7 +11,7 @@ class Graph(nodz_main.Nodz):
     KeyPressed = QtCore.Signal(int)
     ItemDobleClicked = QtCore.Signal(object)
     BlockDeleted = QtCore.Signal(object)
-    BoxCreated = QtCore.Signal(object, object)
+    BoxCreated = QtCore.Signal(object)
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
 
@@ -119,7 +119,7 @@ class Graph(nodz_main.Nodz):
             node = self.createNode(bloc, position=self.mapToScene(self.mapFromGlobal(QtGui.QCursor.pos())))
 
             if bloc.hasNetwork():
-                self.BoxCreated.emit(bloc, self)
+                self.BoxCreated.emit(bloc)
 
             # TODO : preset
             for ip in bloc.inputs():
@@ -167,6 +167,9 @@ class Graph(nodz_main.Nodz):
 
         # Emit signal.
         self.signal_AttrCreated.emit(node.name, index)
+
+    def initProxyNode(self):
+        pass
 
 
 class SubNet(Graph):
@@ -251,7 +254,7 @@ class SubNet(Graph):
     def outProxyDisConnected(self, proxyPort, port):
         self.boxModel().disconnectOutProxy(proxyPort, port)
 
-    def moveProxiesToCenter(self):
+    def initProxyNode(self):
         position = self.mapToScene(self.viewport().rect().center())
         self.__proxy_in.setPos(position - self.__proxy_in.nodeCenter - QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
         self.__proxy_out.setPos(position - self.__proxy_in.nodeCenter + QtCore.QPoint(0, self.__proxy_in.height) * 1.5)

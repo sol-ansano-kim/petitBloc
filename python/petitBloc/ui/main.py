@@ -17,7 +17,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__editor_tabs = None
         self.__run = None
         self.__parm_editor = None
-        self.__subnets = {}
+        self.__networks = {}
         self.__removed_subnets = []
         self.__initialize()
 
@@ -37,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph = graph.Graph(name="scene", parent=self)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
+        self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
 
         self.__parm_editor = paramEditor.ParamEditor()
         self.__packet_history = packetHistory.PacketHistory()
@@ -51,6 +52,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         main_layout.addWidget(main_contents)
         main_layout.addWidget(self.__run)
+        self.__resetTabIndice()
 
         self.__run.clicked.connect(self.__runPressed)
 
@@ -66,37 +68,31 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.BoxCreated.connect(self.__boxCreated)
 
     def __blockRenamed(self, bloc, newName):
-        res = self.__graph.renameNode(bloc, newName)
-        if res:
-            return
-
-        for subt in self.__subnets.values():
-            if subt["widget"].renameNode(bloc, newName):
+        for n_dict in self.__networks.values():
+            if n_dict["graph"].renameNode(bloc, newName):
                 return
 
         raise Exception, "Failed to find the node : {}".format(oldName)
 
     def __currentGraphTabChanged(self, index):
-        allowProxy = True
         widget = None
-        if index == 0:
-            widget = self.__graph
-            allowProxy = False
+
+        for n_dict in self.__networks.values():
+            if n_dict.get("index", None) == index:
+                widget = n_dict["graph"]
+                break
 
         if widget is None:
-            for bloc, vals in self.__subnets.iteritems():
-                if vals.get("index", None) == index:
-                    widget = vals["widget"]
-                    break
-
-        self.__parm_editor.allowProxy(allowProxy)
-        self.__currentBlockChanged(widget.currentBlock())
-
-    def __boxCreated(self, boxBloc, parent, init=True):
-        if self.__subnets.has_key(boxBloc):
             return
 
-        grph = graph.SubNet(boxObject=boxBloc, parent=parent)
+        self.__parm_editor.allowProxy(index != 0)
+        self.__currentBlockChanged(widget.currentBlock())
+
+    def __boxCreated(self, boxBloc, init=True):
+        if self.__networks.has_key(boxBloc):
+            return
+
+        grph = graph.SubNet(boxObject=boxBloc)
         grph.ItemDobleClicked.connect(self.__showGraphTab)
         grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
         grph.BoxDeleted.connect(self.__boxDeleted)
@@ -104,48 +100,57 @@ class MainWindow(QtWidgets.QMainWindow):
         grph.ProxyPortRemoved.connect(self.__removeProxyPort)
         grph.BoxCreated.connect(self.__boxCreated)
 
-        self.__subnets[boxBloc] = {"parentWidget": parent, "widget": grph, "init": init}
+        self.__networks[boxBloc] = {"graph": grph, "init": init}
 
     def __showGraphTab(self, bloc):
         widget_created = False
 
-        box_data = self.__subnets[bloc]
+        box_data = self.__networks[bloc]
 
         if box_data.get("index") is None:
             widget_created = True
-            index = self.__graph_tabs.addTab(self.__subnets[bloc]["widget"], bloc.path())
-            self.__subnets[bloc]["index"] = index
+            index = self.__graph_tabs.addTab(self.__networks[bloc]["graph"], bloc.path())
+            self.__networks[bloc]["index"] = index
 
-        self.__graph_tabs.setCurrentIndex(self.__subnets[bloc]["index"])
+        self.__graph_tabs.setCurrentIndex(self.__networks[bloc]["index"])
 
-        if self.__subnets[bloc]["init"]:
-            self.__subnets[bloc]["widget"].moveProxiesToCenter()
-            self.__subnets[bloc]["init"] = False
+        if self.__networks[bloc]["init"]:
+            self.__networks[bloc]["graph"].initProxyNode()
+            self.__networks[bloc]["init"] = False
 
     def __boxDeleted(self, bloc):
-        self.__removed_subnets = [bloc]
+        path = bloc.path()
 
-        self.__closeDeletedGraphTab(bloc)
+        remove_blocs = []
+        remove_widgets = []
+        remove_indices = []
 
-        for s in self.__removed_subnets:
-            self.__subnets.pop(s)
+        for bloc, n_dict in self.__networks.iteritems():
+            if bloc.path().startswith(path):
+                remove_blocs.append(bloc)
+                widget = n_dict.get("graph")
+                index = n_dict.get("index")
+                if widget is not None:
+                    remove_widgets.append(widget)
 
-    def __closeDeletedGraphTab(self, bloc):
-        vals = self.__subnets.get(bloc, {})
-        if not vals:
-            return
+                if index is not None:
+                    remove_indices.append(index)
 
-        widget = vals.get("widget")
+        remove_indices.sort()
+        remove_indices.reverse()
 
-        for sub_bloc, sub_vals in self.__subnets.iteritems():
-            if sub_vals["parentWidget"] == widget:
-                self.__closeDeletedGraphTab(sub_bloc)
+        while (remove_indices):
+            index = remove_indices.pop(0)
+            self.__graph_tabs.removeTab(index)
 
-        widget.close()
-        del widget
+        while (remove_blocs):
+            bloc = remove_blocs.pop(0)
+            self.__networks.pop(bloc, None)
 
-        if vals.get("index", None) is not None:
-            self.__graph_tabs.removeTab(vals["index"])
+        while (remove_widgets):
+            widget = remove_widgets.pop(0)
+            widget.close()
+            del widget
 
         self.__resetTabIndice()
 
@@ -157,42 +162,40 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__resetTabIndice()
 
     def __resetTabIndice(self):
-        for vals in self.__subnets.values():
-            index = self.__graph_tabs.indexOf(vals.get("widget"))
-            vals["index"] = None if index < 0 else index
+        for n_dict in self.__networks.values():
+            index = self.__graph_tabs.indexOf(n_dict["graph"])
+            n_dict["index"] = None if index < 0 else index
 
     def __addProxyPort(self, boxBloc, proxyNode, port):
-        par_grp = self.__subnets.get(boxBloc, {}).get("parentWidget")
-        if not par_grp:
+        par_dict = self.__networks.get(boxBloc.parent(), None)
+
+        if not par_dict:
             return
 
-        node = par_grp.findNode(boxBloc)
+        node = par_dict["graph"].findNode(boxBloc)
 
         if port.isInPort():
-            par_grp.createAttribute(node=node, port=port, plug=False, socket=True, preset="attr_preset_1", dataType=port.typeClass(), proxyNode=proxyNode)
+            par_dict["graph"].createAttribute(node=node, port=port, plug=False, socket=True, preset="attr_preset_1", dataType=port.typeClass(), proxyNode=proxyNode)
         else:
-            par_grp.createAttribute(node=node, port=port, plug=True, socket=False, preset="attr_preset_1", dataType=port.typeClass(), proxyNode=proxyNode)
+            par_dict["graph"].createAttribute(node=node, port=port, plug=True, socket=False, preset="attr_preset_1", dataType=port.typeClass(), proxyNode=proxyNode)
 
     def __removeProxyPort(self, boxBloc, proxyNode, name):
-        par_grp = self.__subnets.get(boxBloc, {}).get("parentWidget")
-        if not par_grp:
+        par_dict = self.__networks.get(boxBloc.parent(), None)
+        if not par_dict:
             return
 
-        node = par_grp.findNode(boxBloc)
+        node = par_dict["graph"].findNode(boxBloc)
 
-        par_grp.deleteAttribute(node, node.attrs.index(name))
+        par_dict["graph"].deleteAttribute(node, node.attrs.index(name))
 
     def __runPressed(self):
         graph = None
         index = self.__graph_tabs.currentIndex()
-        if index == 0:
-            graph = self.__graph
 
-        if graph is None:
-            for vals in self.__subnets.values():
-                if vals["index"] == index:
-                    graph = vals["widget"]
-                    break
+        for n_dict in self.__networks.values():
+            if n_dict["index"] == index:
+                graph = n_dict["graph"]
+                break
 
         self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
         self.__packet_history.refresh()
