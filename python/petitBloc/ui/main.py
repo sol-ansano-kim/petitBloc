@@ -113,7 +113,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if box_data.get("index") is None:
             widget_created = True
-            index = self.__graph_tabs.addTab(self.__subnets[bloc]["widget"], bloc.name())
+            index = self.__graph_tabs.addTab(self.__subnets[bloc]["widget"], bloc.path())
             self.__subnets[bloc]["index"] = index
 
         self.__graph_tabs.setCurrentIndex(self.__subnets[bloc]["index"])

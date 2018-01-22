@@ -54,6 +54,12 @@ class Parameter(object):
     def name(self):
         return self.__name
 
+    def path(self):
+        if self.__parent is None:
+            return self.__name
+
+        return "{}@{}".format(self.__parent.path(), self.__name)
+
     def typeClass(self):
         return self.__type_class
 
@@ -145,6 +151,12 @@ class PortBase(object):
 
     def parent(self):
         return self.__parent
+
+    def path(self):
+        if self.__parent is None:
+            return self.__name
+
+        return "{}.{}".format(self.__parent.path(), self.__name)
 
     def match(self, port):
         if self.__type_class == port.typeClass():
@@ -281,6 +293,12 @@ class ComponentBase(object):
 
     def parent(self):
         return self.__parent
+
+    def path(self):
+        if self.__parent is None:
+            return self.__name
+
+        return "{}/{}".format(self.__parent.path(), self.__name)
 
     def setParent(self, parent):
         self.__parent = parent
