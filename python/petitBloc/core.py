@@ -267,6 +267,9 @@ class ComponentBase(object):
     def __repr__(self):
         return self.__str__()
 
+    def type(self):
+        return self.__class_name
+
     def hasNetwork(self):
         return False
 
