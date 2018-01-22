@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import box
 from petitBloc import block
+from petitBloc import chain
 from petitBloc import workerManager
 
 
@@ -59,8 +60,8 @@ class PatchTest(unittest.TestCase):
         b.addBlock(m)
         b.addBlock(a)
         b.addBlock(mt)
-        b.connect(m.output(0), a.input(0))
-        b.connect(a.output(0), mt.input(0))
+        chain.Chain(m.output(0), a.input(0))
+        chain.Chain(a.output(0), mt.input(0))
 
         s = b.getSchedule()
 

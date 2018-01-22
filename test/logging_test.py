@@ -80,7 +80,7 @@ class LoggingTest(unittest.TestCase):
         b.addBlock(m)
         b.addBlock(e)
         e.param("value").set(5)
-        b.connect(m.output(0), e.input(0))
+        chain.Chain(m.output(0), e.input(0))
         workerManager.WorkerManager.RunSchedule(b.getSchedule())
         self.assertTrue(e.isFailed())
         self.assertFalse(e.isTerminated())

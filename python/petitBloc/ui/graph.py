@@ -21,10 +21,6 @@ class Graph(nodz_main.Nodz):
         self.__current_block = None
         self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames())
         self.__creator.BlockCreatorEnd.connect(self.addBlock)
-        self.signal_PlugConnected.connect(self.__portConnected)
-        self.signal_PlugDisconnected.connect(self.__portDisconnected)
-        self.signal_SocketConnected.connect(self.__portConnected)
-        self.signal_SocketDisconnected.connect(self.__portDisconnected)
         self.signal_NodeDeleted.connect(self.__nodeDeleted)
         self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
@@ -101,17 +97,11 @@ class Graph(nodz_main.Nodz):
                 self.BoxDeleted.emit(b)
             self.__model.deleteNode(n)
 
-    def __portConnected(self, srcNode, srcPort, dstNode, dstPort):
-        if srcNode is None or srcPort is None or dstNode is None or dstPort is None:
-            return
+    def portConnected(self, srcPort, dstPort):
+        self.__model.connect(srcPort, dstPort)
 
-        self.__model.connect(srcNode, srcPort, dstNode, dstPort)
-
-    def __portDisconnected(self, srcNode, srcPort, dstNode, dstPort):
-        if srcNode is None or srcPort is None or dstNode is None or dstPort is None:
-            return
-
-        self.__model.disconnect(srcNode, srcPort, dstNode, dstPort)
+    def portDisconnected(self, srcPort, dstPort):
+        self.__model.disconnect(srcPort, dstPort)
 
     def addBlock(self, blockName):
         bloc = self.__model.addBlock(blockName)
@@ -523,22 +513,7 @@ class OutputPortItem(nodz_main.PlugItem):
         # Emit signal.
         nodzInst = self.scene().views()[0]
 
-        if isinstance(self, OutputProxyPortItem):
-            if self.proxyNode().isInProxy():
-                self.proxyNode().scene().views()[0].inProxyConnected(self.port(), socket_item.port())
-            else:
-                self.proxyNode().scene().views()[0].outProxyConnected(self.port(), socket_item.port())
-
-            return
-
-        if isinstance(socket_item, InputProxyPortItem):
-            if socket_item.proxyNode().isInProxy():
-                socket_item.proxyNode().scene().views()[0].inProxyConnected(socket_item.port(), self.port())
-            else:
-                socket_item.proxyNode().scene().views()[0].outProxyConnected(socket_item.port(), self.port())
-
-            return
-
+        nodzInst.portConnected(self.port(), socket_item.port())
         nodzInst.signal_PlugConnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
 
     def disconnect(self, connection):
@@ -550,26 +525,13 @@ class OutputPortItem(nodz_main.PlugItem):
         socket_item = connection.socketItem
 
         nodzInst = self.scene().views()[0]
-
         if socket_item is not None:
-            if isinstance(self, OutputProxyPortItem):
-                if self.proxyNode().isInProxy():
-                    self.proxyNode().scene().views()[0].inProxyDisConnected(self.port(), socket_item.port())
-                else:
-                    self.proxyNode().scene().views()[0].outProxyDisConnected(self.port(), socket_item.port())
-
-            elif isinstance(socket_item, InputProxyPortItem):
-                if socket_item.proxyNode().isInProxy():
-                    socket_item.proxyNode().scene().views()[0].inProxyDisConnected(socket_item.port(), self.port())
-                else:
-                    socket_item.proxyNode().scene().views()[0].outProxyDisConnected(socket_item.port(), self.port())
-
-            else:
-                nodzInst.signal_PlugDisconnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+            nodzInst.portDisconnected(self.port(), socket_item.port())
 
         # Remove connected socket from plug
         if connection.socketItem in self.connected_slots:
             self.connected_slots.remove(connection.socketItem)
+
         # Remove connection
         self.connections.remove(connection)
 
@@ -587,11 +549,18 @@ class OutputPortItem(nodz_main.PlugItem):
 
                 return
 
-            if isinstance(self, OutputProxyPortItem) and (isinstance(target, ProxyItem) or isinstance(target, InputProxyPortItem)):
-                self.newConnection._remove()
-                super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+            if isinstance(self, OutputProxyPortItem):
+                if isinstance(target, ProxyItem) and self.proxyNode().block().parent() == target.block().parent():
+                    self.newConnection._remove()
+                    super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
 
-                return
+                    return
+
+                if isinstance(target, InputProxyPortItem) and self.proxyNode().block().parent() == target.proxyNode().block().parent():
+                    self.newConnection._remove()
+                    super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                    return
 
             if isinstance(target, ProxyItem):
                 if target.isInProxy():
@@ -723,22 +692,7 @@ class InputPortItem(nodz_main.SocketItem):
 
         # Emit signal.
         nodzInst = self.scene().views()[0]
-
-        if isinstance(self, InputProxyPortItem):
-            if self.proxyNode().isInProxy():
-                self.proxyNode().scene().views()[0].inProxyConnected(self.port(), plug_item.port())
-            else:
-                self.proxyNode().scene().views()[0].outProxyConnected(self.port(), plug_item.port())
-
-            return
-
-        if isinstance(plug_item, OutputProxyPortItem):
-            if plug_item.proxyNode().isInProxy():
-                plug_item.proxyNode().scene().views()[0].inProxyConnected(plug_item.port(), self.port())
-            else:
-                plug_item.proxyNode().scene().views()[0].outProxyConnected(plug_item.port(), self.port())
-
-            return
+        nodzInst.portConnected(plug_item.port(), self.port())
 
         nodzInst.signal_SocketConnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
 
@@ -751,26 +705,13 @@ class InputPortItem(nodz_main.SocketItem):
         plug_item = connection.plugItem
 
         nodzInst = self.scene().views()[0]
-
         if plug_item is not None:
-            if isinstance(self, InputProxyPortItem):
-                if self.proxyNode().isInProxy():
-                    self.proxyNode().scene().views()[0].inProxyDisConnected(self.port(), plug_item.port())
-                else:
-                    self.proxyNode().scene().views()[0].outProxyDisConnected(self.port(), plug_item.port())
-
-            elif isinstance(plug_item, OutputProxyPortItem):
-                if plug_item.proxyNode().isInProxy():
-                    plug_item.proxyNode().scene().views()[0].inProxyDisConnected(plug_item.port(), self.port())
-                else:
-                    plug_item.proxyNode().scene().views()[0].outProxyDisConnected(plug_item.port(), self.port())
-
-            else:
-                nodzInst.signal_SocketDisconnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+            nodzInst.portDisconnected(plug_item.port(), self.port())
 
         # Remove connected plugs
         if connection.plugItem in self.connected_slots:
             self.connected_slots.remove(connection.plugItem)
+
         # Remove connections
         self.connections.remove(connection)
 
@@ -788,11 +729,18 @@ class InputPortItem(nodz_main.SocketItem):
 
                 return
 
-            if isinstance(self, InputProxyPortItem) and (isinstance(target, ProxyItem) or isinstance(target, OutputProxyPortItem)):
-                self.newConnection._remove()
-                super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+            if isinstance(self, InputProxyPortItem):
+                if isinstance(target, ProxyItem) and self.proxyNode().block().parent() == target.block().parent():
+                    self.newConnection._remove()
+                    super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
 
-                return
+                    return
+
+                if isinstance(target, OutputProxyPortItem) and self.proxyNode().block().parent() == target.proxyNode().block().parent():
+                    self.newConnection._remove()
+                    super(nodz_main.SlotItem, self).mouseReleaseEvent(event)
+
+                    return
 
             if isinstance(target, ProxyItem):
                 if target.isOutProxy():

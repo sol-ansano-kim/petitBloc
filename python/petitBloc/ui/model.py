@@ -1,5 +1,6 @@
 from Qt import QtCore
 from .. import box
+from .. import chain
 from .. import blockManager
 from .. import workerManager
 import copy
@@ -75,63 +76,21 @@ class BoxModel(QtCore.QObject):
     def blockClassNames(self):
         return self.__manager.blockNames()
 
-    def connectInProxy(self, proxyPort, port):
-        if not self.__box.connectInputProxyPort(proxyPort, port):
-            raise Exception, "Failed to connect to inProxy : {}".format(port.name())
+    def connect(self, srcPort, dstPort):
+        srcs = map(lambda x: x, dstPort.chains())
 
-    def connectOutProxy(self, proxyPort, port):
-        if not self.__box.connectOutputProxyPort(proxyPort, port):
-            raise Exception, "Failed to connect to outProxy : {}".format(port.name())
+        if srcs:
+            if srcs[0].src() == srcPort:
+                return
 
-    def disconnectInProxy(self, proxyPort, port):
-        if not self.__box.disconnectInputProxyPort(proxyPort, port):
-            raise Exception, "Failed to disconnect to inProxy : {}".format(port.name())
+        chn = chain.Chain(srcPort, dstPort)
 
-    def disconnectOutProxy(self, proxyPort, port):
-        if not self.__box.disconnectOutputProxyPort(proxyPort, port):
-            raise Exception, "Failed to disconnect to outProxy : {}".format(port.name())
+        if chn is None:
+            raise Exception, "Failed to connect {} to {}".format(srcPort.path(), dstPort.path())
 
-    def connect(self, srcBloc, srcPort, dstBloc, dstPort):
-        src_bloc = self.block(srcBloc)
-        if src_bloc is None:
-            raise Exception, "Failed to find the srcBloc : {}".format(srcBloc)
-
-        dst_bloc = self.block(dstBloc)
-        if dst_bloc is None:
-            raise Exception, "Failed to find the dstBloc : {}".format(dstBloc)
-
-        src_port = src_bloc.output(srcPort)
-        if src_port is None:
-            raise Exception, "Failed to find the srcPort : {}.{}".format(srcBloc, srcPort)
-
-        dst_port = dst_bloc.input(dstPort)
-        if dst_port is None:
-            raise Exception, "Failed to find the dstPort : {}.{}".format(dstBloc, dstPort)
-
-        res = self.__box.connect(src_port, dst_port)
-        if not res:
-            raise Exception, "Failed to connect ports : {}.{} > {}.{}".format(srcBloc, srcPort, dstBloc, dstPort)
-
-    def disconnect(self, srcBloc, srcPort, dstBloc, dstPort):
-        src_bloc = self.block(srcBloc)
-        if src_bloc is None:
-            raise Exception, "Failed to find the srcBloc : {}".format(srcBloc)
-
-        dst_bloc = self.block(dstBloc)
-        if dst_bloc is None:
-            raise Exception, "Failed to find the dstBloc : {}".format(dstBloc)
-
-        src_port = src_bloc.output(srcPort)
-        if src_port is None:
-            raise Exception, "Failed to find the srcPort : {}.{}".format(srcBloc, srcPort)
-
-        dst_port = dst_bloc.input(dstPort)
-        if dst_port is None:
-            raise Exception, "Failed to find the dstPort : {}.{}".format(dstBloc, dstPort)
-
-        if self.__box.isConnected(src_port, dst_port):
-            if not self.__box.disconnect(src_port, dst_port):
-                raise Exception, "Failed to disconnect ports : {}.{} > {}.{}".format(srcBloc, srcPort, dstBloc, dstPort)
+    def disconnect(self, srcPort, dstPort):
+        for c in dstPort.chains():
+            c.disconnect()
 
     def deleteNode(self, nodeName):
         bloc = self.block(nodeName)

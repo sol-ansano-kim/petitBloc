@@ -4,6 +4,7 @@ import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import box
 from petitBloc import block
+from petitBloc import chain
 from petitBloc import workerManager
 import multiprocessing
 
@@ -108,21 +109,21 @@ class BoxTest(unittest.TestCase):
         mn = MakeNumbers()
         dp = Dump()
         mt = Mult()
-        self.assertFalse(b.connect(mn.output(0), dp.input(0)))
+
         b.addBlock(mn)
         b.addBlock(dp)
         b.addBlock(mt)
-        self.assertTrue(b.connect(mn.output(0), dp.input(0)))
-        chn1 = None
-        for c in b.chains():
-            chn1 = c
-            self.assertTrue(c.isConnected())
 
-        self.assertTrue(b.connect(mt.output(0), dp.input(0)))
-        self.assertEqual(b.chainCount(), 1)
+        chn1 = chain.Chain(mn.output(0), dp.input(0))
+        self.assertIsNotNone(chn1)
+
+        self.assertTrue(chn1.isConnected())
+
+        chn2 = chain.Chain(mt.output(0), dp.input(0))
+        self.assertIsNotNone(chn2)
+
+        self.assertTrue(chn2.isConnected())
         self.assertFalse(chn1.isConnected())
-        for c in b.chains():
-            self.assertTrue(c.isConnected())
 
     def test_add_bloc(self):
         g = box.Box()
@@ -141,11 +142,11 @@ class BoxTest(unittest.TestCase):
             doub = Mult(name="Mult{}".format(i))
             self.assertTrue(g.addBlock(doub))
             self.assertTrue(g.addBlock(add))
-            self.assertTrue(g.connect(last, add.input(0)))
-            self.assertTrue(g.connect(add.output(0), doub.input(0)))
+            self.assertIsNotNone(chain.Chain(last, add.input(0)))
+            self.assertIsNotNone(chain.Chain(add.output(0), doub.input(0)))
             last = doub.output(0)
 
-        self.assertTrue(g.connect(last, dmp.input(0)))
+        self.assertIsNotNone(chain.Chain(last, dmp.input(0)))
 
         v1 = []
         for i in range(100):
@@ -188,10 +189,10 @@ class BoxTest(unittest.TestCase):
         g.addBlock(dmp1)
         g.addBlock(dmp2)
 
-        g.connect(two.output(0), add1.input(0))
-        g.connect(two.output(1), add2.input(0))
-        g.connect(add1.output(0), dmp1.input(0))
-        g.connect(add2.output(0), dmp2.input(0))
+        chain.Chain(two.output(0), add1.input(0))
+        chain.Chain(two.output(1), add2.input(0))
+        chain.Chain(add1.output(0), dmp1.input(0))
+        chain.Chain(add2.output(0), dmp2.input(0))
 
         workerManager.WorkerManager.RunSchedule(g.getSchedule())
 
@@ -219,7 +220,7 @@ class BoxTest(unittest.TestCase):
         dmp1 = Dump(name="OutSideDmp")
         self.assertTrue(g.addBlock(num1))
         self.assertTrue(g.addBlock(dmp1))
-        self.assertTrue(g.connect(num1.output(0), dmp1.input(0)))
+        self.assertIsNotNone(chain.Chain(num1.output(0), dmp1.input(0)))
 
         c = box.Box()
         self.assertTrue(g.addBlock(c))
@@ -229,8 +230,8 @@ class BoxTest(unittest.TestCase):
         self.assertTrue(c.addBlock(num2))
         self.assertTrue(c.addBlock(dmp2))
         self.assertTrue(c.addBlock(add))
-        self.assertTrue(c.connect(num2.output(0), add.input(0)))
-        self.assertTrue(c.connect(add.output(0), dmp2.input(0)))
+        self.assertIsNotNone(chain.Chain(num2.output(0), add.input(0)))
+        self.assertIsNotNone(chain.Chain(add.output(0), dmp2.input(0)))
 
         workerManager.WorkerManager.RunSchedule(g.getSchedule())
         workerManager.WorkerManager.SetUseProcess(False)
