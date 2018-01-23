@@ -357,6 +357,32 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 grph.addOutputProxy(type_class, name)
 
+        ## proxy params
+        for pam in data["proxyParameters"]:
+            box_path = uiUtil.AddRootPath(pam["path"])
+            grph = self.__getGraph(box_path)
+            if grph is None:
+                raise Exception, "Failed to load : could not find the graph - {}".format(box_path)
+
+            for pdata in pam["params"]:
+                # print param["name"]
+                bloc_path, param_name = uiUtil.AddRootPath(pdata["param"]).split("@")
+                parant_grp = self.__getParentGraph(bloc_path)
+                if parant_grp is None:
+                    print("Warning : could not find target parent {}".format(bloc_path))
+                    continue
+
+                node = parant_grp.findNodeFromName(self.__shortName(bloc_path))
+                if node is None:
+                    print("Warning : could not find target node {}".format(bloc_path))
+                    continue
+
+                param = node.block().param(param_name)
+                if param is None:
+                    print("Warning : could not find target param {}@{}".format(bloc_path, param_name))
+
+                grph.box().addProxyParam(param, name=pdata["name"])
+
         ## connect ports
         for con in data["connections"]:
             parent = None

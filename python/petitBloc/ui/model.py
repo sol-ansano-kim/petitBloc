@@ -179,6 +179,14 @@ class BoxModel(QtCore.QObject):
                 ip = b.outputProxyIn(pn)
                 out_data.append({"name": pn, "type": ip.typeClass().__name__})
 
+        ## proxy params
+        for b in boxies:
+            params = []
+            box_data = {"path": uiUtil.PopRootPath(b.path()), "params": params}
+            data["proxyParameters"].append(box_data)
+            for p in b.proxyParams():
+                params.append({"name": p.name(), "param": uiUtil.PopRootPath(p.param().path())})
+
         ## connection data
         for b in blocks:
             for p in b.inputs():
