@@ -35,7 +35,7 @@ class Graph(nodz_main.Nodz):
     def mouseDoubleClickEvent(self, evnt):
         itm = self.itemAt(evnt.pos())
 
-        if itm is not None:
+        if itm is not None and isinstance(itm, BlocItem):
             if itm.block().hasNetwork():
                 self.ItemDobleClicked.emit(itm.block())
 
