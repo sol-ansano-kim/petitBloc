@@ -54,6 +54,12 @@ class Parameter(object):
     def name(self):
         return self.__name
 
+    def path(self):
+        if self.__parent is None:
+            return self.__name
+
+        return "{}@{}".format(self.__parent.path(), self.__name)
+
     def typeClass(self):
         return self.__type_class
 
@@ -76,7 +82,7 @@ class Parameter(object):
         return False
 
 
-class ProxyParameter(object):
+class ProxyParameter(Proxy, object):
     def __init__(self, param, name=None):
         super(ProxyParameter, self).__init__()
         self.__name = name if name is not None else param.name()
@@ -87,6 +93,9 @@ class ProxyParameter(object):
 
     def param(self):
         return self.__param
+
+    def typeClass(self):
+        return self.param().typeClass()
 
     def set(self, value):
         return self.__param.set(value)
@@ -143,6 +152,12 @@ class PortBase(object):
     def parent(self):
         return self.__parent
 
+    def path(self):
+        if self.__parent is None:
+            return self.__name
+
+        return "{}.{}".format(self.__parent.path(), self.__name)
+
     def match(self, port):
         if self.__type_class == port.typeClass():
             return True
@@ -155,7 +170,7 @@ class PortBase(object):
     def isConnected(self):
         return False
 
-    def getChains(self):
+    def chains(self):
         for i in range(0):
             yield i
 
@@ -182,6 +197,9 @@ class PortBase(object):
 
     def activate(self):
         pass
+
+    def packetHistory(self):
+        return []
 
 
 class ChainBase(object):
@@ -247,6 +265,7 @@ class ComponentBase(object):
     Initialized = 0
     Active = 1
     Terminated = 2
+    Failed = 3
 
     def __init__(self, name="", parent=None):
         self.__name = name
@@ -260,11 +279,26 @@ class ComponentBase(object):
     def __repr__(self):
         return self.__str__()
 
+    def type(self):
+        return self.__class_name
+
+    def hasNetwork(self):
+        return False
+
+    def rename(self, name):
+        self.__name = name
+
     def name(self):
         return self.__name
 
     def parent(self):
         return self.__parent
+
+    def path(self):
+        if self.__parent is None:
+            return self.__name
+
+        return "{}/{}".format(self.__parent.path(), self.__name)
 
     def setParent(self, parent):
         self.__parent = parent
@@ -274,11 +308,7 @@ class ComponentBase(object):
 
     def run(self):
         while (True):
-            try:
-                if not self.process():
-                    break
-            except Exception as e:
-                # TODO : dump error log
+            if not self.process():
                 break
 
     def process(self):
@@ -299,14 +329,20 @@ class ComponentBase(object):
     def isTerminated(self):
         return self.__state is ComponentBase.Terminated
 
+    def isFailed(self):
+        return self.__state is ComponentBase.Failed
+
     def resetState(self):
         self.__state = ComponentBase.Initialized
 
     def activate(self):
         self.__state = ComponentBase.Active
 
-    def terminate(self):
-        self.__state = ComponentBase.Terminated
+    def terminate(self, success=True):
+        if success:
+            self.__state = ComponentBase.Terminated
+        else:
+            self.__state = ComponentBase.Failed
 
     def addInput(self, typeClass, name=None):
         return None
@@ -327,6 +363,19 @@ class ComponentBase(object):
     def inputs(self):
         for i in range(0):
             yield i
+
+    def hasConnection(self, port):
+        return False
+
+    def addParam(self, typeClass=None, name=None, value=None):
+        return None
+
+    def params(self):
+        for i in range(0):
+            yield i
+
+    def param(self, index_or_name):
+        return None
 
     def output(self, index_or_name):
         return None

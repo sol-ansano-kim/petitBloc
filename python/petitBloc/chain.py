@@ -1,14 +1,13 @@
 from numbers import Number
 from . import core
 from . import packet
-from . import manager
+from . import workerManager
 
 
 class Chain(core.ChainBase):
     def __init__(self, srcPort, dstPort):
         super(Chain, self).__init__(srcPort, dstPort)
         self.__packets = None
-        self.__is_activated = False
 
     def empty(self):
         if self.__packets is None:
@@ -23,24 +22,32 @@ class Chain(core.ChainBase):
             while (not self.__packets.empty()):
                 self.__packets.get().drop()
 
+            workerManager.WorkerManager.DeleteQueue(self.__packets)
+            self.__packets = None
+
     def activate(self):
-        if not self.__is_activated:
-            self.__is_activated = True
-            self.__packets = manager.QueueManager.CreateQueue()
+        if self.__packets is None:
+            self.__packets = workerManager.WorkerManager.CreateQueue()
 
     def terminate(self):
-        if self.__is_activated and self.__packets.empty():
-            self.__packets = manager.QueueManager.DeleteQueue(self.__packets)
-            if self.__packets is None:
-                self.__is_activated = False
+        if self.__packets is not None:
+            while (not self.__packets.empty()):
+                self.__packets.get().drop()
+
+            workerManager.WorkerManager.DeleteQueue(self.__packets)
+            self.__packets = None
 
     def send(self, pack):
         if self.dst() is None:
             return False
 
+        if self.__packets is None:
+            return False
+
         pack.pickUp()
 
         self.__packets.put(pack)
+
         return True
 
     def sendEOP(self):

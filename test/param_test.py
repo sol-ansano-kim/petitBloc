@@ -7,7 +7,7 @@ from petitBloc import chain
 from petitBloc import block
 from petitBloc import core
 from petitBloc import box
-from petitBloc import manager
+from petitBloc import workerManager
 import multiprocessing
 
 
@@ -18,17 +18,12 @@ class DmpStr(block.Block):
 
     def initialize(self):
         self.addInput(str)
+        self.addParam(str, "testStr")
 
     def process(self):
-        p = self.input(0).receive()
-        if p.isEOP():
-            return False
+        self.dmp.put(self.param("testStr").get())
 
-        self.dmp.put(p.value())
-
-        p.drop()
-
-        return True
+        return False
 
 
 class DmpInt(block.Block):
@@ -38,15 +33,12 @@ class DmpInt(block.Block):
 
     def initialize(self):
         self.addInput(int)
+        self.addParam(int, "testInt")
 
     def process(self):
-        p = self.input(0).receive()
-        if p.isEOP():
-            return False
+        self.dmp.put(self.param("testInt").get())
 
-        self.dmp.put(p.value())
-
-        return True
+        return False
 
 
 class TestParameter(unittest.TestCase):
@@ -93,9 +85,9 @@ class TestParameter(unittest.TestCase):
         p2 = core.Parameter("testInt", 0, int)
 
 
-class TestInitBlock(unittest.TestCase):
+class TestBlock(unittest.TestCase):
     def test_init(self):
-        b = block.ParamBlock(name="Param")
+        b = block.Block()
         self.assertIsNotNone(b)
 
         p = b.addParam()
@@ -105,25 +97,21 @@ class TestInitBlock(unittest.TestCase):
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param")
         self.assertEqual(p.get(), "")
-        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(int)
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param1")
         self.assertEqual(p.get(), 0)
-        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(float)
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param2")
         self.assertEqual(p.get(), 0.0)
-        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(bool)
         self.assertIsNotNone(p)
         self.assertEqual(p.name(), "param3")
         self.assertEqual(p.get(), False)
-        self.assertIsNotNone(b.output(p.name()))
 
         p = b.addParam(list)
         self.assertIsNone(p)
@@ -133,57 +121,19 @@ class TestInitBlock(unittest.TestCase):
         self.assertEqual(p.name(), "intNumber")
         self.assertEqual(p.typeClass(), int)
         self.assertEqual(p.get(), 1)
-        self.assertIsNotNone(b.output(p.name()))
-
-        count = 0
-        for p in b.params():
-            count += 1
-
-        self.assertEqual(count, 5)
-
-        count = 0
-        for p in b.outputs():
-            count += 1
-
-        self.assertEqual(count, 5)
-
-        count = 0
-        for p in b.inputs():
-            count += 1
-
-        self.assertEqual(count, 0)
-
-        self.assertIsNone(b.addInput(str))
-        self.assertIsNone(b.addOutput(str))
 
     def test_run(self):
-        b = block.ParamBlock("test")
-        b.addParam(str, "testStr")
-        b.addParam(int, "testInt")
-
-        p1 = b.output("testStr")
-        self.assertIsNotNone(p1)
-        p2 = b.output("testInt")
-        self.assertIsNotNone(p2)
-
         dmp_str = DmpStr()
         dmp_int = DmpInt()
 
-        self.assertIsNotNone(chain.Chain(p1, dmp_str.input(0)))
-        self.assertIsNotNone(chain.Chain(p2, dmp_int.input(0)))
-
-        self.assertTrue(b.param("testStr").set("HELLO"))
-        self.assertTrue(b.param("testInt").set(23))
-        b.activate()
-        b.run()
-        b.terminate()
-
+        self.assertTrue(dmp_str.param("testStr").set("HELLO"))
+        self.assertTrue(dmp_int.param("testInt").set(23))
         dmp_str.activate()
         dmp_str.run()
 
         dmp_int.activate()
         dmp_int.run()
-        
+
         dmp_str.terminate()
         dmp_int.terminate()
 
@@ -199,27 +149,18 @@ class TestInitBlock(unittest.TestCase):
 
         self.assertEqual(int_val, [23])
 
-    def test_box(self):
+    def test_run(self):
         box1 = box.Box()
-
-        pb = block.ParamBlock("test")
         dmp_str = DmpStr()
         dmp_int = DmpInt()
-        self.assertTrue(box1.addBlock(pb))
         self.assertTrue(box1.addBlock(dmp_str))
         self.assertTrue(box1.addBlock(dmp_int))
 
-        pb.addParam(str, "string")
-        pb.addParam(int, "int")
-
-        self.assertTrue(box1.connect(pb.output("string"), dmp_str.input(0)))
-        self.assertTrue(box1.connect(pb.output("int"), dmp_int.input(0)))
-
-        pb.param("string").set("HELLO")
-        pb.param("int").set(23)
+        dmp_str.param("testStr").set("HELLO")
+        dmp_int.param("testInt").set(23)
 
         schedule = box1.getSchedule()
-        manager.RunSchedule(schedule)
+        workerManager.WorkerManager.RunSchedule(schedule)
 
         str_val = []
         while (not dmp_str.dmp.empty()):

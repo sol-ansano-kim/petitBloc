@@ -1,0 +1,3 @@
+[submodule "Qt.py"]
+	path = Qt.py
+	url = https://github.com/mottosso/Qt.py.git

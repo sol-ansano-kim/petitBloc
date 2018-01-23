@@ -2,10 +2,11 @@ import re
 
 
 ReConvention = re.compile("^[a-zA-Z][a-zA-Z0-9_]*$")
+ReForbiddenName = re.compile("[^a-zA-z0-9_]")
 ReNumber = re.compile("[0-9]+$")
 
 
-def validateName(name):
+def ValidateName(name):
     return True if ReConvention.match(name) else False
 
 

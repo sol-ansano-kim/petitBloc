@@ -5,6 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import block
 from petitBloc import chain
 import multiprocessing
+import time
 
 
 class MakeString(block.Block):
@@ -16,6 +17,7 @@ class MakeString(block.Block):
 
     def process(self):
         self.output(0).send("Hello World. My Name is MakeString")
+        time.sleep(0.01)
         return False
 
 
@@ -35,6 +37,7 @@ class SplitString(block.Block):
         output = self.output(0)
         for txt in pack.value().split(" "):
             output.send(txt)
+            time.sleep(0.01)
 
         pack.drop()
 
@@ -98,11 +101,11 @@ class PacketTest(unittest.TestCase):
 
         out3 = blck.addOutput(int, "test")
         self.assertIsNotNone(out3)
-        self.assertEqual(out3.name(), "test")
+        self.assertEqual(out3.name(), "test2")
 
         out4 = blck.addOutput(int, "test")
         self.assertIsNotNone(out4)
-        self.assertEqual(out4.name(), "test1")
+        self.assertEqual(out4.name(), "test3")
 
     def test_custom_block(self):
         ms = MakeString()

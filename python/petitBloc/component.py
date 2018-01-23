@@ -8,6 +8,7 @@ class Component(core.ComponentBase):
         super(Component, self).__init__(name=name, parent=parent)
         self.__inputs = []
         self.__outputs = []
+        self.__params = []
         self.initialize()
 
     def getSchedule(self):
@@ -21,20 +22,20 @@ class Component(core.ComponentBase):
         for out in self.__outputs:
             out.activate()
 
-    def terminate(self):
+    def terminate(self, success=True):
         for out in self.__outputs:
             out.terminate()
 
         for inp in self.__inputs:
             inp.terminate()
 
-        super(Component, self).terminate()
+        super(Component, self).terminate(success=success)
 
     def addInput(self, typeClass, name=None):
-        if name is None or not util.validateName(name):
+        if name is None or not util.ValidateName(name):
             name = "input"
 
-        all_names = map(lambda x: x.name(), self.__inputs)
+        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
 
         name = util.GetUniqueName(name, all_names)
 
@@ -44,10 +45,10 @@ class Component(core.ComponentBase):
         return p
 
     def addOutput(self, typeClass, name=None):
-        if name is None or not util.validateName(name):
+        if name is None or not util.ValidateName(name):
             name = "output"
 
-        all_names = map(lambda x: x.name(), self.__outputs)    
+        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
 
         name = util.GetUniqueName(name, all_names)
 
@@ -106,10 +107,23 @@ class Component(core.ComponentBase):
 
         return None
 
+    def hasConnection(self, port):
+        for p in self.__inputs:
+            for c in p.chains():
+                if c.dst() == port:
+                    return True
+
+        for p in self.__outputs:
+            for c in p.chains():
+                if c.src() == port:
+                    return True
+
+        return False
+
     def upstream(self):
         upstreams = []
         for inp in self.__inputs:
-            for chn in inp.getChains():
+            for chn in inp.chains():
                 src = chn.src()
                 if src is None:
                     continue
@@ -126,7 +140,7 @@ class Component(core.ComponentBase):
     def downstream(self):
         downstreams = []
         for oup in self.__outputs:
-            for chn in oup.getChains():
+            for chn in oup.chains():
                 dst = chn.dst()
                 if dst is None:
                     continue
@@ -142,3 +156,35 @@ class Component(core.ComponentBase):
                     downstreams.append(down)
 
         return downstreams
+
+    def addParam(self, typeClass=None, name=None, value=None):
+        if name is None or not util.ValidateName(name):
+            name = "param"
+
+        all_names = map(lambda x: x.name(), self.__params)
+
+        name = util.GetUniqueName(name, all_names)
+
+        p = core.Parameter(name, typeClass=typeClass, value=value, parent=self)
+        if p:
+            self.__params.append(p)
+
+        return p
+
+    def params(self):
+        for p in self.__params:
+            yield p
+
+    def param(self, index_or_name):
+        if isinstance(index_or_name, int):
+            if index_or_name < 0 or index_or_name >= len(self.__params):
+                return None
+
+            return self.__params[index_or_name]
+
+        if isinstance(index_or_name, basestring):
+            for p in self.__params:
+                if p.name() == index_or_name:
+                    return p
+
+        return None
