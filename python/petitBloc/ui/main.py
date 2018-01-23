@@ -25,7 +25,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__initialize()
 
     def __initialize(self):
-        self.setWindowTitle("untitled")
         self.setObjectName(const.ObjectName)
 
         centeral = QtWidgets.QWidget()
@@ -61,17 +60,17 @@ class MainWindow(QtWidgets.QMainWindow):
         file_menu = QtWidgets.QMenu("file")
         news_action = QtWidgets.QAction("New Scene", file_menu)
         save_action = QtWidgets.QAction("Save", file_menu)
-        # save_as_action = QtWidgets.QAction("Save As", file_menu)
+        save_as_action = QtWidgets.QAction("Save As", file_menu)
         load_action = QtWidgets.QAction("Load", file_menu)
         # import_action = QtWidgets.QAction("Import Box", file_menu)
         file_menu.addAction(news_action)
         file_menu.addAction(save_action)
-        # file_menu.addAction(save_as_action)
+        file_menu.addAction(save_as_action)
         file_menu.addAction(load_action)
         # file_menu.addAction(import_action)
         news_action.triggered.connect(self.__new)
         save_action.triggered.connect(self.__save)
-        # save_as_action.triggered.connect(self.__saveAs)
+        save_as_action.triggered.connect(self.__saveAs)
         load_action.triggered.connect(self.__load)
         # import_action.triggered.connect(self.__importBox)
 
@@ -89,6 +88,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
 
         self.__graph.BoxCreated.connect(self.__boxCreated)
+
+        self.__setPath(None)
 
     def __blockRenamed(self, bloc, newName):
         for n_dict in self.__networks.values():
@@ -233,6 +234,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         return None
 
+    def __setPath(self, path):
+        self.__filepath = path
+        if path is None:
+            self.setWindowTitle("untitled")
+        else:
+            self.setWindowTitle(self.__filepath)
+
     def __new(self):
         while (self.__graph_tabs.count() > 0):
             self.__graph_tabs.removeTab(0)
@@ -255,12 +263,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.BoxCreated.connect(self.__boxCreated)
 
         self.__resetTabIndice()
+        self.__setPath(None)
 
     def __save(self):
-        pth, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save", "", "*.blcs")
-        if not pth:
+        if self.__filepath is None:
+            self.__saveAs()
             return
 
+        self.__saveData()
+
+    def __saveData(self):
         data = self.__graph.boxModel().serialize()
         for b in data["blocks"]:
             path = uiUtil.AddRootPath(b["path"])
@@ -276,13 +288,18 @@ class MainWindow(QtWidgets.QMainWindow):
             pos = nod.pos() + nod.nodeCenter
             b["pos"] = [pos.x(), pos.y()]
 
-        uiUtil.Save(pth, data)
+        uiUtil.Save(self.__filepath, data)
+
+    def __saveAs(self):
+        pth, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save", "", "*.blcs")
+        if not pth:
+            return
+
+        self.__setPath(pth)
+        self.__saveData()
 
     def __shortName(self, path):
         return path[path.rfind("/") + 1:]
-
-    def __saveAs(self):
-        print "SAVE AS"
 
     def __load(self):
         pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load", "", "*.blcs")
@@ -426,7 +443,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
             src_parent.createConnection(self.__shortName(src_node_path), src_port, self.__shortName(dst_node_path), dst_port)
 
-            self.__resetTabIndice()
+        self.__resetTabIndice()
+        self.__setPath(pth)
 
     def __importBox(self):
         print "IMPORT BOX"

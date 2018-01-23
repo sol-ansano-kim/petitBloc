@@ -45,7 +45,7 @@ def Load(path):
     with open(path, "r") as f:
         data = json.load(f)
 
-    print("// Load .. {}".format(path))
+    print("// Load : {}".format(path))
 
     data["blocks"] = __sortDataBtPath(data["blocks"])
     data["connections"] = __sortDataBtPath(data["connections"])
