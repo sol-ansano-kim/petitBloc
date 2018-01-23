@@ -3,6 +3,7 @@ from .. import box
 from .. import chain
 from .. import blockManager
 from .. import workerManager
+from . import uiUtil
 import copy
 
 
@@ -24,6 +25,9 @@ class BoxModel(QtCore.QObject):
 
     def box(self):
         return self.__box
+
+    def findObjectClass(self, name):
+        return self.__manager.findObjectClass(name)
 
     def cleanUpInputProxies(self):
         inputs = []
@@ -107,11 +111,11 @@ class BoxModel(QtCore.QObject):
 
         return None
 
-    def addBlock(self, name):
-        bc = self.__manager.block(name)
+    def addBlock(self, blockType, name=None):
+        bc = self.__manager.block(blockType)
         if bc:
             try:
-                bi = bc()
+                bi = bc(name=name)
             except Exception as e:
                 return None
 
@@ -119,8 +123,73 @@ class BoxModel(QtCore.QObject):
             self.__blocs.append(bi)
 
             return bi
+        else:
+            print("Warning : Unknown block type : {}".format(blockType))
 
         return None
+
+    def serialize(self):
+        data = {"blocks": [], "connections": [], "proxyParameters": [], "proxyPorts": []}
+
+        blocks = self.__box.getSchedule()
+        boxies = []
+
+        ## block data
+        for b in blocks:
+            if b == self.__box:
+                continue
+
+            if isinstance(b, box.Box):
+                boxies.append(b)
+
+            block_data = {}
+            if isinstance(b, box.ProxyBlock):
+                if b.parent() == self.__box:
+                    continue
+
+                block_data["preservered"] = True
+
+            block_data["path"] = uiUtil.PopRootPath(b.path())
+            block_data["type"] = b.type()
+
+            params = {}
+            for p in b.params():
+                params[p.name()] = p.get()
+
+            if params:
+                block_data["param"] = params
+
+            data["blocks"].append(block_data)
+
+        ## proxy ports
+        for b in boxies:
+            in_data = []
+            out_data = []
+            box_data = {"path": uiUtil.PopRootPath(b.path()), "in": in_data, "out": out_data}
+            data["proxyPorts"].append(box_data)
+
+            for pn in sorted(b.inputProxies()):
+                op = b.inputProxyOut(pn)
+                if op is None:
+                    continue
+
+                in_data.append({"name": pn, "type": op.typeClass().__name__})
+
+            for pn in sorted(b.outputProxies()):
+                ip = b.outputProxyIn(pn)
+                out_data.append({"name": pn, "type": ip.typeClass().__name__})
+
+        ## connection data
+        for b in blocks:
+            for p in b.inputs():
+                if not p.isConnected():
+                    continue
+
+                src_port = map(lambda x: x.src(), p.chains())[0]
+
+                data["connections"].append({"path": uiUtil.PopRootPath(p.path()), "src": uiUtil.PopRootPath(src_port.path())})
+
+        return data
 
     def run(self, perProcessCallback=None):
         schedule = self.__box.getSchedule()

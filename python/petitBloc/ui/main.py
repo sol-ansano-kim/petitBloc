@@ -7,6 +7,8 @@ from . import model
 from . import graph
 from . import paramEditor
 from . import packetHistory
+from . import uiUtil
+import operator
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -19,10 +21,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__parm_editor = None
         self.__networks = {}
         self.__removed_subnets = []
+        self.__filepath = None
         self.__initialize()
 
     def __initialize(self):
-        self.setWindowTitle(const.WindowTitle)
+        self.setWindowTitle("untitled")
         self.setObjectName(const.ObjectName)
 
         centeral = QtWidgets.QWidget()
@@ -34,7 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph_tabs = QtWidgets.QTabWidget()
         self.__graph_tabs.setTabsClosable(True)
 
-        self.__graph = graph.Graph(name="scene", parent=self)
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
         self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
@@ -56,14 +59,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menubar = self.menuBar()
         file_menu = QtWidgets.QMenu("file")
+        news_action = QtWidgets.QAction("New Scene", file_menu)
         save_action = QtWidgets.QAction("Save", file_menu)
         save_as_action = QtWidgets.QAction("Save As", file_menu)
         load_action = QtWidgets.QAction("Load", file_menu)
         import_action = QtWidgets.QAction("Import Box", file_menu)
+        file_menu.addAction(news_action)
         file_menu.addAction(save_action)
         file_menu.addAction(save_as_action)
         file_menu.addAction(load_action)
         file_menu.addAction(import_action)
+        news_action.triggered.connect(self.__new)
         save_action.triggered.connect(self.__save)
         save_as_action.triggered.connect(self.__saveAs)
         load_action.triggered.connect(self.__load)
@@ -105,7 +111,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__parm_editor.allowProxy(index != 0)
         self.__currentBlockChanged(widget.currentBlock())
 
-    def __boxCreated(self, boxBloc, init=True):
+    def __boxCreated(self, boxBloc, init):
         if self.__networks.has_key(boxBloc):
             return
 
@@ -217,14 +223,184 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
         self.__packet_history.refresh()
 
+    def __getParentGraph(self, path):
+        return self.__getGraph(path[:path.rfind("/")])
+
+    def __getGraph(self, path):
+        for bloc, n_dict in self.__networks.iteritems():
+            if bloc.path() == path:
+                return n_dict["graph"]
+
+        return None
+
+    def __new(self):
+        while (self.__graph_tabs.count() > 0):
+            self.__graph_tabs.removeTab(0)
+
+        for n_dict in self.__networks.values():
+            n_dict["graph"].close()
+            del n_dict["graph"]
+
+        self.__networks = {}
+
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
+        self.__graph_tabs.addTab(self.__graph, "Scene")
+        self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
+        self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
+
+        self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
+        self.__graph.BoxDeleted.connect(self.__boxDeleted)
+
+        self.__graph.BoxCreated.connect(self.__boxCreated)
+
+        self.__resetTabIndice()
+
     def __save(self):
-        print "SAVE"
+        pth, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save", "", "*.blcs")
+        if not pth:
+            return
+
+        data = self.__graph.boxModel().serialize()
+        for b in data["blocks"]:
+            path = uiUtil.AddRootPath(b["path"])
+            grph = self.__getParentGraph(path)
+
+            if grph is None:
+                raise Exception, "Failed to save : could not find the parent graph - {}".format(path)
+
+            nod = grph.findNodeFromName(path[path.rfind("/") + 1:])
+            if nod is None:
+                raise Exception, "Failed to save : could not find the node - {}".format(path)
+
+            pos = nod.pos() + nod.nodeCenter
+            b["pos"] = [pos.x(), pos.y()]
+
+        uiUtil.Save(pth, data)
+
+    def __shortName(self, path):
+        return path[path.rfind("/") + 1:]
 
     def __saveAs(self):
         print "SAVE AS"
 
     def __load(self):
-        print "LOAD"
+        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load", "", "*.blcs")
+        if not pth:
+            return
+
+        data = uiUtil.Load(pth)
+        self.__new()
+
+        ## create blocks
+        for b in data["blocks"]:
+            full_path = uiUtil.AddRootPath(b["path"])
+            short_name = self.__shortName(full_path)
+            grph = self.__getParentGraph(full_path)
+            bloc = None
+            if grph is None:
+                raise Exception, "Failed to load : could not find the parent graph - {}".format(full_path)
+
+            if b.get("preservered", False):
+                node = grph.findNodeFromName(short_name)
+                if node is None:
+                    print("Warning : could not find a preservered node : {}".format(full_path))
+                    continue
+
+                bloc = node.block()
+
+                pos = b.get("pos")
+                if pos:
+                    node.setPos(QtCore.QPointF(pos[0], pos[1]) - node.nodeCenter)
+
+            else:
+                node = grph.addBlock(b["type"], blockName=short_name, position=b.get("pos"), init=False)
+                if node is None:
+                    continue
+
+                bloc = node.block()
+
+            if bloc is not None:
+                for k, v in b.get("param", {}).iteritems():
+                    parm = bloc.param(k)
+                    if parm is None:
+                        print("Warning : {} has not the parameter : {}".format(str(bloc), k))
+                        continue
+
+                    parm.set(v)
+
+        ## proxy ports
+        for proxy in data["proxyPorts"]:
+            full_path = uiUtil.AddRootPath(proxy["path"])
+            grph = self.__getGraph(full_path)
+
+            if grph is None:
+                raise Exception, "Failed to load : could not find the graph - {}".format(full_path)
+
+            for inp in proxy.get("in", []):
+                name = inp["name"]
+                type_name = inp["type"]
+
+                type_class = self.__graph.boxModel().findObjectClass(type_name)
+                if not type_class:
+                    raise Exception, "Failed to load : unknown port type - {}".format(type_name)
+
+                grph.addInputProxy(type_class, name)
+
+            for outp in proxy.get("out", []):
+                name = outp["name"]
+                type_name = outp["type"]
+
+                type_class = self.__graph.boxModel().findObjectClass(type_name)
+                if not type_class:
+                    raise Exception, "Failed to load : unknown port type - {}".format(type_name)
+
+                grph.addOutputProxy(type_class, name)
+
+        ## connect ports
+        for con in data["connections"]:
+            parent = None
+
+            src_node_path, src_port = uiUtil.AddRootPath(con["src"]).split(".")
+            dst_node_path, dst_port = uiUtil.AddRootPath(con["path"]).split(".")
+            src_depth = src_node_path.count("/")
+            dst_depth = dst_node_path.count("/")
+            src_parent = self.__getParentGraph(src_node_path)
+            dst_parent = self.__getParentGraph(dst_node_path)
+
+            if src_parent is None or dst_parent is None:
+                print("Warning : Failed to connect - could not find the parent graph '{}', '{}'".format(con["src"], con["path"]))
+                continue
+
+            if src_parent != dst_parent:
+                ## TODO : improve this more smarter
+                if src_depth >= dst_depth:
+                    src_node_path = uiUtil.ParentPath(src_node_path)
+                    src_parent = self.__getParentGraph(src_node_path)
+
+                    if src_parent != dst_parent:
+                        dst_node_path = uiUtil.ParentPath(dst_node_path)
+                        dst_parent = self.__getParentGraph(dst_node_path)
+
+                        if src_parent != dst_parent:
+                            print("Warning : Failed to connect - could not find the parent graph '{}', '{}'".format(con["src"], con["path"]))
+                            continue
+
+                else:
+                    dst_node_path = uiUtil.ParentPath(dst_node_path)
+                    dst_parent = self.__getParentGraph(dst_node_path)
+
+                    if dst_parent != src_parent:
+                        src_node_path = uiUtil.ParentPath(src_node_path)
+                        src_parent = self.__getParentGraph(src_node_path)
+
+                        if src_parent != dst_parent:
+                            print("Warning : Failed to connect - could not find the parent graph '{}', '{}'".format(con["src"], con["path"]))
+                            continue
+
+            src_parent.createConnection(self.__shortName(src_node_path), src_port, self.__shortName(dst_node_path), dst_port)
+
+            self.__resetTabIndice()
 
     def __importBox(self):
         print "IMPORT BOX"

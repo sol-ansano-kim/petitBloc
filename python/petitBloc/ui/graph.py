@@ -11,7 +11,7 @@ class Graph(nodz_main.Nodz):
     KeyPressed = QtCore.Signal(int)
     ItemDobleClicked = QtCore.Signal(object)
     BlockDeleted = QtCore.Signal(object)
-    BoxCreated = QtCore.Signal(object)
+    BoxCreated = QtCore.Signal(object, bool)
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
 
@@ -34,16 +34,24 @@ class Graph(nodz_main.Nodz):
 
     def mouseDoubleClickEvent(self, evnt):
         itm = self.itemAt(evnt.pos())
+
         if itm is not None:
             if itm.block().hasNetwork():
                 self.ItemDobleClicked.emit(itm.block())
+
+    def findNodeFromName(self, name):
+        for nodename, node in self.scene().nodes.iteritems():
+            if name == nodename:
+                return node
+
+        return None
 
     def findNode(self, bloc):
         for node in self.scene().nodes.values():
             if node.block() == bloc:
                 return node
 
-        return node
+        return None
 
     def renameNode(self, bloc, new_name):
         for node in self.scene().nodes.values():
@@ -103,20 +111,32 @@ class Graph(nodz_main.Nodz):
     def portDisconnected(self, srcPort, dstPort):
         self.__model.disconnect(srcPort, dstPort)
 
-    def addBlock(self, blockName):
-        bloc = self.__model.addBlock(blockName)
-        if bloc:
-            node = self.createNode(bloc, position=self.mapToScene(self.mapFromGlobal(QtGui.QCursor.pos())))
+    def addBlock(self, blockType, blockName=None, position=None, init=True):
+        if not blockType:
+            return None
 
-            if bloc.hasNetwork():
-                self.BoxCreated.emit(bloc)
+        bloc = self.__model.addBlock(blockType, name=blockName)
+        if bloc is None:
+            return None
 
-            # TODO : preset
-            for ip in bloc.inputs():
-                self.createAttribute(node=node, port=ip, plug=False, socket=True, preset="attr_preset_1", dataType=ip.typeClass())
+        if position is None:
+            position = self.mapToScene(self.mapFromGlobal(QtGui.QCursor.pos()))
+        else:
+            position = QtCore.QPointF(position[0], position[1])
 
-            for op in bloc.outputs():
-                self.createAttribute(node=node, port=op, plug=True, socket=False, preset="attr_preset_1", dataType=op.typeClass())
+        node = self.createNode(bloc, position=position)
+
+        if bloc.hasNetwork():
+            self.BoxCreated.emit(bloc, init)
+
+        # TODO : preset
+        for ip in bloc.inputs():
+            self.createAttribute(node=node, port=ip, plug=False, socket=True, preset="attr_preset_1", dataType=ip.typeClass())
+
+        for op in bloc.outputs():
+            self.createAttribute(node=node, port=op, plug=True, socket=False, preset="attr_preset_1", dataType=op.typeClass())
+
+        return node
 
     def createNode(self, bloc, preset='node_default', position=None, alternate=True):
         if bloc.name() in self.scene().nodes.keys():
@@ -215,10 +235,18 @@ class SubNet(Graph):
         self.__proxy_out.scene().updateScene()
 
     def addInputProxy(self, typeClass, name):
-        return self.boxModel().addInputProxy(typeClass, name)
+        ip, op = self.boxModel().addInputProxy(typeClass, name)
+        proxy_node = self.inProxyNode()
+        self.createAttribute(node=proxy_node, port=op, plug=True, socket=False, preset="attr_preset_1", dataType=op.typeClass(), proxyNode=proxy_node)
+        self.ProxyPortAdded.emit(self.box(), proxy_node, ip)
+        return ip, op
 
     def addOutputProxy(self, typeClass, name):
-        return self.boxModel().addOutputProxy(typeClass, name)
+        ip, op = self.boxModel().addOutputProxy(typeClass, name)
+        proxy_node = self.outProxyNode()
+        self.createAttribute(node=proxy_node, port=ip, plug=False, socket=True, preset="attr_preset_1", dataType=ip.typeClass(), proxyNode=proxy_node)
+        self.ProxyPortAdded.emit(self.box(), proxy_node, op)
+        return ip, op
 
     def removeInputProxy(self, port):
         self.boxModel().removeInputProxy(port)
@@ -577,8 +605,6 @@ class OutputPortItem(nodz_main.PlugItem):
                     else:
                         ip, op = nodzInst.addOutputProxy(self.port().typeClass(), self.port().name())
                         proxy_node = nodzInst.outProxyNode()
-                        nodzInst.createAttribute(node=proxy_node, port=ip, plug=False, socket=True, preset="attr_preset_1", dataType=ip.typeClass(), proxyNode=proxy_node)
-                        nodzInst.ProxyPortAdded.emit(nodzInst.box(), proxy_node, op)
                         target_port = proxy_node.sockets[ip.name()]
                         self.newConnection.target = target_port
                         self.newConnection.source = self
@@ -759,8 +785,6 @@ class InputPortItem(nodz_main.SocketItem):
                     else:
                         ip, op = nodzInst.addInputProxy(self.port().typeClass(), self.port().name())
                         proxy_node = nodzInst.inProxyNode()
-                        nodzInst.createAttribute(node=proxy_node, port=op, plug=True, socket=False, preset="attr_preset_1", dataType=op.typeClass(), proxyNode=proxy_node)
-                        nodzInst.ProxyPortAdded.emit(nodzInst.box(), proxy_node, ip)
                         target_port = proxy_node.plugs[op.name()]
                         self.newConnection.target = target_port
                         self.newConnection.source = self

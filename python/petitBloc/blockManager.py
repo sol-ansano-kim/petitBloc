@@ -16,6 +16,9 @@ class BlockManager(object):
     def __init__(self):
         super(BlockManager, self).__init__()
         self.__blocks = {}
+        self.__modules = []
+        self.__loaded = []
+        self.__finded_class = {"bool": bool, "int": int, "float": float, "str": str}
         self.__searchBlocks()
 
     def blockNames(self):
@@ -28,6 +31,27 @@ class BlockManager(object):
     def block(self, name):
         return self.__blocks.get(name)
 
+    def findObjectClass(self, name):
+        cls = self.__finded_class.get(name, None)
+        if cls is not None:
+            return cls
+
+        for mod in self.__modules:
+            if hasattr(mod, name):
+                self.__finded_class[name] = getattr(mod, name)
+                return getattr(mod, name)
+
+            for cont_name in dir(mod):
+                content = getattr(mod, cont_name)
+                if not hasattr(content, "__file__"):
+                    continue
+
+                if hasattr(content, name):
+                    self.__finded_class[name] = getattr(content, name)
+                    return getattr(content, name)
+
+        return None
+
     def __searchBlocks(self):
         self.__blocks["Box"] = box.Box
 
@@ -38,7 +62,14 @@ class BlockManager(object):
 
             for fp in os.listdir(block_dir):
                 if os.path.splitext(fp)[-1].lower() == ".py":
-                    module = self.importModule(os.path.join(block_dir, fp))
+                    py_path = os.path.abspath(os.path.join(block_dir, fp))
+                    if py_path in self.__loaded:
+                        continue
+
+                    self.__loaded.append(py_path)
+
+                    module = self.importModule(py_path)
+
                     for cont_name in dir(module):
                         if self.__blocks.has_key(cont_name):
                             continue
@@ -50,6 +81,7 @@ class BlockManager(object):
 
                         if issubclass(content, core.ComponentBase):
                             self.__blocks[cont_name] = content
+                            self.__modules.append(module)
 
     def importModule(self, path):
         module = None
