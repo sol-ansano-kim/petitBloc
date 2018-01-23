@@ -121,8 +121,6 @@ class Graph(nodz_main.Nodz):
 
         if position is None:
             position = self.mapToScene(self.mapFromGlobal(QtGui.QCursor.pos()))
-        else:
-            position = QtCore.QPointF(position[0], position[1])
 
         node = self.createNode(bloc, position=position)
 

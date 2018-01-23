@@ -9,6 +9,7 @@ from . import paramEditor
 from . import packetHistory
 from . import uiUtil
 import operator
+import re
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -62,17 +63,17 @@ class MainWindow(QtWidgets.QMainWindow):
         save_action = QtWidgets.QAction("Save", file_menu)
         save_as_action = QtWidgets.QAction("Save As", file_menu)
         load_action = QtWidgets.QAction("Load", file_menu)
-        # import_action = QtWidgets.QAction("Import Box", file_menu)
+        import_action = QtWidgets.QAction("Import Box", file_menu)
         file_menu.addAction(news_action)
         file_menu.addAction(save_action)
         file_menu.addAction(save_as_action)
         file_menu.addAction(load_action)
-        # file_menu.addAction(import_action)
+        file_menu.addAction(import_action)
         news_action.triggered.connect(self.__new)
         save_action.triggered.connect(self.__save)
         save_as_action.triggered.connect(self.__saveAs)
         load_action.triggered.connect(self.__load)
-        # import_action.triggered.connect(self.__importBox)
+        import_action.triggered.connect(self.__importBox)
 
         menubar.addMenu(file_menu)
 
@@ -301,17 +302,49 @@ class MainWindow(QtWidgets.QMainWindow):
     def __shortName(self, path):
         return path[path.rfind("/") + 1:]
 
+    def __importBox(self):
+        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load", "", "*.blcs")
+        if not pth:
+            return
+
+        graph = None
+        index = self.__graph_tabs.currentIndex()
+
+        for n_dict in self.__networks.values():
+            if n_dict["index"] == index:
+                graph = n_dict["graph"]
+                break
+
+        node = graph.addBlock("Box", blockName=uiUtil.BaseName(pth), position=graph.mapToScene(graph.viewport().rect().center()))
+
+        self.__read(pth, node.block().path())
+
+        self.__resetTabIndice()
+
     def __load(self):
         pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load", "", "*.blcs")
         if not pth:
             return
 
-        data = uiUtil.Load(pth)
         self.__new()
+        self.__read(pth, const.RootBoxName)
+
+        self.__resetTabIndice()
+        self.__setPath(pth)
+
+    def __read(self, filePath, rootPath):
+        reRootNode = re.compile("^{}\/".format(rootPath.replace("/", "\/")))
+        def addRootPath(path):
+            if reRootNode.search(path):
+                return path
+
+            return "{}/{}".format(rootPath, path)
+
+        data = uiUtil.Load(filePath)
 
         ## create blocks
         for b in data["blocks"]:
-            full_path = uiUtil.AddRootPath(b["path"])
+            full_path = addRootPath(b["path"])
             short_name = self.__shortName(full_path)
             grph = self.__getParentGraph(full_path)
             bloc = None
@@ -331,7 +364,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     node.setPos(QtCore.QPointF(pos[0], pos[1]) - node.nodeCenter)
 
             else:
-                node = grph.addBlock(b["type"], blockName=short_name, position=b.get("pos"), init=False)
+                pos = b.get("pos")
+                if pos:
+                    posf = QtCore.QPointF(pos[0], pos[1])
+                else:
+                    posf = grph.mapToScene(grph.viewport().rect().center())
+
+                node = grph.addBlock(b["type"], blockName=short_name, position=posf, init=False)
                 if node is None:
                     continue
 
@@ -348,7 +387,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ## proxy ports
         for proxy in data["proxyPorts"]:
-            full_path = uiUtil.AddRootPath(proxy["path"])
+            full_path = addRootPath(proxy["path"])
             grph = self.__getGraph(full_path)
 
             if grph is None:
@@ -376,14 +415,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         ## proxy params
         for pam in data["proxyParameters"]:
-            box_path = uiUtil.AddRootPath(pam["path"])
+            box_path = addRootPath(pam["path"])
             grph = self.__getGraph(box_path)
             if grph is None:
                 raise Exception, "Failed to load : could not find the graph - {}".format(box_path)
 
             for pdata in pam["params"]:
                 # print param["name"]
-                bloc_path, param_name = uiUtil.AddRootPath(pdata["param"]).split("@")
+                bloc_path, param_name = addRootPath(pdata["param"]).split("@")
                 parant_grp = self.__getParentGraph(bloc_path)
                 if parant_grp is None:
                     print("Warning : could not find target parent {}".format(bloc_path))
@@ -404,8 +443,8 @@ class MainWindow(QtWidgets.QMainWindow):
         for con in data["connections"]:
             parent = None
 
-            src_node_path, src_port = uiUtil.AddRootPath(con["src"]).split(".")
-            dst_node_path, dst_port = uiUtil.AddRootPath(con["path"]).split(".")
+            src_node_path, src_port = addRootPath(con["src"]).split(".")
+            dst_node_path, dst_port = addRootPath(con["path"]).split(".")
             src_depth = src_node_path.count("/")
             dst_depth = dst_node_path.count("/")
             src_parent = self.__getParentGraph(src_node_path)
@@ -442,12 +481,6 @@ class MainWindow(QtWidgets.QMainWindow):
                             continue
 
             src_parent.createConnection(self.__shortName(src_node_path), src_port, self.__shortName(dst_node_path), dst_port)
-
-        self.__resetTabIndice()
-        self.__setPath(pth)
-
-    def __importBox(self):
-        print "IMPORT BOX"
 
     def __currentBlockChanged(self, bloc):
         if not bloc:

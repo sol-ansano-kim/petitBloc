@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import os
 from . import const
 import operator
 
@@ -26,6 +27,10 @@ def ParentPath(path):
 
 def __sortDataBtPath(data):
     return sorted(data, cmp=BlockCompare, key=operator.itemgetter("path"))
+
+
+def BaseName(path):
+    return os.path.splitext(os.path.basename(path))[0]
 
 
 def Save(path, data):
