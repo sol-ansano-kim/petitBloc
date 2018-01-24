@@ -476,8 +476,9 @@ class BlocItem(nodz_main.NodeItem):
             painter.setPen(self._attrPen)
             painter.setBrush(self._attrBrush)
 
-            if (offset / self.attrHeight) % 2:
-                painter.setBrush(self._attrBrushAlt)
+            if self.alternate:
+                if (offset / self.attrHeight) % 2:
+                    painter.setBrush(self._attrBrushAlt)
 
             painter.drawRect(rect)
 

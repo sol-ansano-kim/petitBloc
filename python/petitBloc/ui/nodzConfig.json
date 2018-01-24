@@ -23,7 +23,7 @@
     "connection_width": 2,
 
     // Default colors > Edit values BUT do not delete.
-    "alternate_value": 20,
+    "alternate_value": 40,
     "grid_color": [50, 50, 50, 255],
     "slot_border": [50, 50, 50, 255],
     "non_connectable_color": [50, 50, 50, 255],
