@@ -60,19 +60,22 @@ class MainWindow(QtWidgets.QMainWindow):
         menubar = self.menuBar()
         file_menu = QtWidgets.QMenu("file")
         news_action = QtWidgets.QAction("New Scene", file_menu)
+        open_action = QtWidgets.QAction("Open", file_menu)
         save_action = QtWidgets.QAction("Save", file_menu)
         save_as_action = QtWidgets.QAction("Save As", file_menu)
-        load_action = QtWidgets.QAction("Load", file_menu)
-        import_action = QtWidgets.QAction("Import Box", file_menu)
+        import_action = QtWidgets.QAction("Import", file_menu)
         file_menu.addAction(news_action)
+        file_menu.addSeparator()
+        file_menu.addAction(open_action)
+        file_menu.addSeparator()
         file_menu.addAction(save_action)
         file_menu.addAction(save_as_action)
-        file_menu.addAction(load_action)
+        file_menu.addSeparator()
         file_menu.addAction(import_action)
         news_action.triggered.connect(self.__new)
         save_action.triggered.connect(self.__save)
         save_as_action.triggered.connect(self.__saveAs)
-        load_action.triggered.connect(self.load)
+        open_action.triggered.connect(self.__open)
         import_action.triggered.connect(self.__importBox)
 
         menubar.addMenu(file_menu)
@@ -303,7 +306,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return path[path.rfind("/") + 1:]
 
     def __importBox(self):
-        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load", "", "*.blcs")
+        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
         if not pth:
             return
 
@@ -321,8 +324,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__resetTabIndice()
 
-    def load(self):
-        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load", "", "*.blcs")
+    def openScene(self, path):
+        self.__new()
+        self.__read(path, const.RootBoxName)
+
+        self.__resetTabIndice()
+        self.__setPath(path)
+
+    def __open(self):
+        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open", "", "*.blcs")
         if not pth:
             return
 

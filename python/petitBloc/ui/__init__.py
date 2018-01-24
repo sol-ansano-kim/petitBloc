@@ -13,8 +13,8 @@ def Show(path=None, multiProcessing=False):
     win = Create()
 
     if path is not None:
-        if lower(os.path.splitext(path)[-1]) == ".blcs":
-            win.load(path)
+        if os.path.isfile(path) and os.path.splitext(path)[-1].lower() == ".blcs":
+            win.openScene(path)
 
     win.show()
 
