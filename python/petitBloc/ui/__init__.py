@@ -12,7 +12,7 @@ def Show(path=None, multiProcessing=False):
     app = QtWidgets.QApplication(sys.argv)
     win = Create()
 
-    if path is not None:
+    if path:
         if os.path.isfile(path) and os.path.splitext(path)[-1].lower() == ".blcs":
             win.openScene(path)
 

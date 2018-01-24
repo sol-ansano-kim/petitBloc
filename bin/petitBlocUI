@@ -2,14 +2,14 @@
 
 import sys
 import os
-import argparse
+import optparse
 
 
-parser = argparse.ArgumentParser()
+parser = optparse.OptionParser()
+parser.add_option("-p", "--multiprocess", dest="mutlprocess", help="User multiprocess", action="store_true", default=False)
+parser.add_option("-s", "--scene", dest="scene", help="Input .blcs file", action="store", default="")
 
-parser.add_argument("--mp", action="store_true", help="Use multiprocesing", default=False)
-parser.add_argument("-scene", action="store", help="Input .blcs file")
-results = parser.parse_args()
+opts, _ = parser.parse_args(sys.argv[1:])
 
 try:
     import petitBloc
@@ -19,4 +19,4 @@ except:
 
 
 from petitBloc import ui
-ui.Show(path=results.sn, multiProcessing=results.mp)
+ui.Show(path=opts.scene, multiProcessing=opts.mutlprocess)
