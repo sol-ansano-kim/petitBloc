@@ -3,20 +3,18 @@
 import sys
 import os
 import argparse
-# print sys.argv
-# from petitBloc import ui
-# ui.Show()
+
+
 parser = argparse.ArgumentParser()
 
-parser.add_argument("--mp", "-multiprocess", action="store_true", help="Use multiprocesing", default=False)
-parser.add_argument("--sn", "-scene", action="store", help="Use multiprocesing")
+parser.add_argument("--mp", action="store_true", help="Use multiprocesing", default=False)
+parser.add_argument("-scene", action="store", help="Input .blcs file")
 results = parser.parse_args()
 
 try:
     import petitBloc
 except:
     sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
-    print os.path.abspath(os.path.join(__file__, "../../python"))
     import petitBloc
 
 
