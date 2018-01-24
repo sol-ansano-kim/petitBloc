@@ -19,6 +19,7 @@ except:
 
 env.Install("release/petitBloc", Glob("python/petitBloc/*.py"))
 env.Install("release/petitBloc/ui", Glob("python/petitBloc/ui/*.py"))
+env.Install("release/petitBloc/ui", Glob("python/petitBloc/ui/*.json"))
 
 
 if install_nodz:

@@ -1,3 +1,4 @@
+import os
 from Nodz import nodz_main
 from Nodz import nodz_utils
 from Qt import QtGui
@@ -5,6 +6,10 @@ from Qt import QtCore
 from Qt import QtWidgets
 from . import model
 from . import blockCreator
+
+
+def getConfigFile():
+    return os.path.abspath(os.path.join(__file__, "../nodzConfig.json"))
 
 
 class Graph(nodz_main.Nodz):
@@ -16,7 +21,7 @@ class Graph(nodz_main.Nodz):
     CurrentNodeChanged = QtCore.Signal(object)
 
     def __init__(self, name="", boxObject=None, parent=None):
-        super(Graph, self).__init__(parent)
+        super(Graph, self).__init__(parent, configPath=getConfigFile())
         self.__model = model.BoxModel(name=name, boxObject=boxObject)
         self.__current_block = None
         self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames())
@@ -141,6 +146,9 @@ class Graph(nodz_main.Nodz):
             print('A node with the same name already exists : {0}'.format(bloc.name()))
             print('Node creation aborted !')
             return
+
+        if bloc.hasNetwork():
+            preset = "box_default"
 
         nodeItem = BlocItem(bloc, alternate, preset, self.config)
 
