@@ -72,7 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
         news_action.triggered.connect(self.__new)
         save_action.triggered.connect(self.__save)
         save_as_action.triggered.connect(self.__saveAs)
-        load_action.triggered.connect(self.__load)
+        load_action.triggered.connect(self.load)
         import_action.triggered.connect(self.__importBox)
 
         menubar.addMenu(file_menu)
@@ -321,7 +321,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__resetTabIndice()
 
-    def __load(self):
+    def load(self):
         pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Load", "", "*.blcs")
         if not pth:
             return

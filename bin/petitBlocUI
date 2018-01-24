@@ -1,0 +1,24 @@
+#!/usr/bin/env python2.7
+
+import sys
+import os
+import argparse
+# print sys.argv
+# from petitBloc import ui
+# ui.Show()
+parser = argparse.ArgumentParser()
+
+parser.add_argument("--mp", "-multiprocess", action="store_true", help="Use multiprocesing", default=False)
+parser.add_argument("--sn", "-scene", action="store", help="Use multiprocesing")
+results = parser.parse_args()
+
+try:
+    import petitBloc
+except:
+    sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
+    print os.path.abspath(os.path.join(__file__, "../../python"))
+    import petitBloc
+
+
+from petitBloc import ui
+ui.Show(path=results.sn, multiProcessing=results.mp)
