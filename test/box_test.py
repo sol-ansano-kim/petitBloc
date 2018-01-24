@@ -234,7 +234,7 @@ class BoxTest(unittest.TestCase):
         self.assertIsNotNone(chain.Chain(add.output(0), dmp2.input(0)))
 
         workerManager.WorkerManager.RunSchedule(g.getSchedule())
-        workerManager.WorkerManager.SetUseProcess(False)
+        workerManager.WorkerManager.SetUseProcess(True)
 
         out_dmp = []
         out_value = []
