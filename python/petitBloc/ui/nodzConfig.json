@@ -6,18 +6,19 @@
     "antialiasing": true,
     "antialiasing_boost": true,
     "smooth_pixmap": true,
+    "zoom_factor": 1.02,
 
     "node_font": "Arial",
-    "node_font_size": 12,
+    "node_font_size": 18,
     "attr_font": "Arial",
-    "attr_font_size": 10,
+    "attr_font_size": 14,
     "mouse_bounding_box": 80,
 
     // Shapes > Edit values BUT do not delete.
     "node_width": 200,
     "node_height": 25,
     "node_radius": 10,
-    "node_border": 2,
+    "node_border": 3,
     "node_attr_height": 30,
     "connection_width": 2,
 
@@ -25,7 +26,7 @@
     "alternate_value": 20,
     "grid_color": [50, 50, 50, 255],
     "slot_border": [50, 50, 50, 255],
-    "non_connectable_color": [100, 100, 100, 255],
+    "non_connectable_color": [50, 50, 50, 255],
     "connection_color": [255, 155, 0, 255],
 
     "node_default": {
@@ -45,26 +46,100 @@
     // Custom colors > Add and remove as you want.
     // Don't forget to edit the end of the dictionary if editing the
     // following part.
+
+    // blocks
     "box_default":
     {
         "bg": [25, 25, 25, 255],
-        "border": [50, 50, 50, 255],
+        "border": [125, 125, 125, 255],
         "border_sel": [98, 215, 234, 255],
         "text": [230, 230, 230, 255]
     },
 
     "block_default":
     {
-        "bg": [25, 25, 25, 255],
-        "border": [50, 50, 50, 255],
+        "bg": [50, 50, 50, 255],
+        "border": [125, 125, 125, 255],
         "border_sel": [98, 215, 234, 255],
         "text": [230, 230, 230, 255]
-    }
+    },
 
-    // "attr_preset_3":{
-    //     "bg": [160, 160, 160, 255],
-    //     "text": [220, 220, 220, 255],
-    //     "plug": [255, 155, 0, 255],
-    //     "socket": [255, 155, 0, 255]
-    // }
+    "proxy_default":
+    {
+        "bg": [50, 60, 70, 255],
+        "border": [50, 120, 175, 255],
+        "border_sel": [98, 215, 234, 255],
+        "text": [50, 120, 175, 255]
+    },
+
+    // ports
+    "bool_port":{
+        "bg": [50, 50, 50, 255],
+        "text": [220, 220, 220, 255],
+        "plug": [0, 80, 180, 255],
+        "socket": [0, 80, 180, 255]
+    },
+
+    "int_port":{
+        "bg": [50, 50, 50, 255],
+        "text": [220, 220, 220, 255],
+        "plug": [100, 220, 230, 255],
+        "socket": [100, 220, 230, 255]
+    },
+
+    "float_port":{
+        "bg": [50, 50, 50, 255],
+        "text": [220, 220, 220, 255],
+        "plug": [20, 180, 80, 255],
+        "socket": [20, 180, 80, 255]
+    },
+
+    "str_port":{
+        "bg": [50, 50, 50, 255],
+        "text": [220, 220, 220, 255],
+        "plug": [120, 60, 130, 255],
+        "socket": [120, 60, 130, 255]
+    },
+
+    "port_default":{
+        "bg": [50, 50, 50, 255],
+        "text": [220, 220, 220, 255],
+        "plug": [150, 150, 150, 255],
+        "socket": [150, 150, 150, 255]
+    },
+
+    "box_bool_port":{
+        "bg": [0, 0, 0, 0],
+        "text": [220, 220, 220, 255],
+        "plug": [0, 80, 180, 255],
+        "socket": [0, 80, 180, 255]
+    },
+
+    "box_int_port":{
+        "bg": [0, 0, 0, 0],
+        "text": [220, 220, 220, 255],
+        "plug": [100, 220, 230, 255],
+        "socket": [100, 220, 230, 255]
+    },
+
+    "box_float_port":{
+        "bg": [0, 0, 0, 0],
+        "text": [220, 220, 220, 255],
+        "plug": [20, 180, 80, 255],
+        "socket": [20, 180, 80, 255]
+    },
+
+    "box_str_port":{
+        "bg": [0, 0, 0, 0],
+        "text": [220, 220, 220, 255],
+        "plug": [120, 60, 130, 255],
+        "socket": [120, 60, 130, 255]
+    },
+
+    "box_port_default":{
+        "bg": [0, 0, 0, 0],
+        "text": [220, 220, 220, 255],
+        "plug": [150, 150, 150, 255],
+        "socket": [150, 150, 150, 255]
+    }
 }

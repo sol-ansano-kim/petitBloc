@@ -2,6 +2,28 @@ from petitBloc import block
 import sys
 
 
+class TestObject(object):
+    def __init__(self):
+        super(TestObject, self).__init__()
+
+
+class StyleCheck(block.Block):
+    def __init__(self, name="", parent=None):
+        super(StyleCheck, self).__init__(name=name, parent=parent)
+
+    def initialize(self):
+        self.addInput(bool, "boolIn")
+        self.addInput(int, "intIn")
+        self.addInput(float, "floatIn")
+        self.addInput(str, "strIn")
+        self.addInput(TestObject, "objectIn")
+        self.addOutput(bool, "boolOut")
+        self.addOutput(int, "intOut")
+        self.addOutput(float, "floatOut")
+        self.addOutput(str, "strOut")
+        self.addOutput(TestObject, "objectOut")
+
+
 class MakeNumbers(block.Block):
     def __init__(self, name="", parent=None):
         super(MakeNumbers, self).__init__(name=name, parent=parent)
