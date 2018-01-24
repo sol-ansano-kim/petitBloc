@@ -1,5 +1,5 @@
-from .Nodz import nodz_main
-from .Nodz import nodz_utils
+from Nodz import nodz_main
+from Nodz import nodz_utils
 from Qt import QtGui
 from Qt import QtCore
 from Qt import QtWidgets

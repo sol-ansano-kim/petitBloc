@@ -28,4 +28,4 @@ if install_nodz:
     env.Install("release/petitBloc/ui/external/Nodz", "Nodz/default_config.json")
 
 if install_qtpy:
-    env.Install("release/petitBloc/ui/external/Qt.py", "Qt.py/Qt.py")
+    env.Install("release/petitBloc/ui/external", "Qt.py/Qt.py")
