@@ -1,7 +1,7 @@
 import os
 
 
-def Run(path=None, multiProcessing=False, attrbutes=[], query=False, info=None):
+def Run(path=None, multiProcessing=False, parameters=[], query=False, info=None):
     from . import scene
 
     if info:
@@ -14,4 +14,4 @@ def Run(path=None, multiProcessing=False, attrbutes=[], query=False, info=None):
     if query:
         return scene.Query(path)
 
-    return scene.Run(path, multiProcessing=multiProcessing, attrbutes=attrbutes)
+    return scene.Run(path, multiProcessing=multiProcessing, parameters=parameters)

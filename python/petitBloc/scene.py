@@ -186,6 +186,36 @@ def __read(filePath):
     return root
 
 
+def __override(root, parameters):
+    for p in parameters:
+        if p.count("@") != 1 or p.count("=") != 1:
+            print("Warning : Invalid parameter setting - {}".format(p))
+            continue
+
+        paramfull, value = p.split("=")
+        bloc_path, param_name = paramfull.split("@")
+        bloc = root.findBlock(bloc_path)
+        if bloc is None:
+            print("Warning : Failed to override parameter. Could not find the block - {}".format(bloc_path))
+            continue
+
+        param = bloc.param(param_name)
+        if param is None:
+            print("Warning : Failed to override parameter. Could not find the parameter - {}".format(paramfull))
+            continue
+
+        type_class = param.typeClass()
+        try:
+            if type_class == bool:
+                v = bool(int(value))
+            else:
+                v = type_class(value)
+
+            param.set(v)
+        except Exception as e:
+            print("Warning : Failed to override parameter. Invalid value - {} : {}".format(type_class.__name__, value))
+
+
 def Write(path, data):
     data["blocks"] = __sortDataBtPath(data["blocks"])
     data["connections"] = __sortDataBtPath(data["connections"])
@@ -252,11 +282,14 @@ def Query(filePath):
     return True
 
 
-def Run(filePath, multiProcessing=False, attrbutes=[]):
+def Run(filePath, parameters=[], multiProcessing=False, attrbutes=[]):
     try:
         workerManager.WorkerManager.SetUseProcess(multiProcessing)
 
         root = __read(filePath)
+
+        __override(root, parameters)
+
         schedule = root.getSchedule()
         workerManager.WorkerManager.RunSchedule(schedule)
 
