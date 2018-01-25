@@ -64,7 +64,7 @@ class PatchTest(unittest.TestCase):
         chain.Chain(a.output(0), mt.input(0))
 
         s = b.getSchedule()
-
+        workerManager.WorkerManager.SetUseProcess(True)
         for i in range(128):
             workerManager.WorkerManager.RunSchedule(s)
 
