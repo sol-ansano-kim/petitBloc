@@ -1,5 +1,111 @@
 import multiprocessing
 import copy
+import time
+from . import const
+
+
+class LogManager(object):
+    __Manager = multiprocessing.Manager()
+    __LogLevel = const.LogLevel.Error
+
+    __Count = multiprocessing.Value("i", 0)
+    __TotalTime = multiprocessing.Value("f", 0.0)
+    __TimeLog = __Manager.dict()
+    __ErrorLog = __Manager.dict()
+    __WarnLog = __Manager.dict()
+    __DebugLog = __Manager.dict()
+
+    @staticmethod
+    def SetLogLevel(l):
+        LogManager.__LogLevel = l
+
+    @staticmethod
+    def Reset():
+        LogManager.__Count.value = 0
+        LogManager.__TotalTime.value = 0.0
+        LogManager.__TimeLog.clear()
+        LogManager.__ErrorLog.clear()
+        LogManager.__WarnLog.clear()
+        LogManager.__DebugLog.clear()
+
+    @staticmethod
+    def IncreaseCount():
+        LogManager.__Count.value += 1
+
+    @staticmethod
+    def TimeReport(path, v):
+        LogManager.__TotalTime.value += v
+        LogManager.__TimeLog[path] = v
+
+    @staticmethod
+    def ExecutionCount():
+        return LogManager.__Count.value
+
+    @staticmethod
+    def TotalTime():
+        return LogManager.__TotalTime.value
+
+    @staticmethod
+    def Time(path):
+        return LogManager.__TimeLog.get(path, -1)
+
+    @staticmethod
+    def AverageTime():
+        if LogManager.__Count.value == 0:
+            return 0
+
+        return LogManager.__TotalTime.value / float(LogManager.__Count.value)
+
+    @staticmethod
+    def ErrorLogs():
+        return LogManager.__ErrorLog.copy()
+
+    @staticmethod
+    def WarnLogs():
+        return LogManager.__WarnLog.copy()
+
+    @staticmethod
+    def DebugLogs():
+        return LogManager.__DebugLog.copy()
+
+    @staticmethod
+    def ErrorLog(path):
+        return copy.copy(LogManager.__ErrorLog.get(path, []))
+
+    @staticmethod
+    def WarnLog(path):
+        return copy.copy(LogManager.__WarnLog.get(path, []))
+
+    @staticmethod
+    def DebugLog(path):
+        return copy.copy(LogManager.__DebugLog.get(path, []))
+
+    @staticmethod
+    def Error(path, message):
+        if LogManager.__LogLevel <= const.LogLevel.Error:
+            print("Error : {}".format(message))
+
+        log_list = LogManager.__ErrorLog.get(path, [])
+        log_list.append(message)
+        LogManager.__ErrorLog[path] = log_list
+
+    @staticmethod
+    def Warn(path, message):
+        if LogManager.__LogLevel <= const.LogLevel.Warn:
+            print("Warning : {}".format(message))
+
+        log_list = LogManager.__WarnLog.get(path, [])
+        log_list.append(message)
+        LogManager.__WarnLog[path] = log_list
+
+    @staticmethod
+    def Debug(path, message):
+        if LogManager.__LogLevel <= const.LogLevel.Debug:
+            print("Debug : {}".format(message))
+
+        log_list = LogManager.__DebugLog.get(path, [])
+        log_list.append(message)
+        LogManager.__DebugLog[path] = log_list
 
 
 class ValueManager(object):
@@ -76,10 +182,16 @@ class ProcessWorker(multiprocessing.Process):
         self.__has_error = ValueManager.CreateValue("i", 0)
 
     def run(self):
+        LogManager.IncreaseCount()
+        st = time.time()
+
         try:
             self.__obj.run()
         except Exception as e:
             self.__has_error.value = 1
+            LogManager.Error(self.__obj.path(), e)
+
+        LogManager.TimeReport(self.__obj.path(), time.time() - st)
 
     def start(self):
         self.__obj.activate()

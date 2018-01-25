@@ -7,6 +7,7 @@ from petitBloc import box
 from petitBloc import port
 from petitBloc import chain
 from petitBloc import workerManager
+from petitBloc import const
 import time
 
 
@@ -21,14 +22,18 @@ class MakeNumbers(block.Block):
         self.addParam(int, "step", 1)
 
     def run(self):
+        self.debug("MakeNumbers start")
         start = self.param("start").get()
         stop = self.param("stop").get()
         step = self.param("step").get()
         if step < 1:
             step = 1
-
+        self.debug("start : {} stop : {} step : {}".format(start, stop, step))
         for n in range(start, stop, step):
             self.output(0).send(n)
+            self.debug("send value {}".format(str(n)))
+        self.warn("testing")
+        self.debug("MakeNumbers end")
 
 
 class RaiseError(block.Block):
@@ -44,7 +49,10 @@ class RaiseError(block.Block):
         if in_f.isEOP():
             return False
 
+        self.debug("receive value {}".format(str(in_f.value())))
+
         if in_f.value() == self.param(0).get():
+            self.error("raise error!")
             raise Exception, "Test Error at : {}".format(in_f.value())
 
         in_f.drop()
@@ -74,6 +82,8 @@ class LoggingTest(unittest.TestCase):
         self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
 
     def test_error(self):
+        workerManager.WorkerManager.SetUseProcess(False)
+        workerManager.WorkerManager.SetLogLevel(const.LogLevel.NoLog)
         b = box.Box()
         m = MakeNumbers()
         e = RaiseError()
@@ -84,6 +94,63 @@ class LoggingTest(unittest.TestCase):
         workerManager.WorkerManager.RunSchedule(b.getSchedule())
         self.assertTrue(e.isFailed())
         self.assertFalse(e.isTerminated())
+
+    def test_state(self):
+        workerManager.WorkerManager.SetUseProcess(False)
+        workerManager.WorkerManager.SetLogLevel(const.LogLevel.NoLog)
+        b = box.Box("scene")
+        m = MakeNumbers()
+        e = RaiseError()
+        b.addBlock(m)
+        b.addBlock(e)
+        e.param("value").set(5)
+        chain.Chain(m.output(0), e.input(0))
+        workerManager.WorkerManager.RunSchedule(b.getSchedule())
+        self.assertEqual(workerManager.WorkerManager.ExecutionCount(), 5)
+        self.assertTrue(workerManager.WorkerManager.TotalTime() > 0)
+        self.assertEqual(workerManager.WorkerManager.AverageTime(), workerManager.WorkerManager.TotalTime() / float(workerManager.WorkerManager.ExecutionCount()))
+        self.assertTrue(workerManager.WorkerManager.Time(e.path()) > 0)
+        self.assertTrue(workerManager.WorkerManager.Time(m.path()) > 0)
+
+        workerManager.WorkerManager.SetUseProcess(True)
+        workerManager.WorkerManager.RunSchedule(b.getSchedule())
+        self.assertEqual(workerManager.WorkerManager.ExecutionCount(), 5)
+        self.assertTrue(workerManager.WorkerManager.TotalTime() > 0)
+        self.assertEqual(workerManager.WorkerManager.AverageTime(), workerManager.WorkerManager.TotalTime() / float(workerManager.WorkerManager.ExecutionCount()))
+        self.assertTrue(workerManager.WorkerManager.Time(e.path()) > 0)
+        self.assertTrue(workerManager.WorkerManager.Time(m.path()) > 0)
+
+    def test_logging(self):
+        workerManager.WorkerManager.SetLogLevel(const.LogLevel.NoLog)
+        workerManager.WorkerManager.SetUseProcess(True)
+        b = box.Box("scene")
+        m = MakeNumbers()
+        e = RaiseError()
+        e2 = RaiseError()
+        b.addBlock(m)
+        b.addBlock(e)
+        b.addBlock(e2)
+        e.param("value").set(5)
+        chain.Chain(m.output(0), e.input(0))
+        chain.Chain(m.output(0), e2.input(0))
+        workerManager.WorkerManager.RunSchedule(b.getSchedule())
+
+        self.assertEqual(len(workerManager.WorkerManager.ErrorLogs().keys()), 2)
+        self.assertEqual(len(workerManager.WorkerManager.ErrorLog(e2.path())), 2)
+        self.assertEqual(len(workerManager.WorkerManager.WarnLogs().keys()), 1)
+        self.assertEqual(len(workerManager.WorkerManager.WarnLog(m.path())), 1)
+        self.assertEqual(len(workerManager.WorkerManager.DebugLog(e.path())), 6)
+        self.assertEqual(len(workerManager.WorkerManager.DebugLog(e2.path())), 1)
+
+        workerManager.WorkerManager.SetUseProcess(False)
+        workerManager.WorkerManager.RunSchedule(b.getSchedule())
+
+        self.assertEqual(len(workerManager.WorkerManager.ErrorLogs().keys()), 2)
+        self.assertEqual(len(workerManager.WorkerManager.ErrorLog(e2.path())), 2)
+        self.assertEqual(len(workerManager.WorkerManager.WarnLogs().keys()), 1)
+        self.assertEqual(len(workerManager.WorkerManager.WarnLog(m.path())), 1)
+        self.assertEqual(len(workerManager.WorkerManager.DebugLog(e.path())), 6)
+        self.assertEqual(len(workerManager.WorkerManager.DebugLog(e2.path())), 1)
 
         
 if __name__ == "__main__":

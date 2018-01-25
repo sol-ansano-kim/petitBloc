@@ -279,6 +279,15 @@ class ComponentBase(object):
     def __repr__(self):
         return self.__str__()
 
+    def debug(self, message):
+        pass
+
+    def warn(self, message):
+        pass
+
+    def error(self, message):
+        pass
+
     def type(self):
         return self.__class_name
 
