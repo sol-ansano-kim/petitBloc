@@ -124,8 +124,6 @@ class BoxModel(QtCore.QObject):
             self.__blocs.append(bi)
 
             return bi
-        else:
-            print("Warning : Unknown block type : {}".format(blockType))
 
         return None
 

@@ -383,6 +383,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 node = grph.addBlock(b["type"], blockName=short_name, position=posf, init=False)
                 if node is None:
+                    print("Warning : Unknown block type : {}".format(b["type"]))
                     continue
 
                 bloc = node.block()
