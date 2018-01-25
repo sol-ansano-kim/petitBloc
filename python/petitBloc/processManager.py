@@ -5,15 +5,15 @@ from . import const
 
 
 class LogManager(object):
-    __Manager = multiprocessing.Manager()
     __LogLevel = const.LogLevel.Error
 
-    __Count = multiprocessing.Value("i", 0)
-    __TotalTime = multiprocessing.Value("f", 0.0)
-    __TimeLog = __Manager.dict()
-    __ErrorLog = __Manager.dict()
-    __WarnLog = __Manager.dict()
-    __DebugLog = __Manager.dict()
+    __Manager = None
+    __Count = None
+    __TotalTime = None
+    __TimeLog = None
+    __ErrorLog = None
+    __WarnLog = None
+    __DebugLog = None
 
     @staticmethod
     def SetLogLevel(l):
@@ -21,12 +21,21 @@ class LogManager(object):
 
     @staticmethod
     def Reset():
-        LogManager.__Count.value = 0
-        LogManager.__TotalTime.value = 0.0
-        LogManager.__TimeLog.clear()
-        LogManager.__ErrorLog.clear()
-        LogManager.__WarnLog.clear()
-        LogManager.__DebugLog.clear()
+        if LogManager.__Manager is None:
+            LogManager.__Manager = multiprocessing.Manager()
+            LogManager.__Count = multiprocessing.Value("i", 0)
+            LogManager.__TotalTime = multiprocessing.Value("f", 0.0)
+            LogManager.__TimeLog = LogManager.__Manager.dict()
+            LogManager.__ErrorLog = LogManager.__Manager.dict()
+            LogManager.__WarnLog = LogManager.__Manager.dict()
+            LogManager.__DebugLog = LogManager.__Manager.dict()
+        else:
+            LogManager.__Count.value = 0
+            LogManager.__TotalTime.value = 0.0
+            LogManager.__TimeLog.clear()
+            LogManager.__ErrorLog.clear()
+            LogManager.__WarnLog.clear()
+            LogManager.__DebugLog.clear()
 
     @staticmethod
     def IncreaseCount():
@@ -270,6 +279,7 @@ class ProcessManager(object):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    LogManager.Reset()
     ValueManager.Reset()
     QueueManager.Reset()
     ProcessManager.Reset()
