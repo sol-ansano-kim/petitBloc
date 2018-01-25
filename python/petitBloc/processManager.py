@@ -55,7 +55,7 @@ class LogManager(object):
         return LogManager.__TotalTime.value
 
     @staticmethod
-    def Time(path):
+    def TimeLog(path):
         return LogManager.__TimeLog.get(path, -1)
 
     @staticmethod
@@ -64,6 +64,10 @@ class LogManager(object):
             return 0
 
         return LogManager.__TotalTime.value / float(LogManager.__Count.value)
+
+    @staticmethod
+    def TimeLogs():
+        return LogManager.__TimeLog.copy()
 
     @staticmethod
     def ErrorLogs():

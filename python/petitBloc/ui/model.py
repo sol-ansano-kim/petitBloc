@@ -22,6 +22,21 @@ class BoxModel(QtCore.QObject):
 
         self.__manager = blockManager.BlockManager()
         self.__blocs = []
+        self.__logs = {"totalTime": 0, "execCount": 0, "avgTime": 0, "timeLogs": {}, "error": {}, "warn": {}, "debug": {}}
+
+    def resetLogs(self):
+        self.__logs = {"totalTime": 0, "execCount": 0, "avgTime": 0, "timeLogs": {}, "error": {}, "warn": {}, "debug": {}}
+        workerManager.WorkerManager.ResetLog()
+
+    def readLogs(self):
+        self.__logs = {"totalTime": 0, "execCount": 0, "avgTime": 0, "timeLogs": {}, "error": {}, "warn": {}, "debug": {}}
+        self.__logs["totalTime"] = workerManager.WorkerManager.TotalTime()
+        self.__logs["execCount"] = workerManager.WorkerManager.ExecutionCount()
+        self.__logs["avgTime"] = workerManager.WorkerManager.AverageTime()
+        self.__logs["timeLogs"] = workerManager.WorkerManager.TimeLogs()
+        self.__logs["error"] = workerManager.WorkerManager.ErrorLogs()
+        self.__logs["warn"] = workerManager.WorkerManager.WarnLogs()
+        self.__logs["debug"] = workerManager.WorkerManager.DebugLogs()
 
     def box(self):
         return self.__box

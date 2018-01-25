@@ -89,8 +89,12 @@ class WorkerManager(object):
         return WorkerManager.__LogManager.TotalTime()
 
     @staticmethod
-    def Time(path):
-        return WorkerManager.__LogManager.Time(path)
+    def TimeLogs():
+        return WorkerManager.__LogManager.TimeLogs()
+
+    @staticmethod
+    def TimeLog(path):
+        return WorkerManager.__LogManager.TimeLog(path)
 
     @staticmethod
     def AverageTime():

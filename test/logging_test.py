@@ -109,16 +109,16 @@ class LoggingTest(unittest.TestCase):
         self.assertEqual(workerManager.WorkerManager.ExecutionCount(), 5)
         self.assertTrue(workerManager.WorkerManager.TotalTime() > 0)
         self.assertEqual(workerManager.WorkerManager.AverageTime(), workerManager.WorkerManager.TotalTime() / float(workerManager.WorkerManager.ExecutionCount()))
-        self.assertTrue(workerManager.WorkerManager.Time(e.path()) > 0)
-        self.assertTrue(workerManager.WorkerManager.Time(m.path()) > 0)
+        self.assertTrue(workerManager.WorkerManager.TimeLog(e.path()) > 0)
+        self.assertTrue(workerManager.WorkerManager.TimeLog(m.path()) > 0)
 
         workerManager.WorkerManager.SetUseProcess(True)
         workerManager.WorkerManager.RunSchedule(b.getSchedule())
         self.assertEqual(workerManager.WorkerManager.ExecutionCount(), 5)
         self.assertTrue(workerManager.WorkerManager.TotalTime() > 0)
         self.assertEqual(workerManager.WorkerManager.AverageTime(), workerManager.WorkerManager.TotalTime() / float(workerManager.WorkerManager.ExecutionCount()))
-        self.assertTrue(workerManager.WorkerManager.Time(e.path()) > 0)
-        self.assertTrue(workerManager.WorkerManager.Time(m.path()) > 0)
+        self.assertTrue(workerManager.WorkerManager.TimeLog(e.path()) > 0)
+        self.assertTrue(workerManager.WorkerManager.TimeLog(m.path()) > 0)
 
     def test_logging(self):
         workerManager.WorkerManager.SetLogLevel(const.LogLevel.NoLog)

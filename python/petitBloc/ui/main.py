@@ -228,6 +228,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
         self.__packet_history.refresh()
+        self.__graph.boxModel().readLogs()
 
     def __getParentGraph(self, path):
         return self.__getGraph(path[:path.rfind("/")])
@@ -269,6 +270,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__resetTabIndice()
         self.__setPath(None)
+        self.__graph.boxModel().resetLogs()
 
     def __save(self):
         if self.__filepath is None:

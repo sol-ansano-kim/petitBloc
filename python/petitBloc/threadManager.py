@@ -46,8 +46,12 @@ class LogManager(object):
         return LogManager.__TotalTime
 
     @staticmethod
-    def Time(path):
+    def TimeLog(path):
         return LogManager.__TimeLog.get(path, -1)
+
+    @staticmethod
+    def TimeLogs():
+        return copy.copy(LogManager.__TimeLog)
 
     @staticmethod
     def AverageTime():
