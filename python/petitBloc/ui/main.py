@@ -342,6 +342,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__resetTabIndice()
         self.__setPath(pth)
+        self.__graph._focus()
 
     def __read(self, filePath, rootPath):
         reRootNode = re.compile("^{}\/".format(rootPath.replace("/", "\/")))
