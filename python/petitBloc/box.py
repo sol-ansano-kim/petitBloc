@@ -3,6 +3,10 @@ from . import component
 from . import util
 from . import core
 import copy
+import re
+
+
+ReSplitPath = re.compile("^(?P<name>[a-zA-Z0-9_]+)[/]")
 
 
 class ProxyBlock(core.Proxy, component.Component):
@@ -13,6 +17,20 @@ class ProxyBlock(core.Proxy, component.Component):
         super(ProxyBlock, self).__init__(name=name, parent=parent)
         self.__ports = {}
         self.__direction = direction
+
+    def output(self, name):
+        for pp in self.__ports.values():
+            if pp["out"].name() == name:
+                return pp["out"]
+
+        return None
+
+    def input(self, name):
+        for pp in self.__ports.values():
+            if pp["in"].name() == name:
+                return pp["in"]
+
+        return None
 
     def hasConnection(self, port):
         if self.isInProxy():
@@ -179,6 +197,37 @@ class Box(component.Component):
     def blocks(self):
         for b in self.__blocks:
             yield b
+
+    def block(self, name):
+        for b in self.__blocks + [self.__in_proxy, self.__out_proxy]:
+            if b.name() == name:
+                return b
+
+        return None
+
+    def findBlock(self, blockPath):
+        current_block = self
+        blpt = blockPath
+
+        while (current_block):
+            if not isinstance(current_block, Box):
+                break
+
+            if current_block.path() == blockPath:
+                break
+
+            blpt = ReSplitPath.sub("", blpt)
+
+            res = ReSplitPath.search(blpt)
+            if not res:
+                current_block = current_block.block(blpt)
+            else:
+                current_block = current_block.block(res.group("name"))
+
+        if current_block is None or current_block.path() != blockPath:
+            return None
+
+        return current_block
 
     def blockCount(self):
         return len(self.__blocks)

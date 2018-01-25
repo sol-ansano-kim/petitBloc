@@ -1,0 +1,27 @@
+#!/usr/bin/env python2.7
+
+import sys
+import os
+import optparse
+
+
+parser = optparse.OptionParser()
+parser.add_option("-m", "--multiprocess", dest="multiprocess", help="User multiprocess", action="store_true", default=False)
+parser.add_option("-s", "--scene", dest="scene", help="Input .blcs file", action="store", default="")
+
+
+opts, _ = parser.parse_args(sys.argv[1:])
+
+try:
+    import petitBloc
+except:
+    sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
+    import petitBloc
+
+
+if not opts.scene:
+    parser.print_help()
+    sys.exit(0)
+
+
+petitBloc.Run(path=opts.scene, multiProcessing=opts.multiprocess)

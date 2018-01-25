@@ -117,6 +117,7 @@ class BoxModel(QtCore.QObject):
             try:
                 bi = bc(name=name)
             except Exception as e:
+                print("Warning : Could not create an instance of {}".format(blockType))
                 return None
 
             self.__box.addBlock(bi)

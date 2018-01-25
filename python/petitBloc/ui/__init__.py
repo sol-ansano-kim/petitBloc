@@ -5,7 +5,7 @@ def Show(path=None, multiProcessing=False):
     import sys
     import os
     from Qt import QtWidgets
-    from petitBloc import workerManager
+    from .. import workerManager
 
     workerManager.WorkerManager.SetUseProcess(multiProcessing)
 

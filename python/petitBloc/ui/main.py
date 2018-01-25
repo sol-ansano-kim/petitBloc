@@ -8,6 +8,7 @@ from . import graph
 from . import paramEditor
 from . import packetHistory
 from . import uiUtil
+from .. import scene
 import operator
 import re
 
@@ -292,7 +293,7 @@ class MainWindow(QtWidgets.QMainWindow):
             pos = nod.pos() + nod.nodeCenter
             b["pos"] = [pos.x(), pos.y()]
 
-        uiUtil.Save(self.__filepath, data)
+        scene.Write(self.__filepath, data)
 
     def __saveAs(self):
         pth, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save", "", "*.blcs")
@@ -350,7 +351,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             return "{}/{}".format(rootPath, path)
 
-        data = uiUtil.Load(filePath)
+        data = scene.Read(filePath)
 
         ## create blocks
         for b in data["blocks"]:
@@ -393,7 +394,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))
                         continue
 
-                    parm.set(v)
+                    if not parm.set(v):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(v)))
 
         ## proxy ports
         for proxy in data["proxyPorts"]:
@@ -409,7 +411,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 type_class = self.__graph.boxModel().findObjectClass(type_name)
                 if not type_class:
-                    raise Exception, "Failed to load : unknown port type - {}".format(type_name)
+                    print("Failed to load : unknown port type - {}".format(type_name))
+
+                    continue
 
                 grph.addInputProxy(type_class, name)
 
@@ -419,7 +423,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 type_class = self.__graph.boxModel().findObjectClass(type_name)
                 if not type_class:
-                    raise Exception, "Failed to load : unknown port type - {}".format(type_name)
+                    print("Failed to load : unknown port type - {}".format(type_name))
+
+                    continue
 
                 grph.addOutputProxy(type_class, name)
 
@@ -431,7 +437,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 raise Exception, "Failed to load : could not find the graph - {}".format(box_path)
 
             for pdata in pam["params"]:
-                # print param["name"]
                 bloc_path, param_name = addRootPath(pdata["param"]).split("@")
                 parant_grp = self.__getParentGraph(bloc_path)
                 if parant_grp is None:

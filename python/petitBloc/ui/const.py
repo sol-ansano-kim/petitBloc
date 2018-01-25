@@ -5,7 +5,8 @@ ParamEditorMaximumWidth = 100
 ParamLabelMinimumWidth = 50
 ParamLabelMaximumWidth = 200
 
-RootBoxName = "scene"
+from .. import const as petitBlocConst
+RootBoxName = petitBlocConst.RootBoxName
 
-InProxyBlock = "in"
-OutProxyBlock = "out"
+InProxyBlock = petitBlocConst.InProxyBlock
+OutProxyBlock = petitBlocConst.OutProxyBlock
