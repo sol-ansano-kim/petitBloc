@@ -3,7 +3,7 @@ from . import threadManager
 
 
 class WorkerManager(object):
-    __UseProcess = True
+    __UseProcess = False
 
     @staticmethod
     def SetUseProcess(value):
