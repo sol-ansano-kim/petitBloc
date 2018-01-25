@@ -6,8 +6,15 @@ import optparse
 
 
 parser = optparse.OptionParser()
-parser.add_option("-m", "--multiprocess", dest="multiprocess", help="User multiprocess", action="store_true", default=False)
+## scene
 parser.add_option("-s", "--scene", dest="scene", help="Input .blcs file", action="store", default="")
+
+## running
+parser.add_option("-m", "--multiprocess", dest="multiprocess", help="User multiprocess", action="store", default="")
+
+## query
+parser.add_option("-i", "--info", dest="info", help="Display infomation of the block (Don't run)", action="store", default="")
+parser.add_option("-q", "--query", dest="query", help="Display the contents of the scene (Don't run)", action="store_true", default=False)
 
 
 opts, _ = parser.parse_args(sys.argv[1:])
@@ -21,7 +28,11 @@ except:
 
 if not opts.scene:
     parser.print_help()
-    sys.exit(0)
+    sys.exit(1)
 
 
-petitBloc.Run(path=opts.scene, multiProcessing=opts.multiprocess)
+if not petitBloc.Run(path=opts.scene, multiProcessing=opts.multiprocess, query=opts.query, info=opts.info):
+    sys.exit(1)
+
+
+sys.exit(0)

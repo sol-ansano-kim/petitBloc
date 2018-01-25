@@ -37,6 +37,23 @@ def __parentPath(path):
     return path[:path.rfind("/")]
 
 
+def __query(filePath):
+    data = Read(filePath)
+
+    if (data["blocks"]):
+        print("# List Blocks")
+    for b in data["blocks"]:
+        print("    '{}'({})".format(__addRootPath(b["path"]), b["type"]))
+
+        for k, v in b.get("params", {}).iteritems():
+            print("        {}: {}".format(k, str(v)))
+
+    if data["connections"]:
+        print("# List Connections")
+    for con in data["connections"]:
+        print("    {} >> {}".format(__addRootPath(con["src"]), __addRootPath(con["path"])))
+
+
 def __read(filePath):
     manager = blockManager.BlockManager()
     root = box.Box(const.RootBoxName)
@@ -78,7 +95,7 @@ def __read(filePath):
                 bloc = None
 
             if bloc is not None:
-                for k, v in b.get("param", {}).iteritems():
+                for k, v in b.get("params", {}).iteritems():
                     parm = bloc.param(k)
                     if parm is None:
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))
@@ -194,6 +211,45 @@ def Read(path):
     data["proxyParameters"] = __sortDataBtPath(data["proxyParameters"])
 
     return data
+
+
+def BlockInfo(blockType):
+    manager = blockManager.BlockManager()
+    bc = manager.block(blockType)
+
+    if bc:
+        try:
+            bloc = bc()
+            print("# Block Info")
+            for inp in bloc.inputs():
+                print("    InPort : '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+            for inp in bloc.outputs():
+                print("    OutPort : '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+            for param in bloc.params():
+                print("    Parameter : '{}' ({})".format(param.name(), param.typeClass().__name__))
+
+        except Exception as e:
+            print("Warning : Could not create an instance of {}".format(blockType))
+            print(e)
+            return False
+
+    else:
+        print("Warning : Unknown block type : {}".format(blockType))
+        return False
+
+    return True
+
+
+def Query(filePath):
+    try:
+        __query(filePath)
+
+    except Exception as e:
+        print("ERROR : {}".format(str(e)))
+
+        return False
+
+    return True
 
 
 def Run(filePath, multiProcessing=False, attrbutes=[]):

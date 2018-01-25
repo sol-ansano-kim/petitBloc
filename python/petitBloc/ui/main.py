@@ -388,7 +388,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 bloc = node.block()
 
             if bloc is not None:
-                for k, v in b.get("param", {}).iteritems():
+                for k, v in b.get("params", {}).iteritems():
                     parm = bloc.param(k)
                     if parm is None:
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))

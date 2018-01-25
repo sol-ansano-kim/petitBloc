@@ -158,7 +158,7 @@ class BoxModel(QtCore.QObject):
                 params[p.name()] = p.get()
 
             if params:
-                block_data["param"] = params
+                block_data["params"] = params
 
             data["blocks"].append(block_data)
 
