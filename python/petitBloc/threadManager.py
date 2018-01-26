@@ -86,29 +86,29 @@ class LogManager(object):
 
     @staticmethod
     def Error(path, message):
-        if LogManager.__LogLevel <= const.LogLevel.Error:
+        if LogManager.__LogLevel >= const.LogLevel.Error:
             print("Error : {}".format(message))
 
         log_list = LogManager.__ErrorLog.get(path, [])
-        log_list.append(message)
+        log_list.append(str(message))
         LogManager.__ErrorLog[path] = log_list
 
     @staticmethod
     def Warn(path, message):
-        if LogManager.__LogLevel <= const.LogLevel.Warn:
+        if LogManager.__LogLevel >= const.LogLevel.Warn:
             print("Warning : {}".format(message))
 
         log_list = LogManager.__WarnLog.get(path, [])
-        log_list.append(message)
+        log_list.append(str(message))
         LogManager.__WarnLog[path] = log_list
 
     @staticmethod
     def Debug(path, message):
-        if LogManager.__LogLevel <= const.LogLevel.Debug:
+        if LogManager.__LogLevel >= const.LogLevel.Debug:
             print("Debug : {}".format(message))
 
         log_list = LogManager.__DebugLog.get(path, [])
-        log_list.append(message)
+        log_list.append(str(message))
         LogManager.__DebugLog[path] = log_list
 
 

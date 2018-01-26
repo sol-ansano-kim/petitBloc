@@ -1,11 +1,10 @@
 import external
 
 
-def Show(path=None, multiProcessing=False):
+def Show(path=None):
     import sys
     import os
     from Qt import QtWidgets
-    UseMultiprocessing(multiProcessing)
 
     app = QtWidgets.QApplication(sys.argv)
     win = Create()
@@ -19,12 +18,12 @@ def Show(path=None, multiProcessing=False):
     app.exec_()
 
 
-def UseMultiprocessing(v):
-    from .. import workerManager
-
-    workerManager.WorkerManager.SetUseProcess(v)
-
-
 def Create(parent=None):
     from . import main
+    from .. import workerManager
+    from .. import const
+
+    workerManager.WorkerManager.SetLogLevel(const.LogLevel.NoLog)
+    workerManager.WorkerManager.SetUseProcess(False)
+
     return main.MainWindow(parent=parent)

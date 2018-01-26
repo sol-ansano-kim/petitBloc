@@ -38,6 +38,9 @@ class BoxModel(QtCore.QObject):
         self.__logs["warn"] = workerManager.WorkerManager.WarnLogs()
         self.__logs["debug"] = workerManager.WorkerManager.DebugLogs()
 
+    def getLogs(self, path):
+        return (self.__logs["timeLogs"].get(path, 0), self.__logs["debug"].get(path, []), self.__logs["warn"].get(path, []), self.__logs["error"].get(path, []))
+
     def box(self):
         return self.__box
 

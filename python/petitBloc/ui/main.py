@@ -7,6 +7,7 @@ from . import model
 from . import graph
 from . import paramEditor
 from . import packetHistory
+from . import logViewer
 from . import uiUtil
 from .. import scene
 import operator
@@ -21,9 +22,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__editor_tabs = None
         self.__run = None
         self.__parm_editor = None
+        self.__packet_history = None
+        self.__log_viewer = None
         self.__networks = {}
-        self.__removed_subnets = []
         self.__filepath = None
+        self.__current_bloc = None
         self.__initialize()
 
     def __initialize(self):
@@ -34,19 +37,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(centeral)
         centeral.setLayout(main_layout)
 
+        # tabs
         self.__editor_tabs = QtWidgets.QTabWidget()
         self.__graph_tabs = QtWidgets.QTabWidget()
         self.__graph_tabs.setTabsClosable(True)
 
+        # scene graph
         self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
         self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
 
+        # editor tabs
         self.__parm_editor = paramEditor.ParamEditor()
         self.__packet_history = packetHistory.PacketHistory()
+        self.__log_viewer = logViewer.LogViewer()
         self.__editor_tabs.addTab(self.__parm_editor, "Param Editor")
         self.__editor_tabs.addTab(self.__packet_history, "Packet History")
+        self.__editor_tabs.addTab(self.__log_viewer, "Log")
 
         self.__run = QtWidgets.QPushButton("RUN")
 
@@ -58,13 +66,14 @@ class MainWindow(QtWidgets.QMainWindow):
         main_layout.addWidget(self.__run)
         self.__resetTabIndice()
 
+        # menu
         menubar = self.menuBar()
         file_menu = QtWidgets.QMenu("file")
-        news_action = QtWidgets.QAction("New Scene", file_menu)
-        open_action = QtWidgets.QAction("Open", file_menu)
-        save_action = QtWidgets.QAction("Save", file_menu)
-        save_as_action = QtWidgets.QAction("Save As", file_menu)
-        import_action = QtWidgets.QAction("Import", file_menu)
+        news_action = file_menu.addAction("New Scene")
+        open_action = file_menu.addAction("Open")
+        save_action = file_menu.addAction("Save")
+        save_as_action = file_menu.addAction("Save As")
+        import_action = file_menu.addAction("Import")
         file_menu.addAction(news_action)
         file_menu.addSeparator()
         file_menu.addAction(open_action)
@@ -78,8 +87,30 @@ class MainWindow(QtWidgets.QMainWindow):
         save_as_action.triggered.connect(self.__saveAs)
         open_action.triggered.connect(self.__open)
         import_action.triggered.connect(self.__importBox)
-
         menubar.addMenu(file_menu)
+
+        setting_menu = QtWidgets.QMenu("log")
+        log_group = QtWidgets.QActionGroup(self)
+        log_group.setExclusive(True)
+        no_log = setting_menu.addAction("No Log")
+        error_log = setting_menu.addAction("Error")
+        warn_log = setting_menu.addAction("Warning")
+        debug_log = setting_menu.addAction("Debug")
+        no_log.setCheckable(True)
+        error_log.setCheckable(True)
+        warn_log.setCheckable(True)
+        debug_log.setCheckable(True)
+        log_group.addAction(no_log)
+        log_group.addAction(error_log)
+        log_group.addAction(warn_log)
+        log_group.addAction(debug_log)
+        error_log.setChecked(True)
+        no_log.triggered.connect(self.__noLogTriggered)
+        error_log.triggered.connect(self.__errorLogTriggered)
+        warn_log.triggered.connect(self.__warnLogTriggered)
+        debug_log.triggered.connect(self.__debugLogTriggered)
+
+        menubar.addMenu(setting_menu)
 
         self.__run.clicked.connect(self.__runPressed)
 
@@ -102,6 +133,18 @@ class MainWindow(QtWidgets.QMainWindow):
                 return
 
         raise Exception, "Failed to find the node : {}".format(oldName)
+
+    def __noLogTriggered(self):
+        self.__log_viewer.setLogLevel(0)
+
+    def __errorLogTriggered(self):
+        self.__log_viewer.setLogLevel(1)
+
+    def __warnLogTriggered(self):
+        self.__log_viewer.setLogLevel(2)
+
+    def __debugLogTriggered(self):
+        self.__log_viewer.setLogLevel(3)
 
     def __currentGraphTabChanged(self, index):
         widget = None
@@ -229,6 +272,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
         self.__packet_history.refresh()
         self.__graph.boxModel().readLogs()
+        if self.__current_bloc is None:
+            self.__log_viewer.clear()
+        else:
+            self.__log_viewer.setLogs(*self.__graph.boxModel().getLogs(self.__current_bloc.path()))
 
     def __getParentGraph(self, path):
         return self.__getGraph(path[:path.rfind("/")])
@@ -502,10 +549,14 @@ class MainWindow(QtWidgets.QMainWindow):
             src_parent.createConnection(self.__shortName(src_node_path), src_port, self.__shortName(dst_node_path), dst_port)
 
     def __currentBlockChanged(self, bloc):
+        self.__current_bloc = bloc
+
         if not bloc:
             self.__parm_editor.setBlock(None)
             self.__packet_history.setBlock(None)
+            self.__log_viewer.clear()
             return
 
         self.__parm_editor.setBlock(bloc)
         self.__packet_history.setBlock(bloc)
+        self.__log_viewer.setLogs(*self.__graph.boxModel().getLogs(bloc.path()))

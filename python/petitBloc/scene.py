@@ -37,6 +37,21 @@ def __parentPath(path):
     return path[:path.rfind("/")]
 
 
+def __setVerboseLevel(l):
+    if l < 0 or l > 3:
+        print("Invalid verbose level {}. Use default level (1)".format(l))
+        l = 1
+
+    if l == 0:
+        workerManager.WorkerManager.SetLogLevel(const.LogLevel.NoLog)
+    elif l == 1:
+        workerManager.WorkerManager.SetLogLevel(const.LogLevel.Error)
+    elif l == 2:
+        workerManager.WorkerManager.SetLogLevel(const.LogLevel.Warn)
+    elif l == 3:
+        workerManager.WorkerManager.SetLogLevel(const.LogLevel.Debug)
+
+
 def __query(filePath):
     data = Read(filePath)
 
@@ -282,8 +297,10 @@ def Query(filePath):
     return True
 
 
-def Run(filePath, parameters=[], multiProcessing=False, attrbutes=[]):
+def Run(filePath, parameters=[], multiProcessing=False, attrbutes=[], verbose=1):
     try:
+        __setVerboseLevel(verbose)
+
         workerManager.WorkerManager.SetUseProcess(multiProcessing)
 
         root = __read(filePath)

@@ -10,8 +10,8 @@ parser = optparse.OptionParser()
 parser.add_option("-s", dest="scene", help="Input .blcs file", action="store", default="")
 
 ## running
-parser.add_option("-m", dest="multiprocess", help="Use multiprocess", action="store", default="")
 parser.add_option("-p", dest="parameter", help="Override parmeter value (mult-usable) (e.g. -p /scene/test@value=1.5 -p /scene/test@on=[0|1])", action="append", default=[])
+parser.add_option("-v", dest="verboseLevel", help="Verbose level(0~3)(default 1)", type="int", action="store", default=1)
 
 ## query
 parser.add_option("-i", dest="info", help="Display infomation of the block (Don't execute)", action="store", default="")
@@ -33,7 +33,7 @@ if not opts.scene:
     sys.exit(1)
 
 
-if not petitBloc.Run(path=opts.scene, parameters=opts.parameter, multiProcessing=opts.multiprocess, query=opts.query, info=opts.info):
+if not petitBloc.Run(path=opts.scene, parameters=opts.parameter, query=opts.query, info=opts.info, verbose=opts.verboseLevel):
     sys.exit(1)
 
 

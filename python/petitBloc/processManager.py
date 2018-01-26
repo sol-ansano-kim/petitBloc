@@ -20,7 +20,7 @@ class LogManager(object):
         LogManager.__LogLevel = l
 
     @staticmethod
-    def Reset():
+    def Initialize():
         if LogManager.__Manager is None:
             LogManager.__Manager = multiprocessing.Manager()
             LogManager.__Count = multiprocessing.Value("i", 0)
@@ -29,7 +29,10 @@ class LogManager(object):
             LogManager.__ErrorLog = LogManager.__Manager.dict()
             LogManager.__WarnLog = LogManager.__Manager.dict()
             LogManager.__DebugLog = LogManager.__Manager.dict()
-        else:
+
+    @staticmethod
+    def Reset():
+        if LogManager.__Manager is not None:
             LogManager.__Count.value = 0
             LogManager.__TotalTime.value = 0.0
             LogManager.__TimeLog.clear()
@@ -95,29 +98,29 @@ class LogManager(object):
 
     @staticmethod
     def Error(path, message):
-        if LogManager.__LogLevel <= const.LogLevel.Error:
+        if LogManager.__LogLevel >= const.LogLevel.Error:
             print("Error : {}".format(message))
 
         log_list = LogManager.__ErrorLog.get(path, [])
-        log_list.append(message)
+        log_list.append(str(message))
         LogManager.__ErrorLog[path] = log_list
 
     @staticmethod
     def Warn(path, message):
-        if LogManager.__LogLevel <= const.LogLevel.Warn:
+        if LogManager.__LogLevel >= const.LogLevel.Warn:
             print("Warning : {}".format(message))
 
         log_list = LogManager.__WarnLog.get(path, [])
-        log_list.append(message)
+        log_list.append(str(message))
         LogManager.__WarnLog[path] = log_list
 
     @staticmethod
     def Debug(path, message):
-        if LogManager.__LogLevel <= const.LogLevel.Debug:
+        if LogManager.__LogLevel >= const.LogLevel.Debug:
             print("Debug : {}".format(message))
 
         log_list = LogManager.__DebugLog.get(path, [])
-        log_list.append(message)
+        log_list.append(str(message))
         LogManager.__DebugLog[path] = log_list
 
 
@@ -283,6 +286,7 @@ class ProcessManager(object):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    LogManager.Initialize()
     LogManager.Reset()
     ValueManager.Reset()
     QueueManager.Reset()

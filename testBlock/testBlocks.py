@@ -163,6 +163,7 @@ class RaiseError(block.Block):
         self.addParam(int, "value")
 
     def process(self):
+        self.warn("warn test")
         in_i = self.input(0).receive()
         if in_i.isEOP():
             return False
@@ -170,6 +171,7 @@ class RaiseError(block.Block):
         if in_i.value() == self.param("value").get():
             raise Exception, "Raise ERROR for testing"
 
+        self.debug("debug test : {}".format(in_i.value()))
         in_i.drop()
 
         return True

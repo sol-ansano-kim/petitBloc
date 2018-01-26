@@ -6,7 +6,6 @@ import optparse
 
 
 parser = optparse.OptionParser()
-parser.add_option("-m", "--multiprocess", dest="multiprocess", help="User multiprocess", action="store_true", default=False)
 parser.add_option("-s", "--scene", dest="scene", help="Input .blcs file", action="store", default="")
 
 opts, _ = parser.parse_args(sys.argv[1:])
@@ -19,4 +18,4 @@ except:
 
 
 from petitBloc import ui
-ui.Show(path=opts.scene, multiProcessing=opts.multiprocess)
+ui.Show(path=opts.scene)

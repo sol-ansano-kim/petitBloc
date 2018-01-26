@@ -7,10 +7,10 @@ OutProxyBlock = "out"
 
 
 class LogLevel(enum.Enum):
-    Debug = 0
-    Warn = 1
-    Error = 2
-    NoLog = 3
+    NoLog = 0
+    Error = 1
+    Warn = 2
+    Debug = 3
 
     def __gt__(self, b):
         return self._value_ > b._value_
