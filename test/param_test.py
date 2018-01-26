@@ -6,6 +6,7 @@ from petitBloc import port
 from petitBloc import chain
 from petitBloc import block
 from petitBloc import core
+from petitBloc import parameter
 from petitBloc import box
 from petitBloc import workerManager
 import multiprocessing
@@ -43,46 +44,46 @@ class DmpInt(block.Block):
 
 class TestParameter(unittest.TestCase):
     def test_init(self):
-        p1 = core.Parameter("testStr", value="test")
+        p1 = parameter.Parameter("testStr", value="test")
         self.assertIsNotNone(p1)
         self.assertEqual(p1.typeClass(), str)
         self.assertEqual(str(p1), "Parameter<'testStr'>")
-        p2 = core.Parameter("testInt", value=1)
+        p2 = parameter.Parameter("testInt", value=1)
         self.assertIsNotNone(p2)
         self.assertEqual(p2.typeClass(), int)
-        p3 = core.Parameter("testInt", value=1.0)
+        p3 = parameter.Parameter("testInt", value=1.0)
         self.assertIsNotNone(p3)
         self.assertEqual(p3.typeClass(), float)
-        p4 = core.Parameter("testBool", value=True)
+        p4 = parameter.Parameter("testBool", value=True)
         self.assertIsNotNone(p4)
         self.assertEqual(p4.typeClass(), bool)
 
-        p5 = core.Parameter("castFloat", typeClass=float, value=False)
+        p5 = parameter.Parameter("castFloat", typeClass=float, value=False)
         self.assertIsNotNone(p5)
         self.assertEqual(p5.typeClass(), float)
         self.assertEqual(p5.get(), 0.0)
 
-        p6 = core.Parameter("castBool", typeClass=bool, value=0)
+        p6 = parameter.Parameter("castBool", typeClass=bool, value=0)
         self.assertIsNotNone(p6)
         self.assertEqual(p6.typeClass(), bool)
         self.assertEqual(p6.get(), False)
 
-        p7 = core.Parameter("castStr", typeClass=str, value=0)
+        p7 = parameter.Parameter("castStr", typeClass=str, value=0)
         self.assertIsNone(p7)
 
-        p8 = core.Parameter("castInt", typeClass=int, value="Asd")
+        p8 = parameter.Parameter("castInt", typeClass=int, value="Asd")
         self.assertIsNone(p8)
 
-        p9 = core.Parameter("typeInt", typeClass=int)
+        p9 = parameter.Parameter("typeInt", typeClass=int)
         self.assertIsNotNone(p9)
 
     def test_get_set(self):
-        p1 = core.Parameter("testStr", str)
+        p1 = parameter.Parameter("testStr", str)
         self.assertEqual(p1.get(), "")
         self.assertTrue(p1.set(u"a"))
         self.assertEqual(p1.get(), "a")
         self.assertFalse(p1.set(1))
-        p2 = core.Parameter("testInt", 0, int)
+        p2 = parameter.Parameter("testInt", 0, int)
 
 
 class TestBlock(unittest.TestCase):

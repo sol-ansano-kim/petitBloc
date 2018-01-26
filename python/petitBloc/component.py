@@ -2,6 +2,7 @@ from . import port
 from . import util
 from . import core
 from . import workerManager
+from . import parameter
 
 
 class Component(core.ComponentBase):
@@ -175,7 +176,7 @@ class Component(core.ComponentBase):
 
         name = util.GetUniqueName(name, all_names)
 
-        p = core.Parameter(name, typeClass=typeClass, value=value, parent=self)
+        p = parameter.Parameter(name, typeClass=typeClass, value=value, parent=self)
         if p:
             self.__params.append(p)
 
