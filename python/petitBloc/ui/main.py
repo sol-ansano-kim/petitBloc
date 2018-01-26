@@ -9,6 +9,7 @@ from . import paramEditor
 from . import packetHistory
 from . import logViewer
 from . import uiUtil
+from . import sceneState
 from .. import scene
 import operator
 import re
@@ -23,6 +24,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__run = None
         self.__parm_editor = None
         self.__packet_history = None
+        self.__scene_state = None
         self.__log_viewer = None
         self.__networks = {}
         self.__filepath = None
@@ -36,6 +38,11 @@ class MainWindow(QtWidgets.QMainWindow):
         main_layout = QtWidgets.QVBoxLayout()
         self.setCentralWidget(centeral)
         centeral.setLayout(main_layout)
+
+        # top bar
+        top_bar = QtWidgets.QHBoxLayout()
+        self.__scene_state = sceneState.SceneState()
+        top_bar.addWidget(self.__scene_state)
 
         # tabs
         self.__editor_tabs = QtWidgets.QTabWidget()
@@ -62,6 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
         main_contents.addWidget(self.__graph_tabs)
         main_contents.addWidget(self.__editor_tabs)
 
+        main_layout.addLayout(top_bar)
         main_layout.addWidget(main_contents)
         main_layout.addWidget(self.__run)
         self.__resetTabIndice()
@@ -276,6 +284,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.__log_viewer.clear()
         else:
             self.__log_viewer.setLogs(*self.__graph.boxModel().getLogs(self.__current_bloc.path()))
+
+        self.__scene_state.setStates(*self.__graph.boxModel().getState())
 
     def __getParentGraph(self, path):
         return self.__getGraph(path[:path.rfind("/")])

@@ -5,18 +5,30 @@ from .. import const
 class LogViewer(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LogViewer, self).__init__(parent=parent)
-        layout = QtWidgets.QGridLayout()
-        self.setLayout(layout)
         self.__time = 0
         self.__debug = []
         self.__warn = []
         self.__error = []
         self.__log_level = const.LogLevel.Error
 
+        self.__time_view = None
+        self.__error_label = None
+        self.__error_view = None
+        self.__warn_label = None
+        self.__warn_view = None
+        self.__debug_label = None
+        self.__debug_view = None
+
+        self.__initialize()
+
+    def __initialize(self):
+        layout = QtWidgets.QGridLayout()
+        self.setLayout(layout)
+
         self.__time_view = QtWidgets.QLabel()
         layout.addWidget(QtWidgets.QLabel("Time"), 0, 0)
         layout.addWidget(self.__time_view, 0, 1)
-        
+
         self.__error_label = QtWidgets.QLabel("Error")
         self.__error_view = QtWidgets.QTextEdit()
         self.__error_view.setReadOnly(True)
