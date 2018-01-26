@@ -5,9 +5,7 @@ def Show(path=None, multiProcessing=False):
     import sys
     import os
     from Qt import QtWidgets
-    from .. import workerManager
-
-    workerManager.WorkerManager.SetUseProcess(multiProcessing)
+    UseMultiprocessing(multiProcessing)
 
     app = QtWidgets.QApplication(sys.argv)
     win = Create()
@@ -19,6 +17,12 @@ def Show(path=None, multiProcessing=False):
     win.show()
 
     app.exec_()
+
+
+def UseMultiprocessing(v):
+    from .. import workerManager
+
+    workerManager.WorkerManager.SetUseProcess(v)
 
 
 def Create(parent=None):
