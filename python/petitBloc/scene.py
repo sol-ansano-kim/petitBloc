@@ -61,7 +61,7 @@ def __query(filePath):
         print("    '{}'({})".format(__addRootPath(b["path"]), b["type"]))
 
         for k, v in b.get("params", {}).iteritems():
-            print("        {}: {}".format(k, str(v)))
+            print("        {}@{}: {}".format(b["path"], k, str(v)))
 
     if data["connections"]:
         print("# List Connections")
