@@ -6,6 +6,7 @@ from petitBloc import box
 from petitBloc import block
 from petitBloc import chain
 from petitBloc import workerManager
+import Queue
 import multiprocessing
 
 
@@ -78,15 +79,27 @@ class Mult(block.Block):
 class Dump(block.Block):
     def __init__(self, name="", parent=None):
         super(Dump, self).__init__(name=name, parent=parent)
-        self.dmp = multiprocessing.Queue()
+        self.dmp = Queue.Queue()
+        self.__process = False
+
+    def useProcess(self, v):
+        self.__process = v
+        self.flush()
 
     def initialize(self):
         self.addInput(float)
 
     def flush(self):
-        self.dmp.close()
-        del self.dmp
-        self.dmp = multiprocessing.Queue()
+        if self.dmp:
+            if not isinstance(self.dmp, Queue.Queue):
+                self.dmp.close()
+
+            del self.dmp
+
+        if self.__process:
+            self.dmp = multiprocessing.Queue()
+        else:
+            self.dmp = Queue.Queue()
 
     def process(self):
         in_f = self.input(0).receive()
@@ -129,7 +142,7 @@ class BoxTest(unittest.TestCase):
         g = box.Box()
         num = MakeNumbers(name="MakeNumber")
         dmp = Dump(name="Dump")
-
+        # dmp.useProcess(False)
         self.assertTrue(g.addBlock(dmp))
         self.assertTrue(g.addBlock(num))
 
@@ -159,13 +172,15 @@ class BoxTest(unittest.TestCase):
         workerManager.WorkerManager.RunSchedule(schedule)
 
         v2 = []
+
         while (not dmp.dmp.empty()):
             v2.append(dmp.dmp.get())
 
         self.assertEqual(v1, v2)
 
         # try it agian
-        dmp.flush()
+        dmp.useProcess(True)
+        workerManager.WorkerManager.SetUseProcess(True)
         self.assertTrue(dmp.dmp.empty())
 
         workerManager.WorkerManager.RunSchedule(schedule)
@@ -193,7 +208,7 @@ class BoxTest(unittest.TestCase):
         chain.Chain(two.output(1), add2.input(0))
         chain.Chain(add1.output(0), dmp1.input(0))
         chain.Chain(add2.output(0), dmp2.input(0))
-
+        workerManager.WorkerManager.SetUseProcess(False)
         workerManager.WorkerManager.RunSchedule(g.getSchedule())
 
         d1 = []
@@ -233,8 +248,11 @@ class BoxTest(unittest.TestCase):
         self.assertIsNotNone(chain.Chain(num2.output(0), add.input(0)))
         self.assertIsNotNone(chain.Chain(add.output(0), dmp2.input(0)))
 
+        workerManager.WorkerManager.SetUseProcess(True)
+        dmp1.useProcess(True)
+        dmp2.useProcess(True)
+
         workerManager.WorkerManager.RunSchedule(g.getSchedule())
-        workerManager.WorkerManager.SetUseProcess(False)
 
         out_dmp = []
         out_value = []

@@ -1,6 +1,7 @@
 from . import port
 from . import util
 from . import core
+from . import workerManager
 
 
 class Component(core.ComponentBase):
@@ -10,6 +11,15 @@ class Component(core.ComponentBase):
         self.__outputs = []
         self.__params = []
         self.initialize()
+
+    def debug(self, message):
+        workerManager.WorkerManager.Debug(self.path(), message)
+
+    def warn(self, message):
+        workerManager.WorkerManager.Warn(self.path(), message)
+
+    def error(self, message):
+        workerManager.WorkerManager.Error(self.path(), message)
 
     def getSchedule(self):
         return [self]

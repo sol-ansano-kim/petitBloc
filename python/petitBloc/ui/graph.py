@@ -1,10 +1,15 @@
-from .Nodz import nodz_main
-from .Nodz import nodz_utils
+import os
+from Nodz import nodz_main
+from Nodz import nodz_utils
 from Qt import QtGui
 from Qt import QtCore
 from Qt import QtWidgets
 from . import model
 from . import blockCreator
+
+
+def getConfigFile():
+    return os.path.abspath(os.path.join(__file__, "../nodzConfig.json"))
 
 
 class Graph(nodz_main.Nodz):
@@ -16,7 +21,7 @@ class Graph(nodz_main.Nodz):
     CurrentNodeChanged = QtCore.Signal(object)
 
     def __init__(self, name="", boxObject=None, parent=None):
-        super(Graph, self).__init__(parent)
+        super(Graph, self).__init__(parent, configPath=getConfigFile())
         self.__model = model.BoxModel(name=name, boxObject=boxObject)
         self.__current_block = None
         self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames())
@@ -25,6 +30,23 @@ class Graph(nodz_main.Nodz):
         self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
         self.initialize()
+
+        self.__zoom_factor = self.config["zoom_factor"]
+
+    def wheelEvent(self, event):
+        self.currentState = 'ZOOM_VIEW'
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
+
+        inFactor = self.__zoom_factor
+        outFactor = 1 / inFactor
+
+        if event.delta() > 0:
+            zoomFactor = inFactor
+        else:
+            zoomFactor = outFactor
+
+        self.scale(zoomFactor, zoomFactor)
+        self.currentState = 'DEFAULT'
 
     def boxModel(self):
         return self.__model
@@ -35,7 +57,7 @@ class Graph(nodz_main.Nodz):
     def mouseDoubleClickEvent(self, evnt):
         itm = self.itemAt(evnt.pos())
 
-        if itm is not None:
+        if itm is not None and isinstance(itm, BlocItem):
             if itm.block().hasNetwork():
                 self.ItemDobleClicked.emit(itm.block())
 
@@ -121,28 +143,28 @@ class Graph(nodz_main.Nodz):
 
         if position is None:
             position = self.mapToScene(self.mapFromGlobal(QtGui.QCursor.pos()))
-        else:
-            position = QtCore.QPointF(position[0], position[1])
 
         node = self.createNode(bloc, position=position)
 
         if bloc.hasNetwork():
             self.BoxCreated.emit(bloc, init)
 
-        # TODO : preset
         for ip in bloc.inputs():
-            self.createAttribute(node=node, port=ip, plug=False, socket=True, preset="attr_preset_1", dataType=ip.typeClass())
+            self.createAttribute(node=node, port=ip, plug=False, socket=True, dataType=ip.typeClass())
 
         for op in bloc.outputs():
-            self.createAttribute(node=node, port=op, plug=True, socket=False, preset="attr_preset_1", dataType=op.typeClass())
+            self.createAttribute(node=node, port=op, plug=True, socket=False, dataType=op.typeClass())
 
         return node
 
-    def createNode(self, bloc, preset='node_default', position=None, alternate=True):
+    def createNode(self, bloc, preset='block_default', position=None, alternate=True):
         if bloc.name() in self.scene().nodes.keys():
             print('A node with the same name already exists : {0}'.format(bloc.name()))
             print('Node creation aborted !')
             return
+
+        if bloc.hasNetwork():
+            preset = "box_default"
 
         nodeItem = BlocItem(bloc, alternate, preset, self.config)
 
@@ -162,7 +184,7 @@ class Graph(nodz_main.Nodz):
 
         return nodeItem
 
-    def createAttribute(self, node, port, index=-1, preset='attr_default', plug=True, socket=True, dataType=None, proxyNode=None):
+    def createAttribute(self, node, port, index=-1, preset='port_default', plug=True, socket=True, dataType=None, proxyNode=None):
         if not node in self.scene().nodes.values():
             print('Node object does not exist !')
             print('Attribute creation aborted !')
@@ -172,6 +194,35 @@ class Graph(nodz_main.Nodz):
             print('An attribute with the same name already exists : {0}'.format(port.name()))
             print('Attribute creation aborted !')
             return
+
+        if isinstance(node, ProxyItem) or (node.block().hasNetwork()):
+            if port.typeClass() == bool:
+                preset = "box_bool_port"
+
+            elif port.typeClass() == int:
+                preset = "box_int_port"
+
+            elif port.typeClass() == float:
+                preset = "box_float_port"
+
+            elif issubclass(port.typeClass(), basestring):
+                preset = "box_str_port"
+
+            else:
+                preset = "str_port"
+
+        else:
+            if port.typeClass() == bool:
+                preset = "bool_port"
+
+            elif port.typeClass() == int:
+                preset = "int_port"
+
+            elif port.typeClass() == float:
+                preset = "float_port"
+
+            elif issubclass(port.typeClass(), basestring):
+                preset = "str_port"
 
         node._createAttribute(port, index=index, preset=preset, plug=plug, socket=socket, dataType=dataType, proxyNode=proxyNode)
 
@@ -188,8 +239,8 @@ class SubNet(Graph):
 
     def __init__(self, name="", boxObject=None, parent=None):
         super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
-        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, "node_default", self.config)
-        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, "node_default", self.config)
+        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, "proxy_default", self.config)
+        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, "proxy_default", self.config)
 
         self.scene().nodes[self.__proxy_in.block().name()] = self.__proxy_in
         self.scene().nodes[self.__proxy_out.block().name()] = self.__proxy_out
@@ -237,14 +288,14 @@ class SubNet(Graph):
     def addInputProxy(self, typeClass, name):
         ip, op = self.boxModel().addInputProxy(typeClass, name)
         proxy_node = self.inProxyNode()
-        self.createAttribute(node=proxy_node, port=op, plug=True, socket=False, preset="attr_preset_1", dataType=op.typeClass(), proxyNode=proxy_node)
+        self.createAttribute(node=proxy_node, port=op, plug=True, socket=False, dataType=op.typeClass(), proxyNode=proxy_node)
         self.ProxyPortAdded.emit(self.box(), proxy_node, ip)
         return ip, op
 
     def addOutputProxy(self, typeClass, name):
         ip, op = self.boxModel().addOutputProxy(typeClass, name)
         proxy_node = self.outProxyNode()
-        self.createAttribute(node=proxy_node, port=ip, plug=False, socket=True, preset="attr_preset_1", dataType=ip.typeClass(), proxyNode=proxy_node)
+        self.createAttribute(node=proxy_node, port=ip, plug=False, socket=True, dataType=ip.typeClass(), proxyNode=proxy_node)
         self.ProxyPortAdded.emit(self.box(), proxy_node, op)
         return ip, op
 
@@ -424,8 +475,10 @@ class BlocItem(nodz_main.NodeItem):
             self._attrPen.setColor(nodz_utils._convertDataToColor([0, 0, 0, 0]))
             painter.setPen(self._attrPen)
             painter.setBrush(self._attrBrush)
-            if (offset / self.attrHeight) % 2:
-                painter.setBrush(self._attrBrushAlt)
+
+            if self.alternate:
+                if (offset / self.attrHeight) % 2:
+                    painter.setBrush(self._attrBrushAlt)
 
             painter.drawRect(rect)
 
@@ -867,6 +920,33 @@ class InputProxyPortItem(InputPortItem):
 class ChainItem(nodz_main.ConnectionItem):
     def __init__(self, source_point, target_point, source, target):
         super(ChainItem, self).__init__(source_point, target_point, source, target)
+
+    def updatePath(self):
+        self._createStyle()
+        super(ChainItem, self).updatePath()
+
+    def _updatePen(self):
+        color = None
+
+        for p in [self.source, self.target]:
+            if p is None:
+                continue
+
+            color = p.brush.color()
+            if p.port().isInPort():
+                break
+
+        config = self.source.scene().views()[0].config
+        if color is None:
+            color = nodz_utils._convertDataToColor(config['connection_color'])
+
+        self._pen = QtGui.QPen(color)
+        self._pen.setWidth(config['connection_width'])
+
+    def _createStyle(self):
+        self._updatePen()
+        self.setAcceptHoverEvents(True)
+        self.setZValue(-1)
 
     def mouseReleaseEvent(self, evnt):
         nodzInst = self.scene().views()[0]

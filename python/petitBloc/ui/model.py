@@ -22,6 +22,27 @@ class BoxModel(QtCore.QObject):
 
         self.__manager = blockManager.BlockManager()
         self.__blocs = []
+        self.__logs = {"totalTime": 0, "execCount": 0, "avgTime": 0, "timeLogs": {}, "error": {}, "warn": {}, "debug": {}}
+
+    def resetLogs(self):
+        self.__logs = {"totalTime": 0, "execCount": 0, "avgTime": 0, "timeLogs": {}, "error": {}, "warn": {}, "debug": {}}
+        workerManager.WorkerManager.ResetLog()
+
+    def readLogs(self):
+        self.__logs = {"totalTime": 0, "execCount": 0, "avgTime": 0, "timeLogs": {}, "error": {}, "warn": {}, "debug": {}}
+        self.__logs["totalTime"] = workerManager.WorkerManager.TotalTime()
+        self.__logs["execCount"] = workerManager.WorkerManager.ExecutionCount()
+        self.__logs["avgTime"] = workerManager.WorkerManager.AverageTime()
+        self.__logs["timeLogs"] = workerManager.WorkerManager.TimeLogs()
+        self.__logs["error"] = workerManager.WorkerManager.ErrorLogs()
+        self.__logs["warn"] = workerManager.WorkerManager.WarnLogs()
+        self.__logs["debug"] = workerManager.WorkerManager.DebugLogs()
+
+    def getState(self):
+        return (self.__logs["execCount"], len(self.__logs["error"].keys()), self.__logs["totalTime"], self.__logs["avgTime"])
+
+    def getLogs(self, path):
+        return (self.__logs["timeLogs"].get(path, 0), self.__logs["debug"].get(path, []), self.__logs["warn"].get(path, []), self.__logs["error"].get(path, []))
 
     def box(self):
         return self.__box
@@ -117,14 +138,13 @@ class BoxModel(QtCore.QObject):
             try:
                 bi = bc(name=name)
             except Exception as e:
+                print("Warning : Could not create an instance of {}".format(blockType))
                 return None
 
             self.__box.addBlock(bi)
             self.__blocs.append(bi)
 
             return bi
-        else:
-            print("Warning : Unknown block type : {}".format(blockType))
 
         return None
 
@@ -157,7 +177,7 @@ class BoxModel(QtCore.QObject):
                 params[p.name()] = p.get()
 
             if params:
-                block_data["param"] = params
+                block_data["params"] = params
 
             data["blocks"].append(block_data)
 

@@ -4,7 +4,8 @@ import os
 sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
 from petitBloc import block
 from petitBloc import chain
-import multiprocessing
+import threading
+import Queue
 import time
 
 
@@ -47,7 +48,7 @@ class SplitString(block.Block):
 class DumpString(block.Block):
     def __init__(self):
         super(DumpString, self).__init__()
-        self.dmp = multiprocessing.Queue()
+        self.dmp = Queue.Queue()
         self.lst = []
         self.count = 0
 
@@ -138,19 +139,19 @@ class PacketTest(unittest.TestCase):
 
         processes = []
         ps.activate()
-        p = multiprocessing.Process(target=ps.run)
+        p = threading.Thread(target=ps.run)
         p.daemon = True
         p.start()
         processes.append((p, ps))
 
         ss.activate()
-        p = multiprocessing.Process(target=ss.run)
+        p = threading.Thread(target=ss.run)
         p.daemon = True
         p.start()
         processes.append((p, ss))
 
         ms.activate()
-        p = multiprocessing.Process(target=ms.run)
+        p = threading.Thread(target=ms.run)
         p.daemon = True
         p.start()
         processes.append((p, ms))

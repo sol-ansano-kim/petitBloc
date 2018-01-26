@@ -1,0 +1,21 @@
+#!/usr/bin/env python2.7
+
+import sys
+import os
+import optparse
+
+
+parser = optparse.OptionParser()
+parser.add_option("-s", "--scene", dest="scene", help="Input .blcs file", action="store", default="")
+
+opts, _ = parser.parse_args(sys.argv[1:])
+
+try:
+    import petitBloc
+except:
+    sys.path.append(os.path.abspath(os.path.join(__file__, "../../python")))
+    import petitBloc
+
+
+from petitBloc import ui
+ui.Show(path=opts.scene)

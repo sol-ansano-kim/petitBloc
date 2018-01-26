@@ -2,6 +2,28 @@ from petitBloc import block
 import sys
 
 
+class TestObject(object):
+    def __init__(self):
+        super(TestObject, self).__init__()
+
+
+class StyleCheck(block.Block):
+    def __init__(self, name="", parent=None):
+        super(StyleCheck, self).__init__(name=name, parent=parent)
+
+    def initialize(self):
+        self.addInput(bool, "boolIn")
+        self.addInput(int, "intIn")
+        self.addInput(float, "floatIn")
+        self.addInput(str, "strIn")
+        self.addInput(TestObject, "objectIn")
+        self.addOutput(bool, "boolOut")
+        self.addOutput(int, "intOut")
+        self.addOutput(float, "floatOut")
+        self.addOutput(str, "strOut")
+        self.addOutput(TestObject, "objectOut")
+
+
 class MakeNumbers(block.Block):
     def __init__(self, name="", parent=None):
         super(MakeNumbers, self).__init__(name=name, parent=parent)
@@ -141,6 +163,7 @@ class RaiseError(block.Block):
         self.addParam(int, "value")
 
     def process(self):
+        self.warn("warn test")
         in_i = self.input(0).receive()
         if in_i.isEOP():
             return False
@@ -148,6 +171,7 @@ class RaiseError(block.Block):
         if in_i.value() == self.param("value").get():
             raise Exception, "Raise ERROR for testing"
 
+        self.debug("debug test : {}".format(in_i.value()))
         in_i.drop()
 
         return True

@@ -1,5 +1,127 @@
 import multiprocessing
 import copy
+import time
+from . import const
+
+
+class LogManager(object):
+    __LogLevel = const.LogLevel.Error
+
+    __Manager = None
+    __Count = None
+    __TotalTime = None
+    __TimeLog = None
+    __ErrorLog = None
+    __WarnLog = None
+    __DebugLog = None
+
+    @staticmethod
+    def SetLogLevel(l):
+        LogManager.__LogLevel = l
+
+    @staticmethod
+    def Initialize():
+        if LogManager.__Manager is None:
+            LogManager.__Manager = multiprocessing.Manager()
+            LogManager.__Count = multiprocessing.Value("i", 0)
+            LogManager.__TotalTime = multiprocessing.Value("f", 0.0)
+            LogManager.__TimeLog = LogManager.__Manager.dict()
+            LogManager.__ErrorLog = LogManager.__Manager.dict()
+            LogManager.__WarnLog = LogManager.__Manager.dict()
+            LogManager.__DebugLog = LogManager.__Manager.dict()
+
+    @staticmethod
+    def Reset():
+        if LogManager.__Manager is not None:
+            LogManager.__Count.value = 0
+            LogManager.__TotalTime.value = 0.0
+            LogManager.__TimeLog.clear()
+            LogManager.__ErrorLog.clear()
+            LogManager.__WarnLog.clear()
+            LogManager.__DebugLog.clear()
+
+    @staticmethod
+    def IncreaseCount():
+        LogManager.__Count.value += 1
+
+    @staticmethod
+    def TimeReport(path, v):
+        LogManager.__TotalTime.value += v
+        LogManager.__TimeLog[path] = v
+
+    @staticmethod
+    def ExecutionCount():
+        return LogManager.__Count.value
+
+    @staticmethod
+    def TotalTime():
+        return LogManager.__TotalTime.value
+
+    @staticmethod
+    def TimeLog(path):
+        return LogManager.__TimeLog.get(path, -1)
+
+    @staticmethod
+    def AverageTime():
+        if LogManager.__Count.value == 0:
+            return 0
+
+        return LogManager.__TotalTime.value / float(LogManager.__Count.value)
+
+    @staticmethod
+    def TimeLogs():
+        return LogManager.__TimeLog.copy()
+
+    @staticmethod
+    def ErrorLogs():
+        return LogManager.__ErrorLog.copy()
+
+    @staticmethod
+    def WarnLogs():
+        return LogManager.__WarnLog.copy()
+
+    @staticmethod
+    def DebugLogs():
+        return LogManager.__DebugLog.copy()
+
+    @staticmethod
+    def ErrorLog(path):
+        return copy.copy(LogManager.__ErrorLog.get(path, []))
+
+    @staticmethod
+    def WarnLog(path):
+        return copy.copy(LogManager.__WarnLog.get(path, []))
+
+    @staticmethod
+    def DebugLog(path):
+        return copy.copy(LogManager.__DebugLog.get(path, []))
+
+    @staticmethod
+    def Error(path, message):
+        if LogManager.__LogLevel >= const.LogLevel.Error:
+            print("Error : {}".format(message))
+
+        log_list = LogManager.__ErrorLog.get(path, [])
+        log_list.append(str(message))
+        LogManager.__ErrorLog[path] = log_list
+
+    @staticmethod
+    def Warn(path, message):
+        if LogManager.__LogLevel >= const.LogLevel.Warn:
+            print("Warning : {}".format(message))
+
+        log_list = LogManager.__WarnLog.get(path, [])
+        log_list.append(str(message))
+        LogManager.__WarnLog[path] = log_list
+
+    @staticmethod
+    def Debug(path, message):
+        if LogManager.__LogLevel >= const.LogLevel.Debug:
+            print("Debug : {}".format(message))
+
+        log_list = LogManager.__DebugLog.get(path, [])
+        log_list.append(str(message))
+        LogManager.__DebugLog[path] = log_list
 
 
 class ValueManager(object):
@@ -76,10 +198,16 @@ class ProcessWorker(multiprocessing.Process):
         self.__has_error = ValueManager.CreateValue("i", 0)
 
     def run(self):
+        LogManager.IncreaseCount()
+        st = time.time()
+
         try:
             self.__obj.run()
         except Exception as e:
             self.__has_error.value = 1
+            LogManager.Error(self.__obj.path(), e)
+
+        LogManager.TimeReport(self.__obj.path(), time.time() - st)
 
     def start(self):
         self.__obj.activate()
@@ -158,6 +286,8 @@ class ProcessManager(object):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    LogManager.Initialize()
+    LogManager.Reset()
     ValueManager.Reset()
     QueueManager.Reset()
     ProcessManager.Reset()

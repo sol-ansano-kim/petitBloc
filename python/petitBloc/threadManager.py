@@ -1,6 +1,115 @@
 import threading
 import Queue
 import copy
+import time
+from . import const
+
+
+class LogManager(object):
+    __LogLevel = const.LogLevel.Error
+
+    __Count = 0
+    __TotalTime = 0
+    __TimeLog = {}
+    __ErrorLog = {}
+    __WarnLog = {}
+    __DebugLog = {}
+
+    @staticmethod
+    def SetLogLevel(l):
+        LogManager.__LogLevel = l
+
+    @staticmethod
+    def Reset():
+        LogManager.__Count = 0
+        LogManager.__TotalTime = 0
+        LogManager.__TimeLog = {}
+        LogManager.__ErrorLog = {}
+        LogManager.__WarnLog = {}
+        LogManager.__DebugLog = {}
+
+    @staticmethod
+    def IncreaseCount():
+        LogManager.__Count += 1
+
+    @staticmethod
+    def TimeReport(path, v):
+        LogManager.__TotalTime += v
+        LogManager.__TimeLog[path] = v
+
+    @staticmethod
+    def ExecutionCount():
+        return LogManager.__Count
+
+    @staticmethod
+    def TotalTime():
+        return LogManager.__TotalTime
+
+    @staticmethod
+    def TimeLog(path):
+        return LogManager.__TimeLog.get(path, -1)
+
+    @staticmethod
+    def TimeLogs():
+        return copy.copy(LogManager.__TimeLog)
+
+    @staticmethod
+    def AverageTime():
+        if LogManager.__Count == 0:
+            return 0
+
+        return LogManager.__TotalTime / float(LogManager.__Count)
+
+    @staticmethod
+    def ErrorLogs():
+        return copy.deepcopy(LogManager.__ErrorLog)
+
+    @staticmethod
+    def WarnLogs():
+        return copy.deepcopy(LogManager.__WarnLog)
+
+    @staticmethod
+    def DebugLogs():
+        return copy.deepcopy(LogManager.__DebugLog)
+
+    @staticmethod
+    def ErrorLog(path):
+        return copy.copy(LogManager.__ErrorLog.get(path, []))
+
+    @staticmethod
+    def WarnLog(path):
+        return copy.copy(LogManager.__WarnLog.get(path, []))
+
+    @staticmethod
+    def DebugLog(path):
+        return copy.copy(LogManager.__DebugLog.get(path, []))
+
+    @staticmethod
+    def Error(path, message):
+        if LogManager.__LogLevel >= const.LogLevel.Error:
+            print("Error : {}".format(message))
+
+        log_list = LogManager.__ErrorLog.get(path, [])
+        log_list.append(str(message))
+        LogManager.__ErrorLog[path] = log_list
+
+    @staticmethod
+    def Warn(path, message):
+        if LogManager.__LogLevel >= const.LogLevel.Warn:
+            print("Warning : {}".format(message))
+
+        log_list = LogManager.__WarnLog.get(path, [])
+        log_list.append(str(message))
+        LogManager.__WarnLog[path] = log_list
+
+    @staticmethod
+    def Debug(path, message):
+        if LogManager.__LogLevel >= const.LogLevel.Debug:
+            print("Debug : {}".format(message))
+
+        log_list = LogManager.__DebugLog.get(path, [])
+        log_list.append(str(message))
+        LogManager.__DebugLog[path] = log_list
 
 
 class QueueManager(object):
@@ -42,14 +151,18 @@ class ProcessWorker(threading.Thread):
         self.__args = args
         self.__kwargs = kwargs
         self.__success = True
-        self.__error_log = ""
 
     def run(self):
+        LogManager.IncreaseCount()
+        st = time.time()
+
         try:
             self.__obj.run()
         except Exception as e:
             self.__success = False
-            self.__error_log = e
+            LogManager.Error(self.__obj.path(), e)
+
+        LogManager.TimeReport(self.__obj.path(), time.time() - st)
 
     def start(self):
         self.__obj.activate()
@@ -123,6 +236,7 @@ class ThreadManager(object):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    LogManager.Reset()
     QueueManager.Reset()
     ThreadManager.Reset()
     ThreadManager.SetMaxProcess(maxProcess)

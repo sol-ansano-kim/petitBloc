@@ -1,15 +1,31 @@
 from . import processManager
 from . import threadManager
+from . import const
 
 
 class WorkerManager(object):
-    __UseProcess = True
+    __UseProcess = False
+    __LogManager = threadManager.LogManager
+    __QueueManager = threadManager.QueueManager
+    __ProcessManager = threadManager.ThreadManager
+    __Module = threadManager
 
     @staticmethod
     def SetUseProcess(value):
         if WorkerManager.__UseProcess != value:
             WorkerManager.ResetQueue()
             WorkerManager.ResetProcess()
+            WorkerManager.ResetLog()
+            if not value:
+                WorkerManager.__LogManager = threadManager.LogManager
+                WorkerManager.__QueueManager = threadManager.QueueManager
+                WorkerManager.__ProcessManager = threadManager.ThreadManager
+                WorkerManager.__Module = threadManager
+            else:
+                WorkerManager.__LogManager = processManager.LogManager
+                WorkerManager.__QueueManager = processManager.QueueManager
+                WorkerManager.__ProcessManager = processManager.ProcessManager
+                WorkerManager.__Module = processManager
 
         WorkerManager.__UseProcess = value
 
@@ -18,50 +34,96 @@ class WorkerManager(object):
         return WorkerManager.__UseProcess
 
     @staticmethod
+    def SetLogLevel(l):
+        if not isinstance(l, const.LogLevel):
+            print("Warning : Invalid Log level")
+            return False
+
+        processManager.LogManager.SetLogLevel(l)
+        threadManager.LogManager.SetLogLevel(l)
+
+        return True
+
+    @staticmethod
+    def Debug(path, message):
+        WorkerManager.__LogManager.Debug(path, message)
+
+    @staticmethod
+    def Warn(path, message):
+        WorkerManager.__LogManager.Warn(path, message)
+
+    @staticmethod
+    def Error(path, message):
+        WorkerManager.__LogManager.Error(path, message)
+
+    @staticmethod
+    def ErrorLogs():
+        return WorkerManager.__LogManager.ErrorLogs()
+
+    @staticmethod
+    def WarnLogs():
+        return WorkerManager.__LogManager.WarnLogs()
+
+    @staticmethod
+    def DebugLogs():
+        return WorkerManager.__LogManager.DebugLogs()
+
+    @staticmethod
+    def ErrorLog(path):
+        return WorkerManager.__LogManager.ErrorLog(path)
+
+    @staticmethod
+    def WarnLog(path):
+        return WorkerManager.__LogManager.WarnLog(path)
+
+    @staticmethod
+    def DebugLog(path):
+        return WorkerManager.__LogManager.DebugLog(path)
+
+    @staticmethod
+    def ExecutionCount():
+        return WorkerManager.__LogManager.ExecutionCount()
+
+    @staticmethod
+    def TotalTime():
+        return WorkerManager.__LogManager.TotalTime()
+
+    @staticmethod
+    def TimeLogs():
+        return WorkerManager.__LogManager.TimeLogs()
+
+    @staticmethod
+    def TimeLog(path):
+        return WorkerManager.__LogManager.TimeLog(path)
+
+    @staticmethod
+    def AverageTime():
+        return WorkerManager.__LogManager.AverageTime()
+
+    @staticmethod
     def CreateQueue():
-        if WorkerManager.UseProcess():
-            return processManager.QueueManager.CreateQueue()
-        else:
-            return threadManager.QueueManager.CreateQueue()
+        return WorkerManager.__QueueManager.CreateQueue()
 
     @staticmethod
     def DeleteQueue(q):
-        if WorkerManager.UseProcess():
-            processManager.QueueManager.DeleteQueue(q)
-        else:
-            threadManager.QueueManager.DeleteQueue(q)
+        WorkerManager.__QueueManager.DeleteQueue(q)
 
     @staticmethod
     def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
-        if WorkerManager.UseProcess():
-            processManager.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
-        else:
-            threadManager.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
+        WorkerManager.__Module.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
 
     @staticmethod
     def QueueCount():
-        if WorkerManager.UseProcess():
-            return processManager.QueueManager.Count()
-        else:
-            return threadManager.QueueManager.Count()
+        return WorkerManager.__QueueManager.Count()
 
     @staticmethod
-    def ProcessCount():
-        if WorkerManager.UseProcess():
-            return processManager.ProcessManager.Count()
-        else:
-            return threadManager.ThreadManager.Count()
+    def ResetLog():
+        WorkerManager.__LogManager.Reset()
 
     @staticmethod
     def ResetQueue():
-        if WorkerManager.__UseProcess:
-            processManager.QueueManager.Reset()
-        else:
-            threadManager.QueueManager.Reset()
+        WorkerManager.__QueueManager.Reset()
 
     @staticmethod
     def ResetProcess():
-        if WorkerManager.__UseProcess:
-            processManager.ProcessManager.Reset()
-        else:
-            threadManager.ThreadManager.Reset()
+        WorkerManager.__ProcessManager.Reset()
