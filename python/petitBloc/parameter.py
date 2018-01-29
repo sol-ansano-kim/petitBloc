@@ -82,10 +82,11 @@ class Parameter(core.ParameterBase):
     def __resolveTokens(self, expression):
         subs = []
         tokens = set()
+
         for tkn_txt in ReContextParam.findall(expression):
             tokens.add(tkn_txt[1:])
 
-        if not subs:
+        if not tokens:
             return expression
 
         ctx = self.__getContext()
@@ -99,10 +100,10 @@ class Parameter(core.ParameterBase):
             if val is None:
                 continue
 
-            subs.append((re.compile("[$]{}".format(tkn)), val))
+            subs.append((re.compile("[$]{}".format(tkn)), str(val)))
 
         for reg, v in subs:
-            expression = reg.sub(val, expression)
+            expression = reg.sub(str(v), expression)
 
         return expression
 

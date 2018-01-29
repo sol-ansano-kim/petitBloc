@@ -292,6 +292,88 @@ class TestBlock(unittest.TestCase):
 
         self.assertEqual(res, ["{} {}".format(box1.param("v1").get(), box2.param("v1").get()), box1.param("v2").get() * box2.param("v2").get()])
 
+    def test_context(self):
+        box1 = box.Box("main")
+        box2 = box.Box("subn")
+        box1.addBlock(box2)
+        box1.addParam(str, "str")
+        box2.addParam(int, "int")
+        box1.param("str").set("WORLD")
+        box2.param("int").set(20)
+        dump = DumpParam()
+
+        box2.addBlock(dump)
+
+        self.assertTrue(box1.createContext())
+        self.assertFalse(box1.createContext())
+        self.assertFalse(box2.createContext())
+        self.assertEqual(box1.getContext(), {})
+
+        self.assertIsNotNone(box1.addContext(str, "contextStr"))
+        self.assertIsNotNone(box1.addContext(int, "contextInt"))
+        self.assertIsNone(box2.addContext(str, "contextStr"))
+        self.assertIsNone(box2.addContext(int, "contextInt"))
+        self.assertEqual(box1.getContext(), {"contextStr": "", "contextInt": 0})
+
+        self.assertIsNotNone(box1.context("contextStr"))
+        self.assertIsNotNone(box1.context("contextInt"))
+        self.assertIsNone(box2.context("contextStr"))
+        self.assertIsNone(box2.context("contextInt"))
+
+        for p in box2.contexts():
+            self.assertTrue(False)
+
+        c1 = box1.context("contextStr")
+        self.assertTrue(box1.removeContext(c1))
+        self.assertFalse(box1.removeContext("contextStr"))
+        c2 = box1.context("contextInt")
+        self.assertTrue(box1.removeContext("contextInt"))
+        self.assertFalse(box1.removeContext(c2))
+
+        self.assertIsNotNone(box1.addContext(str, "contextStr"))
+        self.assertIsNotNone(box1.addContext(int, "contextInt"))
+        self.assertEqual(box1.getContext(), {"contextStr": "", "contextInt": 0})
+        c1 = box1.context("contextStr")
+        c2 = box1.context("contextInt")
+        c1.set("HELLO")
+        c2.set(5)
+        self.assertEqual(box1.getContext(), {"contextStr": "HELLO", "contextInt": 5})
+
+        self.assertTrue(dump.param("str1").setExpression("= '$contextStr'"))
+        self.assertTrue(dump.param("str1").setExpression("= '$contextStr'.lower()"))
+        self.assertEqual(dump.param("str1").get(), "hello")
+        self.assertTrue(dump.param("float1").setExpression("= $contextInt * 2"))
+        self.assertEqual(dump.param("float1").get(), 10.0)
+
+        self.assertTrue(dump.param("str1").setExpression("= '$contextStr' + ' ../../@str'"))
+        self.assertTrue(dump.param("float1").setExpression("= $contextInt * ../@int"))
+
+        self.assertEqual(dump.param("str1").get(), "HELLO WORLD")
+        self.assertEqual(dump.param("float1").get(), 100.0)
+
+        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+
+        res = []
+        while (not dump.dmp.empty()):
+            res.append(dump.dmp.get())
+
+        self.assertEqual(res, ["HELLO WORLD", 100.0])
+
+        os.environ["TEST_ENV_STR"] = "!!!"
+        os.environ["TEST_ENV_FLT"] = "0.5"
+
+        self.assertTrue(dump.param("str1").setExpression("= '$contextStr' + ' ../../@str' + '$TEST_ENV_STR'"))
+        self.assertTrue(dump.param("float1").setExpression("= $contextInt * ../@int * $TEST_ENV_FLT"))
+
+        dump.flush()
+        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+
+        res = []
+        while (not dump.dmp.empty()):
+            res.append(dump.dmp.get())
+
+        self.assertEqual(res, ["HELLO WORLD!!!", 50.0])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,18 @@ import re
 ReSplitPath = re.compile("^[/](?P<name>[a-zA-Z0-9_]+)")
 
 
+class SceneContext(component.Component):
+    def __init__(self, name="", parent=None):
+        super(SceneContext, self).__init__(name=name, parent=parent)
+
+    def getContext(self):
+        context = {}
+        for p in self.params():
+            context[p.name()] = p.get()
+
+        return context
+
+
 class ProxyBlock(core.Proxy, component.Component):
     In = 0
     Out = 1
@@ -142,6 +154,7 @@ class ProxyBlock(core.Proxy, component.Component):
 class Box(component.Component):
     def __init__(self, name="", parent=None):
         super(Box, self).__init__(name=name, parent=parent)
+        self.__context = None
         self.__blocks = []
         self.__in_proxy = ProxyBlock(ProxyBlock.In, name=const.InProxyBlock, parent=self)
         self.__out_proxy = ProxyBlock(ProxyBlock.Out, name=const.OutProxyBlock, parent=self)
@@ -276,6 +289,48 @@ class Box(component.Component):
                 self.removeChain(c)
 
         return True
+
+    def createContext(self):
+        if self.ancestor() != self:
+            return False
+
+        if self.__context is not None:
+            return False
+
+        self.__context = SceneContext()
+        return True
+
+    def getContext(self):
+        if self.__context is None:
+            return []
+
+        return self.__context.getContext()
+
+    def addContext(self, typeClass, name=None):
+        if self.__context is None:
+            return None
+
+        return self.__context.addParam(typeClass, name=name)
+
+    def removeContext(self, name_or_param):
+        if self.__context is None:
+            return False
+
+        return self.__context.removeParam(name_or_param)
+
+    def context(self, name):
+        if self.__context is None:
+            return None
+
+        return self.__context.param(name)
+
+    def contexts(self):
+        if self.__context is None:
+            for p in []:
+                yield p
+        else:
+            for p in self.__context.params():
+                yield p
 
     def addInputProxy(self, typeClass, name=None):
         return self.__in_proxy.addProxy(typeClass, name=name)

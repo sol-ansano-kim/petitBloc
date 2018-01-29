@@ -345,6 +345,9 @@ class ComponentBase(object):
     def hasConnection(self, port):
         return False
 
+    def removeParam(self, name_or_param):
+        return False
+
     def addParam(self, typeClass=None, name=None, value=None):
         return None
 

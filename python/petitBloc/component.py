@@ -174,6 +174,22 @@ class Component(core.ComponentBase):
 
         return downstreams
 
+    def removeParam(self, name_or_param):
+        if isinstance(name_or_param, core.ParameterBase):
+            if name_or_param in self.__params:
+                self.__params.remove(name_or_param)
+                return True
+
+            return False
+
+        if isinstance(name_or_param, basestring):
+            p = self.param(name_or_param)
+            if p:
+                self.__params.remove(p)
+                return True
+
+        return False
+
     def addParam(self, typeClass=None, name=None, value=None):
         if name is None or not util.ValidateName(name):
             name = "param"
