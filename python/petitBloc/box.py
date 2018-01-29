@@ -7,7 +7,7 @@ import copy
 import re
 
 
-ReSplitPath = re.compile("^(?P<name>[a-zA-Z0-9_]+)[/]")
+ReSplitPath = re.compile("^[/](?P<name>[a-zA-Z0-9_]+)")
 
 
 class ProxyBlock(core.Proxy, component.Component):
@@ -73,6 +73,9 @@ class ProxyBlock(core.Proxy, component.Component):
                 return name
 
         return None
+
+    def getContext(self):
+        return {}
 
     def addProxy(self, typeClass, name=None):
         if name is None or not util.ValidateName(name):
@@ -149,6 +152,12 @@ class Box(component.Component):
 
     def __str__(self):
         return "Box<'{}'>".format(self.name())
+
+    def ancestor(self):
+        if self.parent() is None:
+            return self
+
+        return self.parent().ancestor()
 
     def hasNetwork(self):
         return True

@@ -8,7 +8,9 @@ from petitBloc import block
 from petitBloc import core
 from petitBloc import parameter
 from petitBloc import box
+from petitBloc import const
 from petitBloc import workerManager
+import Queue
 import multiprocessing
 
 
@@ -38,6 +40,41 @@ class DmpInt(block.Block):
 
     def process(self):
         self.dmp.put(self.param("testInt").get())
+
+        return False
+
+
+class DumpParam(block.Block):
+    def __init__(self, name="", parent=None):
+        super(DumpParam, self).__init__(name=name, parent=parent)
+        self.dmp = Queue.Queue()
+        self.__process = False
+
+    def initialize(self):
+        self.addParam(str, "str1")
+        self.addParam(str, "str2")
+        self.addParam(float, "float1")
+        self.addParam(float, "float2")
+
+    def useProcess(self, v):
+        self.__process = v
+        self.flush()
+
+    def flush(self):
+        if self.dmp:
+            if not isinstance(self.dmp, Queue.Queue):
+                self.dmp.close()
+
+            del self.dmp
+
+        if self.__process:
+            self.dmp = multiprocessing.Queue()
+        else:
+            self.dmp = Queue.Queue()
+
+    def process(self):
+        self.dmp.put(self.param("str1").get())
+        self.dmp.put(self.param("float1").get())
 
         return False
 
@@ -83,7 +120,10 @@ class TestParameter(unittest.TestCase):
         self.assertTrue(p1.set(u"a"))
         self.assertEqual(p1.get(), "a")
         self.assertFalse(p1.set(1))
-        p2 = parameter.Parameter("testInt", 0, int)
+        p2 = parameter.Parameter("testInt", typeClass=int, value=0)
+        self.assertTrue(p2.set(1.12312))
+        self.assertTrue(isinstance(p2.get(), int))
+        self.assertEqual(p2.get(), 1)
 
 
 class TestBlock(unittest.TestCase):
@@ -174,6 +214,83 @@ class TestBlock(unittest.TestCase):
             int_val.append(dmp_int.dmp.get())
 
         self.assertEqual(int_val, [23])
+
+    def test_expression_path(self):
+        box1 = box.Box("main")
+        box2 = box.Box("subn")
+
+        box1.addParam(str, "v1")
+        box2.addParam(str, "v1")
+        box1.addParam(float, "v2")
+        box2.addParam(float, "v2")
+        box1.param("v1").set("HELLO")
+        box2.param("v1").set("WORLD")
+        box1.param("v2").set(2.5)
+        box2.param("v2").set(3.5)
+
+        param_bloc = DumpParam()
+        param_bloc.useProcess(False)
+        box2.addBlock(param_bloc)
+        box1.addBlock(box2)
+
+        param_bloc.param("str1").set("no expr")
+        param_bloc.param("str2").set("Hello")
+        self.assertFalse(param_bloc.param("str1").hasExpression())
+        self.assertFalse(param_bloc.param("str1").setExpression("1 * 2"))
+        self.assertFalse(param_bloc.param("str1").setExpression("= 1 * 2"))
+        self.assertTrue(param_bloc.param("str1").setExpression("= 'asda'.upper()"))
+        self.assertEqual(param_bloc.param("str1").get(), "ASDA")
+        self.assertTrue(param_bloc.param("str1").setExpression("= './@str2'"))
+        self.assertEqual(param_bloc.param("str1").getExpression(), "= './@str2'")
+        self.assertEqual(param_bloc.param("str1").get(), param_bloc.param("str2").get())
+        self.assertTrue(param_bloc.param("str1").setExpression("= '../@v1'"))
+        self.assertEqual(param_bloc.param("str1").getExpression(), "= '../@v1'")
+        self.assertEqual(param_bloc.param("str1").get(), box2.param("v1").get())
+        self.assertTrue(param_bloc.param("str1").setExpression(None))
+        self.assertFalse(param_bloc.param("str1").hasExpression())
+        self.assertEqual(param_bloc.param("str1").get(), "no expr")
+        self.assertTrue(param_bloc.param("str1").setExpression("= '{} {}'.format('/main@v1', '/main/subn@v1')"))
+        self.assertEqual(param_bloc.param("str1").getExpression(), "= '{} {}'.format('/main@v1', '/main/subn@v1')")
+        self.assertEqual(param_bloc.param("str1").get(), "{} {}".format(box1.param("v1").get(), box2.param("v1").get()))
+        self.assertTrue(param_bloc.param("str1").hasExpression())
+
+        param_bloc.param("float1").set(1.1)
+        param_bloc.param("float2").set(2.2)
+        self.assertFalse(param_bloc.param("float1").hasExpression())
+        self.assertFalse(param_bloc.param("float1").setExpression("1 * 2"))
+        self.assertTrue(param_bloc.param("float1").setExpression("= 1 * 2"))
+        self.assertEqual(param_bloc.param("float1").get(), 2.0)
+        self.assertTrue(param_bloc.param("float1").setExpression("= ./@float2"))
+        self.assertEqual(param_bloc.param("float1").get(), param_bloc.param("float2").get())
+        self.assertEqual(param_bloc.param("float1").get(), param_bloc.param("float2").get())
+        self.assertTrue(param_bloc.param("float1").setExpression(None))
+        self.assertFalse(param_bloc.param("float1").hasExpression())
+        self.assertEqual(param_bloc.param("float1").get(), 1.1)
+        self.assertTrue(param_bloc.param("float1").setExpression("= ../@v2"))
+        self.assertEqual(param_bloc.param("float1").get(), box2.param("v2").get())
+        self.assertTrue(param_bloc.param("float1").setExpression("= ../@v2 * ../../@v2"))
+        self.assertEqual(param_bloc.param("float1").get(), box2.param("v2").get() * box1.param("v2").get())
+        self.assertTrue(param_bloc.param("float1").hasExpression())
+
+        param_bloc.flush()
+        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+
+        res = []
+        while (not param_bloc.dmp.empty()):
+            res.append(param_bloc.dmp.get())
+
+        self.assertEqual(res, ["{} {}".format(box1.param("v1").get(), box2.param("v1").get()), box1.param("v2").get() * box2.param("v2").get()])
+
+        workerManager.WorkerManager.SetUseProcess(True)
+        param_bloc.useProcess(True)
+        param_bloc.flush()
+        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+
+        res = []
+        while (not param_bloc.dmp.empty()):
+            res.append(param_bloc.dmp.get())
+
+        self.assertEqual(res, ["{} {}".format(box1.param("v1").get(), box2.param("v1").get()), box1.param("v2").get() * box2.param("v2").get()])
 
 
 if __name__ == "__main__":

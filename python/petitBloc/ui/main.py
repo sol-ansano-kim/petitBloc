@@ -13,6 +13,7 @@ from . import sceneState
 from .. import scene
 import operator
 import re
+import os
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -288,7 +289,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__scene_state.setStates(*self.__graph.boxModel().getState())
 
     def __getParentGraph(self, path):
-        return self.__getGraph(path[:path.rfind("/")])
+        return self.__getGraph(os.path.dirname(path))
 
     def __getGraph(self, path):
         for bloc, n_dict in self.__networks.iteritems():
@@ -345,7 +346,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if grph is None:
                 raise Exception, "Failed to save : could not find the parent graph - {}".format(path)
 
-            nod = grph.findNodeFromName(path[path.rfind("/") + 1:])
+            nod = grph.findNodeFromName(self.__shortName(path))
             if nod is None:
                 raise Exception, "Failed to save : could not find the node - {}".format(path)
 
@@ -363,7 +364,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__saveData()
 
     def __shortName(self, path):
-        return path[path.rfind("/") + 1:]
+        return os.path.basename(path)
 
     def __importBox(self):
         pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
@@ -386,7 +387,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def openScene(self, path):
         self.__new()
-        self.__read(path, const.RootBoxName)
+        self.__read(path, "/{}".format(const.RootBoxName))
 
         self.__resetTabIndice()
         self.__setPath(path)
@@ -397,14 +398,14 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         self.__new()
-        self.__read(pth, const.RootBoxName)
+        self.__read(pth, "/{}".format(const.RootBoxName))
 
         self.__resetTabIndice()
         self.__setPath(pth)
         self.__graph._focus()
 
     def __read(self, filePath, rootPath):
-        reRootNode = re.compile("^{}\/".format(rootPath.replace("/", "\/")))
+        reRootNode = re.compile("^[/]{}[/]".format(rootPath.replace("/", "\/")))
         def addRootPath(path):
             if reRootNode.search(path):
                 return path

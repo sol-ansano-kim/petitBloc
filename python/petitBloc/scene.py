@@ -6,6 +6,7 @@ from . import chain
 from . import blockManager
 from . import workerManager
 from . import const
+import os
 
 
 ReBootNode = re.compile("^{}\/".format(const.RootBoxName))
@@ -26,15 +27,15 @@ def __addRootPath(path):
     if ReBootNode.search(path):
         return path
 
-    return "{}/{}".format(const.RootBoxName, path)
+    return "/{}/{}".format(const.RootBoxName, path)
 
 
 def __shortName(path):
-    return path[path.rfind("/") + 1:]
+    return os.path.basename(path)
 
 
 def __parentPath(path):
-    return path[:path.rfind("/")]
+    return os.path.dirname(path)
 
 
 def __setVerboseLevel(l):
@@ -61,7 +62,7 @@ def __query(filePath):
         print("    '{}'({})".format(__addRootPath(b["path"]), b["type"]))
 
         for k, v in b.get("params", {}).iteritems():
-            print("        {}@{}: {}".format(b["path"], k, str(v)))
+            print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v)))
 
     if data["connections"]:
         print("# List Connections")
@@ -84,7 +85,6 @@ def __read(filePath):
             print("Warning : Could not find the parent block - {}".format(full_path))
             continue
 
-        
         if b["type"] == "ProxyBlock":
             if not isinstance(parent, box.Box):
                 print("Warning : Invalid proxyblock {}".format(full_path))

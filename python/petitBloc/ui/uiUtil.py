@@ -3,8 +3,8 @@ import re
 from . import const
 
 
-RootBlockPath = re.compile("^{}\/".format(const.RootBoxName))
-LastPath = re.compile("\/[^/]+$")
+RootBlockPath = re.compile("^[/]{}[/]".format(const.RootBoxName))
+LastPath = re.compile("[/][^/]+$")
 
 
 def PopRootPath(path):
@@ -15,7 +15,7 @@ def AddRootPath(path):
     if RootBlockPath.search(path):
         return path
 
-    return "{}/{}".format(const.RootBoxName, path)
+    return "/{}/{}".format(const.RootBoxName, path)
 
 
 def ParentPath(path):

@@ -33,12 +33,18 @@ class Component(core.ComponentBase):
         for out in self.__outputs:
             out.activate()
 
+        for p in self.__params:
+            p.activate()
+
     def terminate(self, success=True):
         for out in self.__outputs:
             out.terminate()
 
         for inp in self.__inputs:
             inp.terminate()
+
+        for p in self.__params:
+            p.terminate()
 
         super(Component, self).terminate(success=success)
 

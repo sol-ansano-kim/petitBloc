@@ -18,6 +18,27 @@ class ParameterBase(object):
     def __repr__(self):
         return self.__str__()
 
+    def activate(self):
+        pass
+
+    def terminate(self):
+        pass
+
+    def hasExpression(self):
+        return False
+
+    def setExpression(self, expression):
+        return False
+
+    def getExpression(self):
+        return ""
+
+    def ancestor(self):
+        if self.__parent is None:
+            return None
+
+        return self.__parent.ancestor()
+
     def parent(self):
         return self.__parent
 
@@ -106,6 +127,12 @@ class PortBase(object):
 
     def name(self):
         return self.__name
+
+    def ancestor(self):
+        if self.__parent is None:
+            return None
+
+        return self.__parent.ancestor()
 
     def parent(self):
         return self.__parent
@@ -258,12 +285,18 @@ class ComponentBase(object):
     def name(self):
         return self.__name
 
+    def ancestor(self):
+        if self.__parent is None:
+            return None
+
+        return self.__parent.ancestor()
+
     def parent(self):
         return self.__parent
 
     def path(self):
         if self.__parent is None:
-            return self.__name
+            return "/{}".format(self.__name)
 
         return "{}/{}".format(self.__parent.path(), self.__name)
 
