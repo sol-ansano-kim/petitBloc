@@ -61,28 +61,6 @@ class ParameterBase(object):
         return False
 
 
-class ProxyParameter(Proxy, object):
-    def __init__(self, param, name=None):
-        super(ProxyParameter, self).__init__()
-        self.__name = name if name is not None else param.name()
-        self.__param = param
-
-    def name(self):
-        return self.__name
-
-    def param(self):
-        return self.__param
-
-    def typeClass(self):
-        return self.param().typeClass()
-
-    def set(self, value):
-        return self.__param.set(value)
-
-    def get(self):
-        return self.__param.get()
-
-
 class PacketBase(object):
     def __init__(self, value=None):
         super(PacketBase, self).__init__()

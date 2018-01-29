@@ -145,30 +145,6 @@ def __read(filePath):
 
             parent.addOutputProxy(type_class, outp["name"])
 
-    ## proxy params
-    for pam in data["proxyParameters"]:
-        full_path = __addRootPath(pam["path"])
-        parent = root.findBlock(__parentPath(full_path))
-
-        if parent is None or not isinstance(parent, box.Box):
-            print("Warning : Could not find the parent box - {}".format(full_path))
-
-        continue
-
-        for pdata in pam["params"]:
-            bloc_path, param_name = __addRootPath(pdata["param"]).split("@")
-            target_bloc = root.findBlock(bloc_path)
-
-            if target_bloc is None:
-                print("Warning : Could not find target parent block - {}".format(bloc_path))
-                continue
-
-            param = target_bloc.param(param_name)
-            if param is None:
-                print("Warning : Could not find target param - {}".format(full_path))
-
-            parent.addProxyParam(param, name=pdata["name"])
-
     ## connect ports
     for con in data["connections"]:
         src_full_path, src_port_name = __addRootPath(con["src"]).split(".")
@@ -235,7 +211,6 @@ def Write(path, data):
     data["blocks"] = __sortDataBtPath(data["blocks"])
     data["connections"] = __sortDataBtPath(data["connections"])
     data["proxyPorts"] = __sortDataBtPath(data["proxyPorts"])
-    data["proxyParameters"] = __sortDataBtPath(data["proxyParameters"])
 
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
@@ -253,7 +228,6 @@ def Read(path):
     data["blocks"] = __sortDataBtPath(data["blocks"])
     data["connections"] = __sortDataBtPath(data["connections"])
     data["proxyPorts"] = __sortDataBtPath(data["proxyPorts"])
-    data["proxyParameters"] = __sortDataBtPath(data["proxyParameters"])
 
     return data
 

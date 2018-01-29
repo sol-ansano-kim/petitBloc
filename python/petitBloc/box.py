@@ -143,7 +143,6 @@ class Box(component.Component):
     def __init__(self, name="", parent=None):
         super(Box, self).__init__(name=name, parent=parent)
         self.__blocks = []
-        self.__proxy_params = []
         self.__in_proxy = ProxyBlock(ProxyBlock.In, name=const.InProxyBlock, parent=self)
         self.__out_proxy = ProxyBlock(ProxyBlock.Out, name=const.OutProxyBlock, parent=self)
 
@@ -276,75 +275,7 @@ class Box(component.Component):
                 c.disconnect()
                 self.removeChain(c)
 
-        params = map(lambda x: x, bloc.params())
-        delete_proxies = []
-        for p in self.proxyParams():
-            if p.param() in params:
-                delete_proxies.append(p)
-
-        for d in delete_proxies:
-            self.removeProxyParam(d)
-
         return True
-
-    def addProxyParam(self, param, name=None):
-        for proxy in self.__proxy_params:
-            if proxy.param() == param:
-                return None
-
-        if name is None or not util.ValidateName(name):
-            name = param.name()
-
-        all_names = map(lambda x: x.name(), self.__proxy_params)
-
-        name = util.GetUniqueName(name, all_names)
-
-        proxy = core.ProxyParameter(param, name)
-
-        self.__proxy_params.append(proxy)
-
-        return proxy
-
-    def proxyParam(self, index_or_name):
-        if isinstance(index_or_name, int):
-            if index_or_name < 0 or index_or_name >= len(self.__proxy_params):
-                return None
-
-            return self.__proxy_params[index_or_name]
-
-        if isinstance(index_or_name, basestring):
-            for p in self.__proxy_params:
-                if p.name() == index_or_name:
-                    return p
-
-        return None
-
-    def proxyParams(self):
-        for proxy in self.__proxy_params:
-            yield proxy
-
-    def hasProxyParam(self, param):
-        for proxy in self.__proxy_params:
-            if proxy.param() == param:
-                return True
-
-        return False
-
-    def removeProxyParamFromParam(self, param):
-        target_proxy = None
-        for proxy in self.__proxy_params:
-            if proxy.param() == param:
-                target_proxy = proxy
-                break
-
-        return self.removeProxyParam(target_proxy)
-
-    def removeProxyParam(self, proxy):
-        if proxy in self.__proxy_params:
-            self.__proxy_params.remove(proxy)
-            return True
-
-        return False
 
     def addInputProxy(self, typeClass, name=None):
         return self.__in_proxy.addProxy(typeClass, name=name)

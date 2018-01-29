@@ -149,7 +149,7 @@ class BoxModel(QtCore.QObject):
         return None
 
     def serialize(self):
-        data = {"blocks": [], "connections": [], "proxyParameters": [], "proxyPorts": []}
+        data = {"blocks": [], "connections": [], "proxyPorts": []}
 
         blocks = self.__box.getSchedule()
         boxies = []
@@ -198,14 +198,6 @@ class BoxModel(QtCore.QObject):
             for pn in sorted(b.outputProxies()):
                 ip = b.outputProxyIn(pn)
                 out_data.append({"name": pn, "type": ip.typeClass().__name__})
-
-        ## proxy params
-        for b in boxies:
-            params = []
-            box_data = {"path": uiUtil.PopRootPath(b.path()), "params": params}
-            data["proxyParameters"].append(box_data)
-            for p in b.proxyParams():
-                params.append({"name": p.name(), "param": uiUtil.PopRootPath(p.param().path())})
 
         ## connection data
         for b in blocks:
