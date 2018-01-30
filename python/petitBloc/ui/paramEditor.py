@@ -2,9 +2,67 @@ from Qt import QtWidgets
 from Qt import QtCore
 from Qt import QtGui
 from . import const
+from . import uiUtil
 from .. import util
+from .. import box
 import re
 ReEqual = re.compile("^\s*[=]\s*")
+
+
+class ParamCreator(QtWidgets.QDialog):
+    ParamTypes = {"bool": bool, "int": int, "float": float, "str": str}
+
+    def __init__(self, parent=None):
+        super(ParamCreator, self).__init__(parent=parent)
+        self.__type = None
+        self.__name = None
+
+        main_layout = QtWidgets.QVBoxLayout()
+
+        param_layout = QtWidgets.QHBoxLayout()
+        param_layout.addWidget(QtWidgets.QLabel("Type :"))
+        self.__type_combo = QtWidgets.QComboBox()
+        self.__type_combo.addItems(ParamCreator.ParamTypes.keys())
+        param_layout.addWidget(self.__type_combo)
+        param_layout.addWidget(QtWidgets.QLabel("Name :"))
+        self.__name_line = QtWidgets.QLineEdit()
+        param_layout.addWidget(self.__name_line)
+        main_layout.addLayout(param_layout)
+
+        button_layout = QtWidgets.QHBoxLayout()
+        self.__add = QtWidgets.QPushButton("Add")
+        self.__cancle = QtWidgets.QPushButton("Cancle")
+        button_layout.addWidget(self.__add)
+        button_layout.addWidget(self.__cancle)
+        main_layout.addLayout(button_layout)
+
+        self.__add.clicked.connect(self.accept)
+        self.__cancle.clicked.connect(self.reject)
+
+        self.__type_combo.currentIndexChanged.connect(self.__typeChanged)
+        self.__name_line.editingFinished.connect(self.__nameChanged)
+
+        self.setLayout(main_layout)
+
+    def exec_(self):
+        self.__name = None
+        self.__type_combo.setCurrentIndex(0)
+        self.__typeChanged(0)
+        self.__name_line.setText("")
+
+        return super(ParamCreator, self).exec_()
+
+    def __typeChanged(self, a):
+        self.__type = ParamCreator.ParamTypes[self.__type_combo.itemText(a)]
+
+    def __nameChanged(self):
+        self.__name = str(self.__name_line.text())
+
+    def getType(self):
+        return self.__type
+
+    def getName(self):
+        return self.__name
 
 
 class ParamLine(QtWidgets.QLineEdit):
@@ -142,17 +200,21 @@ class ParamLayout(QtWidgets.QHBoxLayout):
     RegexInt = re.compile("[^0-9-]")
     RegexFloat = re.compile("[^0-9-.]")
     ParameterEdited = QtCore.Signal()
+    DeleteRequest = QtCore.Signal(object)
 
-    def __init__(self, param):
+    def __init__(self, param, deletable=False):
         super(ParamLayout, self).__init__()
         self.__label = None
         self.__param = param
         self.__val_edit = None
-        self.__need_to_refresh = False
+        self.__delete_button = None
+        self.__need_to_refresh = True
+        self.__deletable = deletable
         self.__initialize()
 
     def refresh(self):
-        self.__val_edit.refresh()
+        if self.__need_to_refresh:
+            self.__val_edit.refresh()
 
     def __initialize(self):
         self.setAlignment(QtCore.Qt.AlignLeft)
@@ -166,6 +228,7 @@ class ParamLayout(QtWidgets.QHBoxLayout):
             self.__val_edit = QtWidgets.QCheckBox()
             self.__val_edit.setChecked(self.__param.get())
             self.__val_edit.stateChanged.connect(self.__boolChanged)
+            self.__need_to_refresh = False
         elif tc == int:
             self.__val_edit = ParamLine(self.__param, isInt=True)
             self.__val_edit.Changed.connect(self.__editedEmit)
@@ -176,11 +239,21 @@ class ParamLayout(QtWidgets.QHBoxLayout):
             self.__val_edit = ParamLine(self.__param)
             self.__val_edit.Changed.connect(self.__editedEmit)
 
+        self.__delete_button = QtWidgets.QPushButton("Del")
+        self.__delete_button.clicked.connect(self.__deleteParam)
+        if not self.__deletable:
+            self.__delete_button.hide()
+
         self.addWidget(self.__val_edit)
+        self.addWidget(self.__delete_button)
+
         self.setSpacing(10)
 
         if tc != str:
             self.addStretch(100)
+
+    def __deleteParam(self):
+        self.DeleteRequest.emit(self.__param)
 
     def __boolChanged(self, state):
         self.__param.set(state == QtCore.Qt.Checked)
@@ -192,6 +265,7 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 
 class ParamEditor(QtWidgets.QWidget):
     BlockRenamed = QtCore.Signal(object, str)
+    DeleteRequest = QtCore.Signal(object, object)
 
     def __init__(self, parent=None):
         super(ParamEditor, self).__init__()
@@ -199,6 +273,8 @@ class ParamEditor(QtWidgets.QWidget):
         self.__param_layout = None
         self.__block_type_label = None
         self.__block_name = None
+        self.__add_param_button = None
+        self.__param_creator = None
         self.__params = {}
         self.__initialize()
         self.__refresh()
@@ -218,12 +294,18 @@ class ParamEditor(QtWidgets.QWidget):
         self.__block_type_label.setAlignment(QtCore.Qt.AlignCenter)
         self.__block_name = QtWidgets.QLineEdit()
         self.__block_name.setMaximumWidth(const.ParamEditorBlockNameMaximumWidth)
+        self.__add_param_button = QtWidgets.QPushButton("Add")
         main_layout.addWidget(self.__block_type_label)
         main_layout.addWidget(self.__block_name)
         main_layout.addLayout(self.__param_layout)
+        main_layout.addWidget(self.__add_param_button)
+        self.__add_param_button.hide()
 
         self.setLayout(main_layout)
 
+        self.__param_creator = ParamCreator(self)
+
+        self.__add_param_button.clicked.connect(self.__addParam)
         self.__block_name.editingFinished.connect(self.__renameBloc)
         self.__block_name.textEdited.connect(self.__nameCheck)
 
@@ -267,11 +349,22 @@ class ParamEditor(QtWidgets.QWidget):
             self.__block_name.setText("")
             self.__block_type_label.hide()
             self.__block_name.hide()
+            self.__add_param_button.hide()
         else:
             self.__block_type_label.show()
             self.__block_name.show()
             self.__block_name.setText(self.__bloc.name())
             self.__block_type_label.setText(self.__bloc.__class__.__name__)
+
+            if self.__bloc and self.__bloc.expandable():
+                self.__add_param_button.show()
+            else:
+                self.__add_param_button.hide()
+
+            if isinstance(self.__bloc, box.SceneContext):
+                self.__block_name.setEnabled(False)
+            else:
+                self.__block_name.setEnabled(True)
 
         self.__build_params()
 
@@ -281,11 +374,31 @@ class ParamEditor(QtWidgets.QWidget):
 
         box_bloc = self.__bloc.parent()
 
-        for p in self.__bloc.params():
+        for p in self.__bloc.params(includeExtraParam=False):
             lay = ParamLayout(p)
             lay.ParameterEdited.connect(self.__update_all_params)
+            lay.DeleteRequest.connect(self.__deleteParam)
             self.__params[p] = lay
             self.__param_layout.addLayout(lay)
+
+        for p in self.__bloc.extraParams():
+            lay = ParamLayout(p, deletable=True)
+            lay.ParameterEdited.connect(self.__update_all_params)
+            lay.DeleteRequest.connect(self.__deleteParam)
+            self.__params[p] = lay
+            self.__param_layout.addLayout(lay)
+
+    def __addParam(self):
+        if self.__param_creator.exec_() == QtWidgets.QDialog.Accepted:
+            type_class = self.__param_creator.getType()
+            name = self.__param_creator.getName()
+            if type_class and name:
+                self.__bloc.addExtraParam(type_class, name=name)
+                self.__refresh()
+
+    def __deleteParam(self, param):
+        self.__bloc.removeParam(param)
+        self.__refresh()
 
     def __update_all_params(self):
         for p in self.__params.values():

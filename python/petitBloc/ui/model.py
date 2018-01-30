@@ -47,6 +47,12 @@ class BoxModel(QtCore.QObject):
     def box(self):
         return self.__box
 
+    def createContext(self):
+        return self.__box.createContext()
+
+    def deleteContext(self):
+        return self.__box.deleteContext()
+
     def findObjectClass(self, name):
         return self.__manager.findObjectClass(name)
 
@@ -173,13 +179,23 @@ class BoxModel(QtCore.QObject):
             block_data["type"] = b.type()
 
             params = {}
-            for p in b.params():
+            for p in b.params(includeExtraParam=False):
                 value = p.get()
                 expr = p.getExpression() if p.hasExpression() else None
                 params[p.name()] = {"value": value, "expression": expr}
 
+            extra = {}
+            for p in b.extraParams():
+                value = p.get()
+                expr = p.getExpression() if p.hasExpression() else None
+                typeName = p.typeClass().__name__
+                extra[p.name()] = {"value": value, "expression": expr, "type": typeName}
+
             if params:
                 block_data["params"] = params
+
+            if extra:
+                block_data["extraParams"] = extra
 
             data["blocks"].append(block_data)
 

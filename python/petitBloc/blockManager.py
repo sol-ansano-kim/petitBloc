@@ -54,6 +54,7 @@ class BlockManager(object):
 
     def __searchBlocks(self):
         self.__blocks["Box"] = box.Box
+        self.__blocks["SceneContext"] = box.SceneContext
 
         block_path = os.environ.get("PETITBLOC_BLOCK_PATH", "")
         for block_dir in filter(lambda x: x, block_path.split(os.pathsep)):

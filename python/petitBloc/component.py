@@ -11,6 +11,7 @@ class Component(core.ComponentBase):
         self.__inputs = []
         self.__outputs = []
         self.__params = []
+        self.__extraParams = []
         self.initialize()
 
     def debug(self, message):
@@ -178,6 +179,9 @@ class Component(core.ComponentBase):
         if isinstance(name_or_param, core.ParameterBase):
             if name_or_param in self.__params:
                 self.__params.remove(name_or_param)
+                if name_or_param in self.__extraParams:
+                    self.__extraParams.remove(name_or_param)
+
                 return True
 
             return False
@@ -186,6 +190,9 @@ class Component(core.ComponentBase):
             p = self.param(name_or_param)
             if p:
                 self.__params.remove(p)
+                if p in self.__extraParams:
+                    self.__extraParams.remove(p)
+
                 return True
 
         return False
@@ -204,8 +211,23 @@ class Component(core.ComponentBase):
 
         return p
 
-    def params(self):
+    def params(self, includeExtraParam=True):
         for p in self.__params:
+            if not includeExtraParam and p in self.__extraParams:
+                continue
+
+            yield p
+
+    def addExtraParam(self, typeClass=None, name=None, value=None):
+        p = self.addParam(typeClass=typeClass, name=name, value=value)
+        if p is not None:
+            self.__extraParams.append(p)
+            return p
+
+        return None
+
+    def extraParams(self):
+        for p in self.__extraParams:
             yield p
 
     def param(self, index_or_name):

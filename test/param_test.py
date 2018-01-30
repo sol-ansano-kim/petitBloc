@@ -308,9 +308,9 @@ class TestBlock(unittest.TestCase):
 
         box2.addBlock(dump)
 
-        self.assertTrue(box1.createContext())
-        self.assertFalse(box1.createContext())
-        self.assertFalse(box2.createContext())
+        self.assertIsNotNone(box1.createContext())
+        self.assertIsNone(box1.createContext())
+        self.assertIsNone(box2.createContext())
         self.assertEqual(box1.getContext(), {})
 
         self.assertIsNotNone(box1.addContext(str, "contextStr"))

@@ -260,6 +260,9 @@ class ComponentBase(object):
     def hasNetwork(self):
         return False
 
+    def expandable(self):
+        return False
+
     def rename(self, name):
         self.__name = name
 
@@ -354,7 +357,14 @@ class ComponentBase(object):
     def addParam(self, typeClass=None, name=None, value=None):
         return None
 
-    def params(self):
+    def params(self, includeExtraParam=True):
+        for i in range(0):
+            yield i
+
+    def addExtraParam(self, typeClass=None, name=None, value=None):
+        return None
+
+    def extraParams(self):
         for i in range(0):
             yield i
 

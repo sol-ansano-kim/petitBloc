@@ -12,7 +12,10 @@ ReSplitPath = re.compile("^[/](?P<name>[a-zA-Z0-9_]+)")
 
 class SceneContext(component.Component):
     def __init__(self, name="", parent=None):
-        super(SceneContext, self).__init__(name=name, parent=parent)
+        super(SceneContext, self).__init__(name=self.__class__.__name__, parent=parent)
+
+    def expandable(self):
+        return True
 
     def getContext(self):
         context = {}
@@ -174,10 +177,16 @@ class Box(component.Component):
     def hasNetwork(self):
         return True
 
+    def expandable(self):
+        return True
+
     def getSchedule(self):
         schedule = []
         initblocs = []
         blocs = []
+
+        if self.__context is not None:
+            schedule.append(self.__context)
 
         schedule.append(self.__in_proxy)
 
@@ -292,17 +301,22 @@ class Box(component.Component):
 
     def createContext(self):
         if self.ancestor() != self:
-            return False
+            return None
 
         if self.__context is not None:
-            return False
+            return None
 
         self.__context = SceneContext()
-        return True
+        self.__context.setParent(self)
+
+        return self.__context
+
+    def deleteContext(self):
+        self.__context = None
 
     def getContext(self):
         if self.__context is None:
-            return []
+            return {}
 
         return self.__context.getContext()
 

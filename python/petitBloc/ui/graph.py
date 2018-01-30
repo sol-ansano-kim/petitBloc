@@ -20,12 +20,14 @@ class Graph(nodz_main.Nodz):
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
 
-    def __init__(self, name="", boxObject=None, parent=None):
+    def __init__(self, name="", boxObject=None, parent=None, isTop=False):
         super(Graph, self).__init__(parent, configPath=getConfigFile())
         self.__model = model.BoxModel(name=name, boxObject=boxObject)
         self.__current_block = None
-        self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames())
+        # TODO : SceneContext
+        self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames(), excludeList=([] if isTop else ["SceneContext"]))
         self.__creator.BlockCreatorEnd.connect(self.addBlock)
+        self.__context_node = None
         self.signal_NodeDeleted.connect(self.__nodeDeleted)
         self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
@@ -53,6 +55,24 @@ class Graph(nodz_main.Nodz):
 
     def box(self):
         return self.__model.box()
+
+    def addContextBlock(self, position=None):
+        if self.__context_node is None:
+
+            cntx_bloc = self.__model.createContext()
+            if cntx_bloc is None:
+                raise Exception, "Error : Failed to create a context block"
+
+            self.__context_node = ContextItem(cntx_bloc, False, "proxy_default", self.config)
+
+            self.scene().nodes[cntx_bloc.name()] = self.__context_node
+            self.scene().addItem(self.__context_node)
+            if not position:
+                position = self.mapToScene(self.viewport().rect().center())
+
+            self.__context_node.setPos(position - self.__context_node.nodeCenter)
+
+            return self.__context_node
 
     def mouseDoubleClickEvent(self, evnt):
         itm = self.itemAt(evnt.pos())
@@ -105,6 +125,11 @@ class Graph(nodz_main.Nodz):
             return
 
         node = selectedNodes[0]
+        if self.__context_node and self.__context_node.name == node:
+            self.__current_block = self.__context_node.block()
+            self.CurrentNodeChanged.emit(self.__current_block)
+            return
+
         self.__current_block = self.__model.block(node)
         self.CurrentNodeChanged.emit(self.__current_block)
 
@@ -121,6 +146,11 @@ class Graph(nodz_main.Nodz):
 
     def __nodeDeleted(self, deletedNodes):
         for n in deletedNodes:
+            if self.__context_node and self.__context_node.name == n:
+                self.__model.deleteContext()
+                self.__context_node = None
+                continue
+
             b = self.__model.block(n)
             self.BlockDeleted.emit(b)
             if b.hasNetwork():
@@ -136,6 +166,10 @@ class Graph(nodz_main.Nodz):
     def addBlock(self, blockType, blockName=None, position=None, init=True):
         if not blockType:
             return None
+
+        # TODO : SceneContext
+        if blockType == "SceneContext":
+            return self.addContextBlock(position=position)
 
         bloc = self.__model.addBlock(blockType, name=blockName)
         if bloc is None:
@@ -324,6 +358,7 @@ class SubNet(Graph):
         self.boxModel().disconnectOutProxy(proxyPort, port)
 
     def initProxyNode(self):
+        # TODO : do this more smarter
         position = self.mapToScene(self.viewport().rect().center())
         self.__proxy_in.setPos(position - self.__proxy_in.nodeCenter - QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
         self.__proxy_out.setPos(position - self.__proxy_in.nodeCenter + QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
@@ -512,6 +547,11 @@ class BlocItem(nodz_main.NodeItem):
             painter.setFont(font)
             textRect = QtCore.QRect(0, 0, self.baseWidth, self.height)
             painter.drawText(textRect, QtCore.Qt.AlignCenter, "ERROR")
+
+
+class ContextItem(BlocItem):
+    def __init__(self, bloc, alternate, preset, config):
+        super(ContextItem, self).__init__(bloc, alternate, preset, config)
 
 
 class ProxyItem(BlocItem):

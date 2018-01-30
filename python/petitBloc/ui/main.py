@@ -51,7 +51,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph_tabs.setTabsClosable(True)
 
         # scene graph
-        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
+        ## TODO : USE __new()
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self, isTop=True)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
         self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
@@ -314,7 +315,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__networks = {}
 
-        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self, isTop=True)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
         self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
@@ -416,6 +417,11 @@ class MainWindow(QtWidgets.QMainWindow):
         ## create blocks
         for b in data["blocks"]:
             full_path = addRootPath(b["path"])
+
+            if b["type"] == "SceneContext":
+                if "/{}".format(const.RootBoxName) != os.path.dirname(full_path):
+                    continue
+
             short_name = self.__shortName(full_path)
             grph = self.__getParentGraph(full_path)
             bloc = None
@@ -453,6 +459,24 @@ class MainWindow(QtWidgets.QMainWindow):
                     parm = bloc.param(k)
                     if parm is None:
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))
+                        continue
+
+                    if not parm.set(vv["value"]):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(vv["value"])))
+
+                    if not parm.setExpression(vv["expression"]):
+                        print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
+
+                for k, vv in b.get("extraParams", {}).iteritems():
+                    type_name = vv["type"]
+                    type_class = self.__graph.boxModel().findObjectClass(type_name)
+                    if not type_class:
+                        print("Warning : unknown parameter type - {}".format(type_name))
+                        continue
+
+                    parm = bloc.addExtraParam(type_class, k)
+                    if parm is None:
+                        print("Warning : Failed to add an extra parameter : {}".format(str(bloc), k))
                         continue
 
                     if not parm.set(vv["value"]):

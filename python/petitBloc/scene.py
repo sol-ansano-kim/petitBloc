@@ -62,7 +62,15 @@ def __query(filePath):
         print("    '{}'({})".format(__addRootPath(b["path"]), b["type"]))
 
         for k, v in b.get("params", {}).iteritems():
-            print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v)))
+            if v["expression"]:
+                print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v["expression"])))
+            else:
+                print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v["value"])))
+        for k, v in b.get("extraParams", {}).iteritems():
+            if v["expression"]:
+                print("        {}@{}: {} ({})".format(__addRootPath(b["path"]), k, str(v["expression"]), str(v["type"])))
+            else:
+                print("        {}@{}: {} ({})".format(__addRootPath(b["path"]), k, str(v["value"]), str(v["type"])))
 
     if data["connections"]:
         print("# List Connections")
@@ -96,14 +104,20 @@ def __read(filePath):
             bloc = None
 
             if bc:
-                try:
-                    bloc = bc(name=short_name)
-                    parent.addBlock(bloc)
+                if bc == box.SceneContext:
+                    bloc = root.createContext()
+                    if not bloc:
+                        print("Warning : Failed to create a scene context block")
 
-                except Exception as e:
-                    print("Warning : Could not create an instance of {}".format(b["type"]))
-                    print(e)
-                    bloc = None
+                else:
+                    try:
+                        bloc = bc(name=short_name)
+                        parent.addBlock(bloc)
+
+                    except Exception as e:
+                        print("Warning : Could not create an instance of {}".format(b["type"]))
+                        print(e)
+                        bloc = None
 
             else:
                 print("Warning : Unknown block type : {}".format(b["type"]))
@@ -114,6 +128,24 @@ def __read(filePath):
                     parm = bloc.param(k)
                     if parm is None:
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))
+                        continue
+
+                    if not parm.set(vv["value"]):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(vv["value"])))
+
+                    if not parm.setExpression(vv["expression"]):
+                        print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
+
+                for k, vv in b.get("extraParams", {}).iteritems():
+                    type_name = vv["type"]
+                    type_class = manager.findObjectClass(type_name)
+                    if not type_class:
+                        print("Warning : unknown parameter type - {}".format(type_name))
+                        continue
+
+                    parm = bloc.addExtraParam(type_class, k)
+                    if parm is None:
+                        print("Warning : Failed to add an extra parameter : {}".format(str(bloc), k))
                         continue
 
                     if not parm.set(vv["value"]):
@@ -178,6 +210,31 @@ def __read(filePath):
             print("Warning : Faild to connect {}.{} >> {}.{}".format(src_port.path(), dst_port.path()))
 
     return root
+
+
+def __overrideContext(root, parameters):
+    for p in parameters:
+        if p.count("=") != 1:
+            print("Warning : Invalid context setting - {}".format(p))
+            continue
+
+        context_name, value = p.split("=")
+
+        param = root.context(context_name)
+        if param is None:
+            print("Warning : Failed to override context. Could not find the parameter - {}".format(context_name))
+            continue
+
+        type_class = param.typeClass()
+        try:
+            if type_class == bool:
+                v = bool(int(value))
+            else:
+                v = type_class(value)
+
+            param.set(v)
+        except Exception as e:
+            print("Warning : Failed to override context. Invalid value - {} : {}".format(type_class.__name__, value))
 
 
 def __override(root, parameters):
@@ -274,7 +331,7 @@ def Query(filePath):
     return True
 
 
-def Run(filePath, parameters=[], multiProcessing=False, attrbutes=[], verbose=1):
+def Run(filePath, contexts=[], parameters=[], multiProcessing=False, attrbutes=[], verbose=1):
     try:
         __setVerboseLevel(verbose)
 
@@ -283,6 +340,7 @@ def Run(filePath, parameters=[], multiProcessing=False, attrbutes=[], verbose=1)
         root = __read(filePath)
 
         __override(root, parameters)
+        __overrideContext(root, contexts)
 
         schedule = root.getSchedule()
         workerManager.WorkerManager.RunSchedule(schedule)
