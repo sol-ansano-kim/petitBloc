@@ -110,14 +110,17 @@ def __read(filePath):
                 bloc = None
 
             if bloc is not None:
-                for k, v in b.get("params", {}).iteritems():
+                for k, vv in b.get("params", {}).iteritems():
                     parm = bloc.param(k)
                     if parm is None:
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))
                         continue
 
-                    if not parm.set(v):
-                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(v)))
+                    if not parm.set(vv["value"]):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(vv["value"])))
+
+                    if not parm.setExpression(vv["expression"]):
+                        print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
 
     ## proxy ports
     for proxy in data["proxyPorts"]:

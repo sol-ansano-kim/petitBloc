@@ -156,7 +156,7 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 
     def __initialize(self):
         self.setAlignment(QtCore.Qt.AlignLeft)
-        self.__label = QtWidgets.QLabel(self.__paramLabel(self.__param.name()))
+        self.__label = QtWidgets.QLabel(self.__param.name())
         self.__label.setMinimumWidth(const.ParamLabelMinimumWidth)
         self.__label.setMaximumWidth(const.ParamLabelMaximumWidth)
         self.addWidget(self.__label)
@@ -185,10 +185,6 @@ class ParamLayout(QtWidgets.QHBoxLayout):
     def __boolChanged(self, state):
         self.__param.set(state == QtCore.Qt.Checked)
         self.__editedEmit()
-
-    def __paramLabel(self, txt):
-        txt = txt[0].upper() + txt[1:]
-        return txt
 
     def __editedEmit(self):
         self.ParameterEdited.emit()

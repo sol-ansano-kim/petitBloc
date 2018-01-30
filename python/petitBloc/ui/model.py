@@ -174,7 +174,9 @@ class BoxModel(QtCore.QObject):
 
             params = {}
             for p in b.params():
-                params[p.name()] = p.get()
+                value = p.get()
+                expr = p.getExpression() if p.hasExpression() else None
+                params[p.name()] = {"value": value, "expression": expr}
 
             if params:
                 block_data["params"] = params
