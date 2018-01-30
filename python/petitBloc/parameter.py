@@ -52,6 +52,26 @@ class Parameter(core.ParameterBase):
     def hasExpression(self):
         return self.__expression is not None
 
+    def validExpression(self):
+        if not self.hasExpression():
+            return True
+
+        value = self.__evalExpression(self.__expression)
+
+        if value is None:
+            return False
+
+        elif isinstance(value, self.__type_class):
+            return True
+
+        elif isinstance(value, Number) and issubclass(self.__type_class, Number):
+            return True
+
+        elif isinstance(value, basestring) and issubclass(self.__type_class, basestring):
+            return True
+
+        return False
+
     def activate(self):
         if not self.hasExpression():
             self.__pre_evaluated_value = None
@@ -158,7 +178,6 @@ class Parameter(core.ParameterBase):
         try:
             return eval(exp)
         except Exception as e:
-            print("Warning : invalid expression - {}".format(e))
             return None
 
     def __getContext(self):
@@ -175,25 +194,9 @@ class Parameter(core.ParameterBase):
         if ReEqual.search(expression) is None:
             return False
 
-        value = self.__evalExpression(expression)
+        self.__expression = expression
 
-        res = False
-        if value is None:
-            res = False
-
-        elif isinstance(value, self.__type_class):
-            res = True
-
-        elif isinstance(value, Number) and issubclass(self.__type_class, Number):
-            res = True
-
-        elif isinstance(value, basestring) and issubclass(self.__type_class, basestring):
-            res = True
-
-        if res:
-            self.__expression = expression
-
-        return res
+        return True
 
     def getExpression(self):
         return self.__expression

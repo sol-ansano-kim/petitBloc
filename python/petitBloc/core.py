@@ -27,6 +27,9 @@ class ParameterBase(object):
     def hasExpression(self):
         return False
 
+    def validExpression(self):
+        return False
+
     def setExpression(self, expression):
         return False
 
