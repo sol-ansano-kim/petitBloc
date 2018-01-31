@@ -264,26 +264,6 @@ class Graph(nodz_main.Nodz):
         # Emit signal.
         self.signal_AttrCreated.emit(node.name, index)
 
-    def initProxyNode(self):
-        pass
-
-
-class SubNet(Graph):
-    ProxyPortAdded = QtCore.Signal(object, object, object)
-    ProxyPortRemoved = QtCore.Signal(object, object, str)
-
-    def __init__(self, name="", boxObject=None, parent=None):
-        super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
-        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, "proxy_default", self.config)
-        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, "proxy_default", self.config)
-
-        self.scene().nodes[self.__proxy_in.block().name()] = self.__proxy_in
-        self.scene().nodes[self.__proxy_out.block().name()] = self.__proxy_out
-        self.scene().addItem(self.__proxy_in)
-        self.scene().addItem(self.__proxy_out)
-
-        self.BlockDeleted.connect(self.cleanUpProxies)
-
     def createConnection(self, sourceNode, sourceAttr, targetNode, targetAttr):
         plug = self.scene().nodes[sourceNode].plugs[sourceAttr]
         socket = self.scene().nodes[targetNode].sockets[targetAttr]
@@ -303,6 +283,26 @@ class SubNet(Graph):
         self.scene().addItem(connection)
 
         return connection
+
+    def initProxyNode(self):
+        pass
+
+
+class SubNet(Graph):
+    ProxyPortAdded = QtCore.Signal(object, object, object)
+    ProxyPortRemoved = QtCore.Signal(object, object, str)
+
+    def __init__(self, name="", boxObject=None, parent=None):
+        super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
+        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, "proxy_default", self.config)
+        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, "proxy_default", self.config)
+
+        self.scene().nodes[self.__proxy_in.block().name()] = self.__proxy_in
+        self.scene().nodes[self.__proxy_out.block().name()] = self.__proxy_out
+        self.scene().addItem(self.__proxy_in)
+        self.scene().addItem(self.__proxy_out)
+
+        self.BlockDeleted.connect(self.cleanUpProxies)
 
     def cleanUpProxies(self):
         inputs, outputs = self.boxModel().cleanUpInputProxies()
