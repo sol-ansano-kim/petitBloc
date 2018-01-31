@@ -31,6 +31,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__filepath = None
         self.__current_bloc = None
         self.__initialize()
+        self.__setStyleSheet()
+
+    def __setStyleSheet(self):
+        qss_path = os.path.abspath(os.path.join(__file__, "../style.qss"))
+
+        if not os.path.isfile(qss_path):
+            return
+
+        current_dir = os.path.dirname(__file__)
+
+        style = ""
+        with open(qss_path, "r") as f:
+            style = f.read()
+            style = style.replace('url("', 'url("%s/' % current_dir.replace("\\", "/"))
+
+        self.setStyleSheet(style)
 
     def __initialize(self):
         self.setObjectName(const.ObjectName)

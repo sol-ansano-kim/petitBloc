@@ -7,6 +7,12 @@ RootBlockPath = re.compile("^[/]{}[/]".format(const.RootBoxName))
 LastPath = re.compile("[/][^/]+$")
 
 
+def GetIcon(name):
+    path = os.path.abspath(os.path.join(__file__, "../icons/{}.png".format(name)))
+
+    return path if os.path.isfile(path) else ""
+
+
 def PopRootPath(path):
     return RootBlockPath.sub("", path)
 

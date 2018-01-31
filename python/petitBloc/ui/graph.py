@@ -107,7 +107,7 @@ class Graph(nodz_main.Nodz):
         if obj != self:
             return False
 
-        if evnt.type() == QtCore.QEvent.Type.KeyPress:
+        if evnt.type() == QtCore.QEvent.KeyPress:
             self.KeyPressed.emit(evnt.key())
             if evnt.key() == QtCore.Qt.Key_Tab:
                 self.__creator.show(self.mapFromGlobal(QtGui.QCursor.pos()))
