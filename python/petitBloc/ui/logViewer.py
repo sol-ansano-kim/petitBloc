@@ -1,5 +1,7 @@
 from Qt import QtWidgets
+from Qt import QtCore
 from .. import const
+from . import const as uiconst
 
 
 class LogViewer(QtWidgets.QWidget):
@@ -23,6 +25,7 @@ class LogViewer(QtWidgets.QWidget):
 
     def __initialize(self):
         layout = QtWidgets.QGridLayout()
+        layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
         self.setLayout(layout)
 
         self.__time_view = QtWidgets.QLabel()
@@ -31,21 +34,25 @@ class LogViewer(QtWidgets.QWidget):
 
         self.__error_label = QtWidgets.QLabel("Error")
         self.__error_view = QtWidgets.QTextEdit()
+        self.__error_view.setMaximumHeight(uiconst.LogMaximumHeight)
         self.__error_view.setReadOnly(True)
         layout.addWidget(self.__error_label, 1, 0)
         layout.addWidget(self.__error_view, 1, 1)
         
         self.__warn_label = QtWidgets.QLabel("Warning")
         self.__warn_view = QtWidgets.QTextEdit()
+        self.__warn_view.setMaximumHeight(uiconst.LogMaximumHeight)
         self.__warn_view.setReadOnly(True)
         layout.addWidget(self.__warn_label, 2, 0)
         layout.addWidget(self.__warn_view, 2, 1)
 
         self.__debug_label = QtWidgets.QLabel("Debug")
         self.__debug_view = QtWidgets.QTextEdit()
+        self.__debug_view.setMaximumHeight(uiconst.LogMaximumHeight)
         self.__debug_view.setReadOnly(True)
         layout.addWidget(self.__debug_label, 3, 0)
         layout.addWidget(self.__debug_view, 3, 1)
+        layout.setRowStretch(4, 10)
 
         self.updateViewer()
 

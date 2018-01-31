@@ -56,11 +56,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(centeral)
         centeral.setLayout(main_layout)
 
-        # top bar
-        top_bar = QtWidgets.QHBoxLayout()
-        self.__scene_state = sceneState.SceneState()
-        top_bar.addWidget(self.__scene_state)
-
         # tabs
         self.__editor_tabs = QtWidgets.QTabWidget()
         self.__graph_tabs = QtWidgets.QTabWidget()
@@ -81,25 +76,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__editor_tabs.addTab(self.__packet_history, "Packet History")
         self.__editor_tabs.addTab(self.__log_viewer, "Log")
 
-        self.__run = QtWidgets.QPushButton("RUN")
-
         main_contents = QtWidgets.QSplitter()
         main_contents.addWidget(self.__graph_tabs)
         main_contents.addWidget(self.__editor_tabs)
 
-        main_layout.addLayout(top_bar)
+        # scene state
+        self.__scene_state = sceneState.SceneState()
+
         main_layout.addWidget(main_contents)
-        main_layout.addWidget(self.__run)
+        main_layout.addWidget(self.__scene_state)
         self.__resetTabIndice()
 
         # menu
         menubar = self.menuBar()
-        file_menu = QtWidgets.QMenu("file")
-        news_action = file_menu.addAction("New Scene")
-        open_action = file_menu.addAction("Open")
+        file_menu = QtWidgets.QMenu("&File", self)
+        news_action = file_menu.addAction("&New Scene")
+        news_action.setShortcut(QtGui.QKeySequence("Ctrl+N"))
+        open_action = file_menu.addAction("&Open")
+        open_action.setShortcut(QtGui.QKeySequence("Ctrl+O"))
         save_action = file_menu.addAction("Save")
+        save_action.setShortcut(QtGui.QKeySequence("Ctrl+S"))
         save_as_action = file_menu.addAction("Save As")
-        import_action = file_menu.addAction("Import")
+        save_as_action.setShortcut(QtGui.QKeySequence("Ctrl+Shift+S"))
+        import_action = file_menu.addAction("&Import")
+        import_action.setShortcut(QtGui.QKeySequence("Ctrl+I"))
         file_menu.addAction(news_action)
         file_menu.addSeparator()
         file_menu.addAction(open_action)
@@ -115,7 +115,14 @@ class MainWindow(QtWidgets.QMainWindow):
         import_action.triggered.connect(self.__importBox)
         menubar.addMenu(file_menu)
 
-        setting_menu = QtWidgets.QMenu("log")
+        process_menu = QtWidgets.QMenu("&Blocks", self)
+        create_block = process_menu.addAction("Create Block")
+        process_menu.addSeparator()
+        run_action = process_menu.addAction("&Execute")
+        run_action.setShortcut(QtGui.QKeySequence("F5"))
+        menubar.addMenu(process_menu)
+
+        setting_menu = QtWidgets.QMenu("Log", self)
         log_group = QtWidgets.QActionGroup(self)
         log_group.setExclusive(True)
         no_log = setting_menu.addAction("No Log")
@@ -138,7 +145,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menubar.addMenu(setting_menu)
 
-        self.__run.clicked.connect(self.__runPressed)
+        run_action.triggered.connect(self.__runTriggered)
 
         self.__graph_tabs.tabCloseRequested.connect(self.__closeGraphRequest)
         self.__graph_tabs.currentChanged.connect(self.__currentGraphTabChanged)
@@ -285,16 +292,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         par_dict["graph"].deleteAttribute(node, node.attrs.index(name))
 
-    def __runPressed(self):
+    def __runTriggered(self):
         graph = None
         index = self.__graph_tabs.currentIndex()
 
         for n_dict in self.__networks.values():
-            if n_dict["index"] == index:
+            if n_dict.get("index") == index:
                 graph = n_dict["graph"]
                 break
 
-        self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
+        self.__graph.boxModel().run(perProcessCallback=graph.viewport().update if graph else None)
         self.__packet_history.refresh()
         self.__graph.boxModel().readLogs()
         if self.__current_bloc is None:

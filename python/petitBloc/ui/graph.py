@@ -32,6 +32,7 @@ class Graph(nodz_main.Nodz):
         self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
         self.initialize()
+        self.gridVisToggle = False
 
         self.__zoom_factor = self.config["zoom_factor"]
 
@@ -63,7 +64,7 @@ class Graph(nodz_main.Nodz):
             if cntx_bloc is None:
                 raise Exception, "Error : Failed to create a context block"
 
-            self.__context_node = ContextItem(cntx_bloc, False, "proxy_default", self.config)
+            self.__context_node = ContextItem(cntx_bloc, False, "context_default", self.config)
 
             self.scene().nodes[cntx_bloc.name()] = self.__context_node
             self.scene().addItem(self.__context_node)
@@ -375,6 +376,23 @@ class BlocItem(nodz_main.NodeItem):
         self.__hl_pen.setStyle(QtCore.Qt.SolidLine)
         self.__hl_pen.setWidth(self.border + 2)
         self.__emphasize = False
+
+    def mouseMoveEvent(self, event):
+        if self.scene().views()[0].gridSnapToggle or self.scene().views()[0]._nodeSnap:
+            gridSize = self.scene().gridSize
+
+            currentPos = self.mapToScene(event.pos().x() - self.baseWidth / 2,
+                                         event.pos().y() - self.height / 2)
+
+            snap_x = (round(currentPos.x() / gridSize) * gridSize) - gridSize/4
+            snap_y = (round(currentPos.y() / gridSize) * gridSize) - gridSize/4
+            snap_pos = QtCore.QPointF(snap_x, snap_y)
+            self.setPos(snap_pos)
+
+            self.scene().updateScene()
+        else:
+            self.scene().updateScene()
+            super(nodz_main.NodeItem, self).mouseMoveEvent(event)
 
     @property
     def pen(self):

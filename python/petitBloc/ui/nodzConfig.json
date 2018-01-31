@@ -6,7 +6,7 @@
     "antialiasing": true,
     "antialiasing_boost": true,
     "smooth_pixmap": true,
-    "zoom_factor": 1.02,
+    "zoom_factor": 1.10,
 
     "node_font": "Arial",
     "node_font_size": 18,
@@ -18,7 +18,7 @@
     "node_width": 200,
     "node_height": 25,
     "node_radius": 10,
-    "node_border": 3,
+    "node_border": 4,
     "node_attr_height": 30,
     "connection_width": 2,
 
@@ -70,6 +70,14 @@
         "border": [50, 120, 175, 255],
         "border_sel": [98, 215, 234, 255],
         "text": [50, 120, 175, 255]
+    },
+
+    "context_default":
+    {
+        "bg": [25, 25, 25, 255],
+        "border": [150, 120, 200, 255],
+        "border_sel": [98, 215, 234, 255],
+        "text": [150, 120, 200, 255]
     },
 
     // ports

@@ -41,6 +41,7 @@ class ParamCreator(QtWidgets.QDialog):
 
         self.__type_combo.currentIndexChanged.connect(self.__typeChanged)
         self.__name_line.editingFinished.connect(self.__nameChanged)
+        self.__name_line.textEdited.connect(self.__nameCheck)
 
         self.setLayout(main_layout)
 
@@ -49,6 +50,7 @@ class ParamCreator(QtWidgets.QDialog):
         self.__type_combo.setCurrentIndex(0)
         self.__typeChanged(0)
         self.__name_line.setText("")
+        self.__nameCheck("")
 
         return super(ParamCreator, self).exec_()
 
@@ -57,6 +59,9 @@ class ParamCreator(QtWidgets.QDialog):
 
     def __nameChanged(self):
         self.__name = str(self.__name_line.text())
+
+    def __nameCheck(self, text):
+        self.__add.setEnabled((True if text else False))
 
     def getType(self):
         return self.__type
@@ -74,20 +79,19 @@ class ParamLine(QtWidgets.QLineEdit):
 
     def __init__(self, param, parent=None, isInt=False, isFloat=False):
         super(ParamLine, self).__init__(parent=parent)
-        self.__normal_color = QtCore.Qt.black
-        self.__expression_color = QtGui.QColor(10, 70, 70)
-        self.__expression_error_color = QtGui.QColor(100, 10, 40)
+        self.__style = "QLineEdit{ background-color: %s; border: 1px solid #1D1D1D; }"
+        self.__normal_color = "#1D1D1D"
+        self.__expression_color = "#0A4646"
+        self.__expression_error_color = "#640A28"
         self.__current_state = ParamLine.Value
         self.__param = param
 
         if isInt:
             self.textEdited.connect(self.__intOnly)
-            self.setMaximumWidth(const.ParamEditorMaximumWidth)
             self.setAlignment(QtCore.Qt.AlignRight)
             self.editingFinished.connect(self.__intFinished)
         elif isFloat:
             self.textEdited.connect(self.__floatOnly)
-            self.setMaximumWidth(const.ParamEditorMaximumWidth)
             self.setAlignment(QtCore.Qt.AlignRight)
             self.editingFinished.connect(self.__floatFinished)
         else:
@@ -127,16 +131,14 @@ class ParamLine(QtWidgets.QLineEdit):
         self.refresh()
 
     def __setBackgroundColor(self):
-        p = self.palette()
-
         if self.__current_state == ParamLine.Value:
-            p.setColor(QtGui.QPalette.Base, self.__normal_color)
+            s = self.__style % self.__normal_color
         elif self.__current_state == ParamLine.Expression:
-            p.setColor(QtGui.QPalette.Base, self.__expression_color)
+            s = self.__style % self.__expression_color
         elif self.__current_state == ParamLine.ExpressionError:
-            p.setColor(QtGui.QPalette.Base, self.__expression_error_color)
+            s = self.__style % self.__expression_error_color
 
-        self.setPalette(p)
+        self.setStyleSheet(s)
 
     def __intOnly(self, txt):
         if not ReEqual.search(txt):
@@ -239,7 +241,10 @@ class ParamLayout(QtWidgets.QHBoxLayout):
             self.__val_edit = ParamLine(self.__param)
             self.__val_edit.Changed.connect(self.__editedEmit)
 
-        self.__delete_button = QtWidgets.QPushButton("Del")
+        self.__delete_button = QtWidgets.QPushButton()
+        self.__delete_button.setObjectName("RemoveButton")
+        self.__delete_button.setFixedSize(14, 14)
+        self.__delete_button.setFocusPolicy(QtCore.Qt.NoFocus)
         self.__delete_button.clicked.connect(self.__deleteParam)
         if not self.__deletable:
             self.__delete_button.hide()
@@ -248,9 +253,6 @@ class ParamLayout(QtWidgets.QHBoxLayout):
         self.addWidget(self.__delete_button)
 
         self.setSpacing(10)
-
-        if tc != str:
-            self.addStretch(100)
 
     def __deleteParam(self):
         self.DeleteRequest.emit(self.__param)
@@ -272,6 +274,7 @@ class ParamEditor(QtWidgets.QWidget):
         self.__bloc = None
         self.__param_layout = None
         self.__block_type_label = None
+        self.__name_label = None
         self.__block_name = None
         self.__add_param_button = None
         self.__param_creator = None
@@ -292,13 +295,30 @@ class ParamEditor(QtWidgets.QWidget):
         self.__param_layout = QtWidgets.QVBoxLayout()
         self.__block_type_label = QtWidgets.QLabel()
         self.__block_type_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        name_layout = QtWidgets.QHBoxLayout()
         self.__block_name = QtWidgets.QLineEdit()
+        self.__name_label = QtWidgets.QLabel("Name")
+        self.__name_label.setMinimumWidth(const.ParamLabelMinimumWidth + 4)
+        self.__name_label.setMaximumWidth(const.ParamLabelMaximumWidth)
+        name_layout.addWidget(self.__name_label)
+        name_layout.addWidget(self.__block_name)
+        name_layout.setAlignment(QtCore.Qt.AlignLeft)
+        name_layout.addStretch(10)
         self.__block_name.setMaximumWidth(const.ParamEditorBlockNameMaximumWidth)
-        self.__add_param_button = QtWidgets.QPushButton("Add")
+
+        add_layout = QtWidgets.QHBoxLayout()
+        self.__add_param_button = QtWidgets.QPushButton()
+        self.__add_param_button.setObjectName("AddButton")
+        self.__add_param_button.setFixedSize(18, 18)
+        self.__add_param_button.setFocusPolicy(QtCore.Qt.NoFocus)
+        add_layout.setAlignment(QtCore.Qt.AlignCenter)
+        add_layout.addWidget(self.__add_param_button)
+
         main_layout.addWidget(self.__block_type_label)
-        main_layout.addWidget(self.__block_name)
+        main_layout.addLayout(name_layout)
         main_layout.addLayout(self.__param_layout)
-        main_layout.addWidget(self.__add_param_button)
+        main_layout.addLayout(add_layout)
         self.__add_param_button.hide()
 
         self.setLayout(main_layout)
@@ -348,13 +368,15 @@ class ParamEditor(QtWidgets.QWidget):
             self.__block_type_label.setText("")
             self.__block_name.setText("")
             self.__block_type_label.hide()
+            self.__name_label.hide()
             self.__block_name.hide()
             self.__add_param_button.hide()
         else:
             self.__block_type_label.show()
+            self.__name_label.show()
             self.__block_name.show()
             self.__block_name.setText(self.__bloc.name())
-            self.__block_type_label.setText(self.__bloc.__class__.__name__)
+            self.__block_type_label.setText("<{}>".format(self.__bloc.__class__.__name__))
 
             if self.__bloc and self.__bloc.expandable():
                 self.__add_param_button.show()
