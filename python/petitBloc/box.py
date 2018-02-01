@@ -212,6 +212,8 @@ class Box(component.Component):
             for db in all_downstreams:
                 if db in blocs:
                     blocs.remove(db)
+                if db in schedule:
+                    continue
                 schedule.append(db)
 
         for bloc in blocs:
