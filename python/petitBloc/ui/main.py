@@ -10,6 +10,7 @@ from . import packetHistory
 from . import logViewer
 from . import uiUtil
 from . import sceneState
+from . import progress
 from .. import scene
 import operator
 import re
@@ -30,6 +31,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__networks = {}
         self.__filepath = None
         self.__current_bloc = None
+        self.__progress = None
+        self.__is_running = False
         self.__initialize()
         self.__setStyleSheet()
 
@@ -142,6 +145,10 @@ class MainWindow(QtWidgets.QMainWindow):
         debug_log.triggered.connect(self.__debugLogTriggered)
 
         menubar.addMenu(setting_menu)
+
+        ## progress
+        self.__progress = progress.Progress(self)
+        self.__progress.hide()
 
         run_action.triggered.connect(self.__runTriggered)
 
@@ -290,16 +297,29 @@ class MainWindow(QtWidgets.QMainWindow):
 
         par_dict["graph"].deleteAttribute(node, node.attrs.index(name))
 
+    def resizeEvent(self, event):
+        if self.__is_running:
+            self.__matchProgressSize()
+
+    def __matchProgressSize(self):
+        self.__progress.setGeometry(0, 0, self.size().width(), self.size().height())
+
     def __runTriggered(self):
+        self.__is_running = True
+        self.__matchProgressSize()
+
+        self.__progress.show()
+
+        self.__graph.boxModel().run(manager=self.__progress.manager())
+
         graph = None
         index = self.__graph_tabs.currentIndex()
 
         for n_dict in self.__networks.values():
             if n_dict.get("index") == index:
-                graph = n_dict["graph"]
+                n_dict["graph"].update()
                 break
 
-        self.__graph.boxModel().run(perProcessCallback=graph.viewport().update if graph else None)
         self.__packet_history.refresh()
         self.__graph.boxModel().readLogs()
         if self.__current_bloc is None:
@@ -308,6 +328,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.__log_viewer.setLogs(*self.__graph.boxModel().getLogs(self.__current_bloc.path()))
 
         self.__scene_state.setStates(*self.__graph.boxModel().getState())
+        self.__progress.hide()
+        self.__is_running = False
 
     def __getParentGraph(self, path):
         return self.__getGraph(os.path.dirname(path))

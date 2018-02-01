@@ -329,3 +329,26 @@ QPushButton#BlockButton:pressed
 {
     image: url("icons/block_pressed.png");
 }
+
+QLabel#TransparentLabel
+{
+    font-size: 24px;
+    background-color: transparent;;
+}
+
+QFrame#ProgressFrame
+{
+    background-color: rgba(50, 50, 70, 170);
+}
+
+QProgressBar
+{
+    border: 2px solid gray;
+    border-radius: 5px;
+    text-align: center;
+}
+
+QProgressBar::chunk
+{
+    background-color: rgb(40, 90, 120);
+}
