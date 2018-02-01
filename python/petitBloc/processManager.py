@@ -153,7 +153,8 @@ class ValueManager(object):
     @staticmethod
     def DeleteValue(v):
         ValueManager.__Count -= 1
-        ValueManager.__Values.remove(v)
+        if v in ValueManager.__Values:
+            ValueManager.__Values.remove(v)
         del v
 
 
@@ -185,7 +186,8 @@ class QueueManager(object):
     @staticmethod
     def DeleteQueue(q):
         QueueManager.__Count -= 1
-        QueueManager.__Queues.remove(q)
+        if q in QueueManager.__Queues:
+            QueueManager.__Queues.remove(q)
         q.close()
         del q
 
@@ -274,7 +276,8 @@ class ProcessManager(object):
     @staticmethod
     def DeleteProcess(p):
         p.terminate()
-        ProcessManager.__Processes.remove(p)
+        if p in ProcessManager.__Processes:
+            ProcessManager.__Processes.remove(p)
 
     @staticmethod
     def Join():
@@ -300,27 +303,22 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         s.resetState()
 
     while (work_schedule):
-        next_bloc = None
-        while (True):
-            bloc = work_schedule.pop(0)
-            if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
-                continue
+        bloc = work_schedule.pop(0)
+        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
+            continue
 
-            suspend = False
+        suspend = False
 
-            for up in bloc.upstream():
-                if up.isWaiting():
-                    suspend = True
-                    break
+        for up in bloc.upstream():
+            if up.isWaiting():
+                suspend = True
+                break
 
-            if suspend:
-                work_schedule.append(bloc)
-                continue
+        if suspend:
+            work_schedule.append(bloc)
+            continue
 
-            next_bloc = bloc
-            break
-
-        ProcessManager.Submit(next_bloc)
+        ProcessManager.Submit(bloc)
 
     ProcessManager.Join()
 
