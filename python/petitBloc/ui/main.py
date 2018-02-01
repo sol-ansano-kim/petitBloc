@@ -1,3 +1,6 @@
+import operator
+import re
+import os
 from Qt import QtWidgets
 from Qt import QtCore
 from Qt import QtGui
@@ -12,9 +15,6 @@ from . import uiUtil
 from . import sceneState
 from . import progress
 from .. import scene
-import operator
-import re
-import os
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -399,9 +399,18 @@ class MainWindow(QtWidgets.QMainWindow):
         scene.Write(self.__filepath, data)
 
     def __saveAs(self):
-        pth, _ = QtWidgets.QFileDialog.getSaveFileName(self, "Save", "", "*.blcs")
+        res = QtWidgets.QFileDialog.getSaveFileName(self, "Save", "", "*.blcs")
+        if isinstance(res, tuple):
+            pth = res[0]
+        else:
+            pth = res
+
         if not pth:
             return
+
+        ext = os.path.splitext(pth)[-1]
+        if not ext:
+            pth += ".blcs"
 
         self.__setPath(pth)
         self.__saveData()
@@ -410,7 +419,13 @@ class MainWindow(QtWidgets.QMainWindow):
         return os.path.basename(path)
 
     def __importBox(self):
-        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
+        res = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
+
+        if isinstance(res, tuple):
+            pth = res[0]
+        else:
+            pth = res
+
         if not pth:
             return
 
@@ -436,7 +451,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__setPath(path)
 
     def __open(self):
-        pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open", "", "*.blcs")
+        res = QtWidgets.QFileDialog.getOpenFileName(self, "Open", "", "*.blcs")
+
+        if isinstance(res, tuple):
+            pth = res[0]
+        else:
+            pth = res
+
         if not pth:
             return
 
