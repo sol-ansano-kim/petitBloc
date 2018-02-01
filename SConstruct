@@ -23,6 +23,8 @@ env.Install("release/petitBloc/python/petitBloc/ui", Glob("python/petitBloc/ui/*
 env.Install("release/petitBloc/python/petitBloc/ui", Glob("python/petitBloc/ui/*.json"))
 env.Install("release/petitBloc/python/petitBloc/ui", Glob("python/petitBloc/ui/*.qss"))
 env.Install("release/petitBloc/python/petitBloc/ui/icons", Glob("python/petitBloc/ui/icons/*.png"))
+env.Install("release/petitBloc/python/petitBloc/blocks", Glob("blocks/*.py"))
+env.Install("release/petitBloc/python/petitBloc/blocks", Glob("blocks/*.config"))
 
 
 if install_nodz:
