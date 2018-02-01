@@ -7,7 +7,22 @@ import copy
 import re
 
 
-ReSplitPath = re.compile("^(?P<name>[a-zA-Z0-9_]+)[/]")
+ReSplitPath = re.compile("^[/](?P<name>[a-zA-Z0-9_]+)")
+
+
+class SceneContext(component.Component):
+    def __init__(self, name="", parent=None):
+        super(SceneContext, self).__init__(name=self.__class__.__name__, parent=parent)
+
+    def expandable(self):
+        return True
+
+    def getContext(self):
+        context = {}
+        for p in self.params():
+            context[p.name()] = p.get()
+
+        return context
 
 
 class ProxyBlock(core.Proxy, component.Component):
@@ -74,6 +89,9 @@ class ProxyBlock(core.Proxy, component.Component):
 
         return None
 
+    def getContext(self):
+        return {}
+
     def addProxy(self, typeClass, name=None):
         if name is None or not util.ValidateName(name):
             name = "proxy"
@@ -139,8 +157,8 @@ class ProxyBlock(core.Proxy, component.Component):
 class Box(component.Component):
     def __init__(self, name="", parent=None):
         super(Box, self).__init__(name=name, parent=parent)
+        self.__context = None
         self.__blocks = []
-        self.__proxy_params = []
         self.__in_proxy = ProxyBlock(ProxyBlock.In, name=const.InProxyBlock, parent=self)
         self.__out_proxy = ProxyBlock(ProxyBlock.Out, name=const.OutProxyBlock, parent=self)
 
@@ -150,13 +168,25 @@ class Box(component.Component):
     def __str__(self):
         return "Box<'{}'>".format(self.name())
 
+    def ancestor(self):
+        if self.parent() is None:
+            return self
+
+        return self.parent().ancestor()
+
     def hasNetwork(self):
+        return True
+
+    def expandable(self):
         return True
 
     def getSchedule(self):
         schedule = []
         initblocs = []
         blocs = []
+
+        if self.__context is not None:
+            schedule.append(self.__context)
 
         schedule.append(self.__in_proxy)
 
@@ -267,75 +297,54 @@ class Box(component.Component):
                 c.disconnect()
                 self.removeChain(c)
 
-        params = map(lambda x: x, bloc.params())
-        delete_proxies = []
-        for p in self.proxyParams():
-            if p.param() in params:
-                delete_proxies.append(p)
-
-        for d in delete_proxies:
-            self.removeProxyParam(d)
-
         return True
 
-    def addProxyParam(self, param, name=None):
-        for proxy in self.__proxy_params:
-            if proxy.param() == param:
-                return None
+    def createContext(self):
+        if self.ancestor() != self:
+            return None
 
-        if name is None or not util.ValidateName(name):
-            name = param.name()
+        if self.__context is not None:
+            return None
 
-        all_names = map(lambda x: x.name(), self.__proxy_params)
+        self.__context = SceneContext()
+        self.__context.setParent(self)
 
-        name = util.GetUniqueName(name, all_names)
+        return self.__context
 
-        proxy = core.ProxyParameter(param, name)
+    def deleteContext(self):
+        self.__context = None
 
-        self.__proxy_params.append(proxy)
+    def getContext(self):
+        if self.__context is None:
+            return {}
 
-        return proxy
+        return self.__context.getContext()
 
-    def proxyParam(self, index_or_name):
-        if isinstance(index_or_name, int):
-            if index_or_name < 0 or index_or_name >= len(self.__proxy_params):
-                return None
+    def addContext(self, typeClass, name=None):
+        if self.__context is None:
+            return None
 
-            return self.__proxy_params[index_or_name]
+        return self.__context.addParam(typeClass, name=name)
 
-        if isinstance(index_or_name, basestring):
-            for p in self.__proxy_params:
-                if p.name() == index_or_name:
-                    return p
+    def removeContext(self, name_or_param):
+        if self.__context is None:
+            return False
 
-        return None
+        return self.__context.removeParam(name_or_param)
 
-    def proxyParams(self):
-        for proxy in self.__proxy_params:
-            yield proxy
+    def context(self, name):
+        if self.__context is None:
+            return None
 
-    def hasProxyParam(self, param):
-        for proxy in self.__proxy_params:
-            if proxy.param() == param:
-                return True
+        return self.__context.param(name)
 
-        return False
-
-    def removeProxyParamFromParam(self, param):
-        target_proxy = None
-        for proxy in self.__proxy_params:
-            if proxy.param() == param:
-                target_proxy = proxy
-                break
-
-        return self.removeProxyParam(target_proxy)
-
-    def removeProxyParam(self, proxy):
-        if proxy in self.__proxy_params:
-            self.__proxy_params.remove(proxy)
-            return True
-
-        return False
+    def contexts(self):
+        if self.__context is None:
+            for p in []:
+                yield p
+        else:
+            for p in self.__context.params():
+                yield p
 
     def addInputProxy(self, typeClass, name=None):
         return self.__in_proxy.addProxy(typeClass, name=name)

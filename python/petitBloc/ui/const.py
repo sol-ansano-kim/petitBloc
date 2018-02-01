@@ -1,9 +1,9 @@
 ObjectName = "petitBloc"
 
-ParamEditorBlockNameMaximumWidth = 200
-ParamEditorMaximumWidth = 100
+ParamEditorBlockNameMaximumWidth = 300
 ParamLabelMinimumWidth = 50
 ParamLabelMaximumWidth = 200
+LogMaximumHeight = 400
 
 from .. import const as petitBlocConst
 RootBoxName = petitBlocConst.RootBoxName

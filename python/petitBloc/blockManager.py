@@ -2,6 +2,7 @@ import imp
 import os
 from . import core
 from . import box
+from . import util
 
 
 class BlockManager(object):
@@ -29,7 +30,22 @@ class BlockManager(object):
         return self.__blocks.has_key(name)
 
     def block(self, name):
-        return self.__blocks.get(name)
+        return self.__blocks.get(name, {}).get("class")
+
+    def config(self, name):
+        return self.__blocks.get(name, {}).get("config", {})
+
+    def blockTree(self):
+        tree = {}
+
+        for b, v in self.__blocks.iteritems():
+            category = v.get("config", {}).get("category", "Not Classified")
+            if not tree.has_key(category):
+                tree[category] = []
+
+            tree[category].append(b)
+
+        return tree
 
     def findObjectClass(self, name):
         cls = self.__finded_class.get(name, None)
@@ -53,7 +69,8 @@ class BlockManager(object):
         return None
 
     def __searchBlocks(self):
-        self.__blocks["Box"] = box.Box
+        self.__blocks["Box"] = {"class": box.Box, "config": {"category": "Scene"}}
+        self.__blocks["SceneContext"] = {"class": box.SceneContext, "config": {"category": "Scene"}}
 
         block_path = os.environ.get("PETITBLOC_BLOCK_PATH", "")
         for block_dir in filter(lambda x: x, block_path.split(os.pathsep)):
@@ -62,11 +79,16 @@ class BlockManager(object):
 
             for fp in os.listdir(block_dir):
                 if os.path.splitext(fp)[-1].lower() == ".py":
-                    py_path = os.path.abspath(os.path.join(block_dir, fp))
+                    py_path = os.path.abspath(os.path.join(block_dir, fp)).replace("\\", "/")
                     if py_path in self.__loaded:
                         continue
 
                     self.__loaded.append(py_path)
+
+                    configs = {}
+                    config_path = os.path.splitext(py_path)[0] + ".config"
+                    if os.path.isfile(config_path):
+                        configs = util.LoadConfig(config_path)
 
                     module = self.importModule(py_path)
 
@@ -80,7 +102,7 @@ class BlockManager(object):
                             continue
 
                         if issubclass(content, core.ComponentBase):
-                            self.__blocks[cont_name] = content
+                            self.__blocks[cont_name] = {"class": content, "config": configs.get(cont_name, {})}
                             self.__modules.append(module)
 
     def importModule(self, path):

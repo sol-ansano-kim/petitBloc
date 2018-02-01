@@ -6,6 +6,8 @@ from Qt import QtCore
 from Qt import QtWidgets
 from . import model
 from . import blockCreator
+import copy
+from functools import partial
 
 
 def getConfigFile():
@@ -20,18 +22,33 @@ class Graph(nodz_main.Nodz):
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
 
-    def __init__(self, name="", boxObject=None, parent=None):
+    def __init__(self, name="", boxObject=None, parent=None, isTop=False):
         super(Graph, self).__init__(parent, configPath=getConfigFile())
+        self.__is_top = isTop
         self.__model = model.BoxModel(name=name, boxObject=boxObject)
+        self.__updateConfig()
         self.__current_block = None
-        self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames())
+        # TODO : SceneContext
+        self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames(), excludeList=([] if isTop else ["SceneContext"]))
         self.__creator.BlockCreatorEnd.connect(self.addBlock)
+        self.__context_node = None
         self.signal_NodeDeleted.connect(self.__nodeDeleted)
         self.signal_NodeSelected.connect(self.__nodeSelected)
         self.installEventFilter(self)
         self.initialize()
+        self.gridVisToggle = False
 
         self.__zoom_factor = self.config["zoom_factor"]
+
+    def isTop(self):
+        return self.__is_top
+
+    def __updateConfig(self):
+        for b in self.__model.blockClassNames() + ["ProxyBlock"]:
+            base = copy.deepcopy(self.config.get(b, self.config.get("Block")))
+            for k, v in self.__model.config(b).iteritems():
+                base[k] = v
+            self.config[b] = base
 
     def wheelEvent(self, event):
         self.currentState = 'ZOOM_VIEW'
@@ -54,12 +71,40 @@ class Graph(nodz_main.Nodz):
     def box(self):
         return self.__model.box()
 
+    def hasContext(self):
+        return self.__context_node is not None
+
+    def addContextBlock(self, position=None):
+        if self.__context_node is None:
+
+            cntx_bloc = self.__model.createContext()
+            if cntx_bloc is None:
+                raise Exception, "Error : Failed to create a context block"
+
+            self.__context_node = ContextItem(cntx_bloc, False, self.config)
+
+            self.scene().nodes[cntx_bloc.name()] = self.__context_node
+            self.scene().addItem(self.__context_node)
+            if not position:
+                position = self.mapToScene(self.viewport().rect().center())
+
+            self.__context_node.setPos(position - self.__context_node.nodeCenter)
+
+            return self.__context_node
+
     def mouseDoubleClickEvent(self, evnt):
         itm = self.itemAt(evnt.pos())
 
         if itm is not None and isinstance(itm, BlocItem):
             if itm.block().hasNetwork():
                 self.ItemDobleClicked.emit(itm.block())
+
+    def mousePressEvent(self, evnt):
+        if evnt.button() == QtCore.Qt.RightButton:
+            self.__showMenu(evnt.pos())
+            return
+
+        super(Graph, self).mousePressEvent(evnt)
 
     def findNodeFromName(self, name):
         for nodename, node in self.scene().nodes.iteritems():
@@ -87,7 +132,7 @@ class Graph(nodz_main.Nodz):
         if obj != self:
             return False
 
-        if evnt.type() == QtCore.QEvent.Type.KeyPress:
+        if evnt.type() == QtCore.QEvent.KeyPress:
             self.KeyPressed.emit(evnt.key())
             if evnt.key() == QtCore.Qt.Key_Tab:
                 self.__creator.show(self.mapFromGlobal(QtGui.QCursor.pos()))
@@ -98,6 +143,22 @@ class Graph(nodz_main.Nodz):
     def currentBlock(self):
         return self.__current_block
 
+    def __showMenu(self, pos):
+        menu = QtWidgets.QMenu(self)
+        block_menu = menu.addMenu("Create Block")
+        for c, blocks in self.__model.blockTree().iteritems():
+            cate = block_menu.addMenu(c)
+            for b in blocks:
+                if b == "SceneContext" and not self.isTop():
+                    continue
+
+                action = cate.addAction(b)
+                action.triggered.connect(partial(self.addBlock, b, position=self.mapToScene(pos)))
+                if b == "SceneContext" and self.hasContext():
+                    action.setEnabled(False)
+
+        menu.popup(self.viewport().mapToGlobal(pos))
+
     def __nodeSelected(self, selectedNodes):
         if not selectedNodes:
             self.__current_block = None
@@ -105,6 +166,11 @@ class Graph(nodz_main.Nodz):
             return
 
         node = selectedNodes[0]
+        if self.__context_node and self.__context_node.name == node:
+            self.__current_block = self.__context_node.block()
+            self.CurrentNodeChanged.emit(self.__current_block)
+            return
+
         self.__current_block = self.__model.block(node)
         self.CurrentNodeChanged.emit(self.__current_block)
 
@@ -121,6 +187,11 @@ class Graph(nodz_main.Nodz):
 
     def __nodeDeleted(self, deletedNodes):
         for n in deletedNodes:
+            if self.__context_node and self.__context_node.name == n:
+                self.__model.deleteContext()
+                self.__context_node = None
+                continue
+
             b = self.__model.block(n)
             self.BlockDeleted.emit(b)
             if b.hasNetwork():
@@ -136,6 +207,10 @@ class Graph(nodz_main.Nodz):
     def addBlock(self, blockType, blockName=None, position=None, init=True):
         if not blockType:
             return None
+
+        # TODO : SceneContext
+        if blockType == "SceneContext":
+            return self.addContextBlock(position=position)
 
         bloc = self.__model.addBlock(blockType, name=blockName)
         if bloc is None:
@@ -157,16 +232,13 @@ class Graph(nodz_main.Nodz):
 
         return node
 
-    def createNode(self, bloc, preset='block_default', position=None, alternate=True):
+    def createNode(self, bloc, preset='Block', position=None, alternate=True):
         if bloc.name() in self.scene().nodes.keys():
             print('A node with the same name already exists : {0}'.format(bloc.name()))
             print('Node creation aborted !')
             return
 
-        if bloc.hasNetwork():
-            preset = "box_default"
-
-        nodeItem = BlocItem(bloc, alternate, preset, self.config)
+        nodeItem = BlocItem(bloc, alternate, self.config)
 
         # Store node in scene.
         self.scene().nodes[bloc.name()] = nodeItem
@@ -229,26 +301,6 @@ class Graph(nodz_main.Nodz):
         # Emit signal.
         self.signal_AttrCreated.emit(node.name, index)
 
-    def initProxyNode(self):
-        pass
-
-
-class SubNet(Graph):
-    ProxyPortAdded = QtCore.Signal(object, object, object)
-    ProxyPortRemoved = QtCore.Signal(object, object, str)
-
-    def __init__(self, name="", boxObject=None, parent=None):
-        super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
-        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, "proxy_default", self.config)
-        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, "proxy_default", self.config)
-
-        self.scene().nodes[self.__proxy_in.block().name()] = self.__proxy_in
-        self.scene().nodes[self.__proxy_out.block().name()] = self.__proxy_out
-        self.scene().addItem(self.__proxy_in)
-        self.scene().addItem(self.__proxy_out)
-
-        self.BlockDeleted.connect(self.cleanUpProxies)
-
     def createConnection(self, sourceNode, sourceAttr, targetNode, targetAttr):
         plug = self.scene().nodes[sourceNode].plugs[sourceAttr]
         socket = self.scene().nodes[targetNode].sockets[targetAttr]
@@ -268,6 +320,26 @@ class SubNet(Graph):
         self.scene().addItem(connection)
 
         return connection
+
+    def initProxyNode(self):
+        pass
+
+
+class SubNet(Graph):
+    ProxyPortAdded = QtCore.Signal(object, object, object)
+    ProxyPortRemoved = QtCore.Signal(object, object, str)
+
+    def __init__(self, name="", boxObject=None, parent=None):
+        super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
+        self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, self.config)
+        self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, self.config)
+
+        self.scene().nodes[self.__proxy_in.block().name()] = self.__proxy_in
+        self.scene().nodes[self.__proxy_out.block().name()] = self.__proxy_out
+        self.scene().addItem(self.__proxy_in)
+        self.scene().addItem(self.__proxy_out)
+
+        self.BlockDeleted.connect(self.cleanUpProxies)
 
     def cleanUpProxies(self):
         inputs, outputs = self.boxModel().cleanUpInputProxies()
@@ -324,14 +396,15 @@ class SubNet(Graph):
         self.boxModel().disconnectOutProxy(proxyPort, port)
 
     def initProxyNode(self):
+        # TODO : do this more smarter
         position = self.mapToScene(self.viewport().rect().center())
         self.__proxy_in.setPos(position - self.__proxy_in.nodeCenter - QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
         self.__proxy_out.setPos(position - self.__proxy_in.nodeCenter + QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
 
 
 class BlocItem(nodz_main.NodeItem):
-    def __init__(self, bloc, alternate, preset, config):
-        super(BlocItem, self).__init__(bloc.name(), alternate, preset, config)
+    def __init__(self, bloc, alternate, config):
+        super(BlocItem, self).__init__(bloc.name(), alternate, bloc.__class__.__name__, config)
         self.__block = bloc
         # TODO : set style from config
         self.__error_pen = QtGui.QPen(QtGui.QColor(242, 38, 94))
@@ -340,6 +413,23 @@ class BlocItem(nodz_main.NodeItem):
         self.__hl_pen.setStyle(QtCore.Qt.SolidLine)
         self.__hl_pen.setWidth(self.border + 2)
         self.__emphasize = False
+
+    def mouseMoveEvent(self, event):
+        if self.scene().views()[0].gridSnapToggle or self.scene().views()[0]._nodeSnap:
+            gridSize = self.scene().gridSize
+
+            currentPos = self.mapToScene(event.pos().x() - self.baseWidth / 2,
+                                         event.pos().y() - self.height / 2)
+
+            snap_x = (round(currentPos.x() / gridSize) * gridSize) - gridSize/4
+            snap_y = (round(currentPos.y() / gridSize) * gridSize) - gridSize/4
+            snap_pos = QtCore.QPointF(snap_x, snap_y)
+            self.setPos(snap_pos)
+
+            self.scene().updateScene()
+        else:
+            self.scene().updateScene()
+            super(nodz_main.NodeItem, self).mouseMoveEvent(event)
 
     @property
     def pen(self):
@@ -467,10 +557,13 @@ class BlocItem(nodz_main.NodeItem):
             preset = attrData['preset']
 
 
+            bloc_class_name = self.__block.__class__.__name__
             # Attribute base.
-            self._attrBrush.setColor(nodz_utils._convertDataToColor(config[preset]['bg']))
+
+            brush_color = config[bloc_class_name].get("port_bg", config[preset]['bg'])
+            self._attrBrush.setColor(nodz_utils._convertDataToColor(brush_color))
             if self.alternate:
-                self._attrBrushAlt.setColor(nodz_utils._convertDataToColor(config[preset]['bg'], True, config['alternate_value']))
+                self._attrBrushAlt.setColor(nodz_utils._convertDataToColor(brush_color, True, config['alternate_value']))
 
             self._attrPen.setColor(nodz_utils._convertDataToColor([0, 0, 0, 0]))
             painter.setPen(self._attrPen)
@@ -483,7 +576,8 @@ class BlocItem(nodz_main.NodeItem):
             painter.drawRect(rect)
 
             # Attribute label.
-            painter.setPen(nodz_utils._convertDataToColor(config[preset]['text']))
+            text_color = config[bloc_class_name].get("port_text", config[preset]['text'])
+            painter.setPen(nodz_utils._convertDataToColor(text_color))
             painter.setFont(self._attrTextFont)
 
             # Search non-connectable attributes.
@@ -514,11 +608,16 @@ class BlocItem(nodz_main.NodeItem):
             painter.drawText(textRect, QtCore.Qt.AlignCenter, "ERROR")
 
 
+class ContextItem(BlocItem):
+    def __init__(self, bloc, alternate, config):
+        super(ContextItem, self).__init__(bloc, alternate, config)
+
+
 class ProxyItem(BlocItem):
     In = 0
     Out = 1
-    def __init__(self, bloc, direction, alternate, preset, config):
-        super(ProxyItem, self).__init__(bloc, alternate, preset, config)
+    def __init__(self, bloc, direction, alternate, config):
+        super(ProxyItem, self).__init__(bloc, alternate, config)
         self.__bloc = bloc
         self.__direction = direction
 

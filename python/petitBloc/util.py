@@ -1,4 +1,5 @@
 import re
+import json
 
 
 ReConvention = re.compile("^[a-zA-Z][a-zA-Z0-9_]*$")
@@ -26,3 +27,19 @@ def GetUniqueName(name, all_names):
                 idx = new_idx
 
     return "{}{}".format(pure, idx + 1)
+
+
+def LoadConfig(filePath):
+    data = {}
+
+    try:
+        with open(filePath, 'r') as myfile:
+            fileString = myfile.read()
+
+            cleanString = re.sub('//.*?\n|/\*.*?\*/', '', fileString, re.S)
+
+            data = json.loads(cleanString)
+    except:
+        return {}
+    else:
+        return data

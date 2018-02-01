@@ -2,6 +2,7 @@ from . import port
 from . import util
 from . import core
 from . import workerManager
+from . import parameter
 
 
 class Component(core.ComponentBase):
@@ -10,6 +11,7 @@ class Component(core.ComponentBase):
         self.__inputs = []
         self.__outputs = []
         self.__params = []
+        self.__extraParams = []
         self.initialize()
 
     def debug(self, message):
@@ -32,12 +34,18 @@ class Component(core.ComponentBase):
         for out in self.__outputs:
             out.activate()
 
+        for p in self.__params:
+            p.activate()
+
     def terminate(self, success=True):
         for out in self.__outputs:
             out.terminate()
 
         for inp in self.__inputs:
             inp.terminate()
+
+        for p in self.__params:
+            p.terminate()
 
         super(Component, self).terminate(success=success)
 
@@ -167,6 +175,28 @@ class Component(core.ComponentBase):
 
         return downstreams
 
+    def removeParam(self, name_or_param):
+        if isinstance(name_or_param, core.ParameterBase):
+            if name_or_param in self.__params:
+                self.__params.remove(name_or_param)
+                if name_or_param in self.__extraParams:
+                    self.__extraParams.remove(name_or_param)
+
+                return True
+
+            return False
+
+        if isinstance(name_or_param, basestring):
+            p = self.param(name_or_param)
+            if p:
+                self.__params.remove(p)
+                if p in self.__extraParams:
+                    self.__extraParams.remove(p)
+
+                return True
+
+        return False
+
     def addParam(self, typeClass=None, name=None, value=None):
         if name is None or not util.ValidateName(name):
             name = "param"
@@ -175,14 +205,29 @@ class Component(core.ComponentBase):
 
         name = util.GetUniqueName(name, all_names)
 
-        p = core.Parameter(name, typeClass=typeClass, value=value, parent=self)
+        p = parameter.Parameter(name, typeClass=typeClass, value=value, parent=self)
         if p:
             self.__params.append(p)
 
         return p
 
-    def params(self):
+    def params(self, includeExtraParam=True):
         for p in self.__params:
+            if not includeExtraParam and p in self.__extraParams:
+                continue
+
+            yield p
+
+    def addExtraParam(self, typeClass=None, name=None, value=None):
+        p = self.addParam(typeClass=typeClass, name=name, value=value)
+        if p is not None:
+            self.__extraParams.append(p)
+            return p
+
+        return None
+
+    def extraParams(self):
+        for p in self.__extraParams:
             yield p
 
     def param(self, index_or_name):

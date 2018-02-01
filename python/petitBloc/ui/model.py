@@ -47,6 +47,12 @@ class BoxModel(QtCore.QObject):
     def box(self):
         return self.__box
 
+    def createContext(self):
+        return self.__box.createContext()
+
+    def deleteContext(self):
+        return self.__box.deleteContext()
+
     def findObjectClass(self, name):
         return self.__manager.findObjectClass(name)
 
@@ -101,6 +107,12 @@ class BoxModel(QtCore.QObject):
     def blockClassNames(self):
         return self.__manager.blockNames()
 
+    def blockTree(self):
+        return self.__manager.blockTree()
+
+    def config(self, name):
+        return self.__manager.config(name)
+
     def connect(self, srcPort, dstPort):
         srcs = map(lambda x: x, dstPort.chains())
 
@@ -149,7 +161,7 @@ class BoxModel(QtCore.QObject):
         return None
 
     def serialize(self):
-        data = {"blocks": [], "connections": [], "proxyParameters": [], "proxyPorts": []}
+        data = {"blocks": [], "connections": [], "proxyPorts": []}
 
         blocks = self.__box.getSchedule()
         boxies = []
@@ -173,11 +185,23 @@ class BoxModel(QtCore.QObject):
             block_data["type"] = b.type()
 
             params = {}
-            for p in b.params():
-                params[p.name()] = p.get()
+            for p in b.params(includeExtraParam=False):
+                value = p.get()
+                expr = p.getExpression() if p.hasExpression() else None
+                params[p.name()] = {"value": value, "expression": expr}
+
+            extra = {}
+            for p in b.extraParams():
+                value = p.get()
+                expr = p.getExpression() if p.hasExpression() else None
+                typeName = p.typeClass().__name__
+                extra[p.name()] = {"value": value, "expression": expr, "type": typeName}
 
             if params:
                 block_data["params"] = params
+
+            if extra:
+                block_data["extraParams"] = extra
 
             data["blocks"].append(block_data)
 
@@ -199,14 +223,6 @@ class BoxModel(QtCore.QObject):
                 ip = b.outputProxyIn(pn)
                 out_data.append({"name": pn, "type": ip.typeClass().__name__})
 
-        ## proxy params
-        for b in boxies:
-            params = []
-            box_data = {"path": uiUtil.PopRootPath(b.path()), "params": params}
-            data["proxyParameters"].append(box_data)
-            for p in b.proxyParams():
-                params.append({"name": p.name(), "param": uiUtil.PopRootPath(p.param().path())})
-
         ## connection data
         for b in blocks:
             for p in b.inputs():
@@ -219,6 +235,13 @@ class BoxModel(QtCore.QObject):
 
         return data
 
-    def run(self, perProcessCallback=None):
+    def run(self, manager=None):
+        callback = None
         schedule = self.__box.getSchedule()
-        workerManager.WorkerManager.RunSchedule(schedule, perProcessCallback=perProcessCallback)
+
+        if manager is not None:
+            manager.reset()
+            manager.setCount(len(schedule))
+            callback = manager.increase
+
+        workerManager.WorkerManager.RunSchedule(schedule, perProcessCallback=callback)

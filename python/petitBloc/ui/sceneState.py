@@ -1,4 +1,5 @@
 from Qt import QtWidgets
+from Qt import QtCore
 
 
 class SceneState(QtWidgets.QWidget):
@@ -14,6 +15,7 @@ class SceneState(QtWidgets.QWidget):
         self.__avg_label = None
 
         self.__initialize()
+        self.__updateUI()
 
     def __updateUI(self):
         self.__exe_label.setText("Execution : {}".format(self.__exe_count))
@@ -36,10 +38,17 @@ class SceneState(QtWidgets.QWidget):
         self.__error_label = QtWidgets.QLabel()
         self.__time_label = QtWidgets.QLabel()
         self.__avg_label = QtWidgets.QLabel()
+        self.__exe_label.setObjectName("StateLabel")
+        self.__error_label.setObjectName("StateLabel")
+        self.__time_label.setObjectName("StateLabel")
+        self.__avg_label.setObjectName("StateLabel")
 
+        layout.addStretch(10)
         layout.addWidget(self.__exe_label)
         layout.addWidget(self.__error_label)
         layout.addWidget(self.__time_label)
         layout.addWidget(self.__avg_label)
+        layout.setAlignment(QtCore.Qt.AlignRight)
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        self.__updateUI
+        self.setFixedHeight(20)

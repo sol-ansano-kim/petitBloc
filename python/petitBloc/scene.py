@@ -6,6 +6,7 @@ from . import chain
 from . import blockManager
 from . import workerManager
 from . import const
+import os
 
 
 ReBootNode = re.compile("^{}\/".format(const.RootBoxName))
@@ -26,15 +27,15 @@ def __addRootPath(path):
     if ReBootNode.search(path):
         return path
 
-    return "{}/{}".format(const.RootBoxName, path)
+    return "/{}/{}".format(const.RootBoxName, path)
 
 
 def __shortName(path):
-    return path[path.rfind("/") + 1:]
+    return os.path.basename(path)
 
 
 def __parentPath(path):
-    return path[:path.rfind("/")]
+    return os.path.dirname(path)
 
 
 def __setVerboseLevel(l):
@@ -61,7 +62,15 @@ def __query(filePath):
         print("    '{}'({})".format(__addRootPath(b["path"]), b["type"]))
 
         for k, v in b.get("params", {}).iteritems():
-            print("        {}: {}".format(k, str(v)))
+            if v["expression"]:
+                print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v["expression"])))
+            else:
+                print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v["value"])))
+        for k, v in b.get("extraParams", {}).iteritems():
+            if v["expression"]:
+                print("        {}@{}: {} ({})".format(__addRootPath(b["path"]), k, str(v["expression"]), str(v["type"])))
+            else:
+                print("        {}@{}: {} ({})".format(__addRootPath(b["path"]), k, str(v["value"]), str(v["type"])))
 
     if data["connections"]:
         print("# List Connections")
@@ -84,7 +93,6 @@ def __read(filePath):
             print("Warning : Could not find the parent block - {}".format(full_path))
             continue
 
-        
         if b["type"] == "ProxyBlock":
             if not isinstance(parent, box.Box):
                 print("Warning : Invalid proxyblock {}".format(full_path))
@@ -96,28 +104,55 @@ def __read(filePath):
             bloc = None
 
             if bc:
-                try:
-                    bloc = bc(name=short_name)
-                    parent.addBlock(bloc)
+                if bc == box.SceneContext:
+                    bloc = root.createContext()
+                    if not bloc:
+                        print("Warning : Failed to create a scene context block")
 
-                except Exception as e:
-                    print("Warning : Could not create an instance of {}".format(b["type"]))
-                    print(e)
-                    bloc = None
+                else:
+                    try:
+                        bloc = bc(name=short_name)
+                        parent.addBlock(bloc)
+
+                    except Exception as e:
+                        print("Warning : Could not create an instance of {}".format(b["type"]))
+                        print(e)
+                        bloc = None
 
             else:
                 print("Warning : Unknown block type : {}".format(b["type"]))
                 bloc = None
 
             if bloc is not None:
-                for k, v in b.get("params", {}).iteritems():
+                for k, vv in b.get("params", {}).iteritems():
                     parm = bloc.param(k)
                     if parm is None:
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))
                         continue
 
-                    if not parm.set(v):
-                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(v)))
+                    if not parm.set(vv["value"]):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(vv["value"])))
+
+                    if not parm.setExpression(vv["expression"]):
+                        print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
+
+                for k, vv in b.get("extraParams", {}).iteritems():
+                    type_name = vv["type"]
+                    type_class = manager.findObjectClass(type_name)
+                    if not type_class:
+                        print("Warning : unknown parameter type - {}".format(type_name))
+                        continue
+
+                    parm = bloc.addExtraParam(type_class, k)
+                    if parm is None:
+                        print("Warning : Failed to add an extra parameter : {}".format(str(bloc), k))
+                        continue
+
+                    if not parm.set(vv["value"]):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(vv["value"])))
+
+                    if not parm.setExpression(vv["expression"]):
+                        print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
 
     ## proxy ports
     for proxy in data["proxyPorts"]:
@@ -144,30 +179,6 @@ def __read(filePath):
                 print("Failed to load : Unknown port type - {}".format(type_name))
 
             parent.addOutputProxy(type_class, outp["name"])
-
-    ## proxy params
-    for pam in data["proxyParameters"]:
-        full_path = __addRootPath(pam["path"])
-        parent = root.findBlock(__parentPath(full_path))
-
-        if parent is None or not isinstance(parent, box.Box):
-            print("Warning : Could not find the parent box - {}".format(full_path))
-
-        continue
-
-        for pdata in pam["params"]:
-            bloc_path, param_name = __addRootPath(pdata["param"]).split("@")
-            target_bloc = root.findBlock(bloc_path)
-
-            if target_bloc is None:
-                print("Warning : Could not find target parent block - {}".format(bloc_path))
-                continue
-
-            param = target_bloc.param(param_name)
-            if param is None:
-                print("Warning : Could not find target param - {}".format(full_path))
-
-            parent.addProxyParam(param, name=pdata["name"])
 
     ## connect ports
     for con in data["connections"]:
@@ -199,6 +210,31 @@ def __read(filePath):
             print("Warning : Faild to connect {}.{} >> {}.{}".format(src_port.path(), dst_port.path()))
 
     return root
+
+
+def __overrideContext(root, parameters):
+    for p in parameters:
+        if p.count("=") != 1:
+            print("Warning : Invalid context setting - {}".format(p))
+            continue
+
+        context_name, value = p.split("=")
+
+        param = root.context(context_name)
+        if param is None:
+            print("Warning : Failed to override context. Could not find the parameter - {}".format(context_name))
+            continue
+
+        type_class = param.typeClass()
+        try:
+            if type_class == bool:
+                v = bool(int(value))
+            else:
+                v = type_class(value)
+
+            param.set(v)
+        except Exception as e:
+            print("Warning : Failed to override context. Invalid value - {} : {}".format(type_class.__name__, value))
 
 
 def __override(root, parameters):
@@ -235,7 +271,6 @@ def Write(path, data):
     data["blocks"] = __sortDataBtPath(data["blocks"])
     data["connections"] = __sortDataBtPath(data["connections"])
     data["proxyPorts"] = __sortDataBtPath(data["proxyPorts"])
-    data["proxyParameters"] = __sortDataBtPath(data["proxyParameters"])
 
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
@@ -253,7 +288,6 @@ def Read(path):
     data["blocks"] = __sortDataBtPath(data["blocks"])
     data["connections"] = __sortDataBtPath(data["connections"])
     data["proxyPorts"] = __sortDataBtPath(data["proxyPorts"])
-    data["proxyParameters"] = __sortDataBtPath(data["proxyParameters"])
 
     return data
 
@@ -265,13 +299,17 @@ def BlockInfo(blockType):
     if bc:
         try:
             bloc = bc()
-            print("# Block Info")
+            print("# <{}>".format(bloc.__class__.__name__))
+
+            print("    InPort")
             for inp in bloc.inputs():
-                print("    InPort : '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+                print("        '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+            print("    OutPort")
             for inp in bloc.outputs():
-                print("    OutPort : '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+                print("        '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+            print("    Parameter")
             for param in bloc.params():
-                print("    Parameter : '{}' ({})".format(param.name(), param.typeClass().__name__))
+                print("        '{}' ({})".format(param.name(), param.typeClass().__name__))
 
         except Exception as e:
             print("Warning : Could not create an instance of {}".format(blockType))
@@ -283,6 +321,14 @@ def BlockInfo(blockType):
         return False
 
     return True
+
+
+def BlockList():
+    manager = blockManager.BlockManager()
+
+    print("# Block List")
+    for b in manager.blockNames():
+        print("    {}".format(b))
 
 
 def Query(filePath):
@@ -297,7 +343,7 @@ def Query(filePath):
     return True
 
 
-def Run(filePath, parameters=[], multiProcessing=False, attrbutes=[], verbose=1):
+def Run(filePath, contexts=[], parameters=[], multiProcessing=False, attrbutes=[], verbose=1):
     try:
         __setVerboseLevel(verbose)
 
@@ -306,6 +352,7 @@ def Run(filePath, parameters=[], multiProcessing=False, attrbutes=[], verbose=1)
         root = __read(filePath)
 
         __override(root, parameters)
+        __overrideContext(root, contexts)
 
         schedule = root.getSchedule()
         workerManager.WorkerManager.RunSchedule(schedule)

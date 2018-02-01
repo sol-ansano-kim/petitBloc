@@ -6,47 +6,41 @@ class Proxy():
     pass
 
 
-class Parameter(object):
-    def __new__(self, name, typeClass=None, value=None, parent=None):
-        if value is None and typeClass is None:
-            return None
-
-        if value is not None:
-            if not isinstance(value, Number) and not isinstance(value, basestring):
-                return None
-
-            if typeClass is not None:
-                if not isinstance(value, typeClass):
-                    if (not issubclass(typeClass, Number) or not isinstance(value, Number)) and (not issubclass(typeClass, basestring) or not isinstance(value, basestring)):
-                        return None
-
-        else:
-            if not issubclass(typeClass, Number) and not issubclass(typeClass, basestring):
-                return None
-
-        return super(Parameter, self).__new__(self, name, typeClass=typeClass, value=value, parent=parent)
-
+class ParameterBase(object):
     def __init__(self, name, typeClass=None, value=None, parent=None):
-        super(Parameter, self).__init__()
+        super(ParameterBase, self).__init__()
         self.__name = name
         self.__parent = parent
-        if value is None:
-            self.__value = typeClass()
-            self.__type_class = typeClass
-
-        elif typeClass is None:
-            self.__value = value
-            self.__type_class = value.__class__
-
-        else:
-            self.__value = typeClass(value)
-            self.__type_class = typeClass
 
     def __str__(self):
-        return "Parameter<'{}'>".format(self.__name)
+        return "ParameterBase<'{}'>".format(self.__name)
 
     def __repr__(self):
         return self.__str__()
+
+    def activate(self):
+        pass
+
+    def terminate(self):
+        pass
+
+    def hasExpression(self):
+        return False
+
+    def validExpression(self):
+        return False
+
+    def setExpression(self, expression):
+        return False
+
+    def getExpression(self):
+        return ""
+
+    def ancestor(self):
+        if self.__parent is None:
+            return None
+
+        return self.__parent.ancestor()
 
     def parent(self):
         return self.__parent
@@ -61,47 +55,13 @@ class Parameter(object):
         return "{}@{}".format(self.__parent.path(), self.__name)
 
     def typeClass(self):
-        return self.__type_class
+        return None
 
     def get(self):
-        return self.__value
+        return None
 
     def set(self, value):
-        if isinstance(value, self.__type_class):
-            self.__value = value
-            return True
-
-        if isinstance(value, Number) and issubclass(self.__type_class, Number):
-            self.__value = value
-            return True
-
-        if isinstance(value, basestring) and issubclass(self.__type_class, basestring):
-            self.__value = value
-            return True
-
         return False
-
-
-class ProxyParameter(Proxy, object):
-    def __init__(self, param, name=None):
-        super(ProxyParameter, self).__init__()
-        self.__name = name if name is not None else param.name()
-        self.__param = param
-
-    def name(self):
-        return self.__name
-
-    def param(self):
-        return self.__param
-
-    def typeClass(self):
-        return self.param().typeClass()
-
-    def set(self, value):
-        return self.__param.set(value)
-
-    def get(self):
-        return self.__param.get()
 
 
 class PacketBase(object):
@@ -148,6 +108,12 @@ class PortBase(object):
 
     def name(self):
         return self.__name
+
+    def ancestor(self):
+        if self.__parent is None:
+            return None
+
+        return self.__parent.ancestor()
 
     def parent(self):
         return self.__parent
@@ -294,18 +260,27 @@ class ComponentBase(object):
     def hasNetwork(self):
         return False
 
+    def expandable(self):
+        return False
+
     def rename(self, name):
         self.__name = name
 
     def name(self):
         return self.__name
 
+    def ancestor(self):
+        if self.__parent is None:
+            return None
+
+        return self.__parent.ancestor()
+
     def parent(self):
         return self.__parent
 
     def path(self):
         if self.__parent is None:
-            return self.__name
+            return "/{}".format(self.__name)
 
         return "{}/{}".format(self.__parent.path(), self.__name)
 
@@ -376,10 +351,20 @@ class ComponentBase(object):
     def hasConnection(self, port):
         return False
 
+    def removeParam(self, name_or_param):
+        return False
+
     def addParam(self, typeClass=None, name=None, value=None):
         return None
 
-    def params(self):
+    def params(self, includeExtraParam=True):
+        for i in range(0):
+            yield i
+
+    def addExtraParam(self, typeClass=None, name=None, value=None):
+        return None
+
+    def extraParams(self):
         for i in range(0):
             yield i
 

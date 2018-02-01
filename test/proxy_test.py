@@ -80,27 +80,6 @@ class DmpFloat(block.Block):
         return True
 
 
-class ProxyParamTest(unittest.TestCase):
-    def test_init(self):
-        box1 = box.Box()
-        bloc = block.Block()
-        box1.addBlock(bloc)
-        p = bloc.addParam(str, "testStr")
-
-        self.assertIsNotNone(box1.addProxyParam(p))
-        self.assertIsNone(box1.addProxyParam(p))
-        p1 = box1.proxyParam("testStr")
-        p2 = box1.proxyParam(0)
-        self.assertEqual(p1, p2)
-        self.assertEqual(p1.get(), "")
-        self.assertTrue(p1.set("HELLO"))
-        self.assertFalse(p1.set(0))
-        self.assertEqual(p1.get(), "HELLO")
-
-        self.assertTrue(box1.removeProxyParam(p1))
-        self.assertFalse(box1.removeProxyParam(p2))
-
-
 class ProxyPortTest(unittest.TestCase):
     def test_init(self):
         box1 = box.Box()

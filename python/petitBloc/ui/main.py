@@ -10,9 +10,11 @@ from . import packetHistory
 from . import logViewer
 from . import uiUtil
 from . import sceneState
+from . import progress
 from .. import scene
 import operator
 import re
+import os
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -29,7 +31,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__networks = {}
         self.__filepath = None
         self.__current_bloc = None
+        self.__progress = None
+        self.__is_running = False
         self.__initialize()
+        self.__setStyleSheet()
+
+    def __setStyleSheet(self):
+        qss_path = os.path.abspath(os.path.join(__file__, "../style.qss"))
+
+        if not os.path.isfile(qss_path):
+            return
+
+        current_dir = os.path.dirname(__file__)
+
+        style = ""
+        with open(qss_path, "r") as f:
+            style = f.read()
+            style = style.replace('url("', 'url("%s/' % current_dir.replace("\\", "/"))
+
+        self.setStyleSheet(style)
 
     def __initialize(self):
         self.setObjectName(const.ObjectName)
@@ -39,18 +59,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(centeral)
         centeral.setLayout(main_layout)
 
-        # top bar
-        top_bar = QtWidgets.QHBoxLayout()
-        self.__scene_state = sceneState.SceneState()
-        top_bar.addWidget(self.__scene_state)
-
         # tabs
         self.__editor_tabs = QtWidgets.QTabWidget()
         self.__graph_tabs = QtWidgets.QTabWidget()
         self.__graph_tabs.setTabsClosable(True)
 
         # scene graph
-        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
+        ## TODO : USE __new()
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self, isTop=True)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
         self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
@@ -63,25 +79,30 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__editor_tabs.addTab(self.__packet_history, "Packet History")
         self.__editor_tabs.addTab(self.__log_viewer, "Log")
 
-        self.__run = QtWidgets.QPushButton("RUN")
-
         main_contents = QtWidgets.QSplitter()
         main_contents.addWidget(self.__graph_tabs)
         main_contents.addWidget(self.__editor_tabs)
 
-        main_layout.addLayout(top_bar)
+        # scene state
+        self.__scene_state = sceneState.SceneState()
+
         main_layout.addWidget(main_contents)
-        main_layout.addWidget(self.__run)
+        main_layout.addWidget(self.__scene_state)
         self.__resetTabIndice()
 
         # menu
         menubar = self.menuBar()
-        file_menu = QtWidgets.QMenu("file")
-        news_action = file_menu.addAction("New Scene")
-        open_action = file_menu.addAction("Open")
+        file_menu = QtWidgets.QMenu("&File", self)
+        news_action = file_menu.addAction("&New Scene")
+        news_action.setShortcut(QtGui.QKeySequence("Ctrl+N"))
+        open_action = file_menu.addAction("&Open")
+        open_action.setShortcut(QtGui.QKeySequence("Ctrl+O"))
         save_action = file_menu.addAction("Save")
+        save_action.setShortcut(QtGui.QKeySequence("Ctrl+S"))
         save_as_action = file_menu.addAction("Save As")
-        import_action = file_menu.addAction("Import")
+        save_as_action.setShortcut(QtGui.QKeySequence("Ctrl+Shift+S"))
+        import_action = file_menu.addAction("&Import")
+        import_action.setShortcut(QtGui.QKeySequence("Ctrl+I"))
         file_menu.addAction(news_action)
         file_menu.addSeparator()
         file_menu.addAction(open_action)
@@ -97,7 +118,12 @@ class MainWindow(QtWidgets.QMainWindow):
         import_action.triggered.connect(self.__importBox)
         menubar.addMenu(file_menu)
 
-        setting_menu = QtWidgets.QMenu("log")
+        process_menu = QtWidgets.QMenu("&Blocks", self)
+        run_action = process_menu.addAction("&Execute")
+        run_action.setShortcut(QtGui.QKeySequence("F5"))
+        menubar.addMenu(process_menu)
+
+        setting_menu = QtWidgets.QMenu("Log", self)
         log_group = QtWidgets.QActionGroup(self)
         log_group.setExclusive(True)
         no_log = setting_menu.addAction("No Log")
@@ -120,7 +146,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         menubar.addMenu(setting_menu)
 
-        self.__run.clicked.connect(self.__runPressed)
+        ## progress
+        self.__progress = progress.Progress(self)
+        self.__progress.hide()
+
+        run_action.triggered.connect(self.__runTriggered)
 
         self.__graph_tabs.tabCloseRequested.connect(self.__closeGraphRequest)
         self.__graph_tabs.currentChanged.connect(self.__currentGraphTabChanged)
@@ -165,7 +195,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if widget is None:
             return
 
-        self.__parm_editor.allowProxy(index != 0)
         self.__currentBlockChanged(widget.currentBlock())
 
     def __boxCreated(self, boxBloc, init):
@@ -268,16 +297,29 @@ class MainWindow(QtWidgets.QMainWindow):
 
         par_dict["graph"].deleteAttribute(node, node.attrs.index(name))
 
-    def __runPressed(self):
+    def resizeEvent(self, event):
+        if self.__is_running:
+            self.__matchProgressSize()
+
+    def __matchProgressSize(self):
+        self.__progress.setGeometry(0, 0, self.size().width(), self.size().height())
+
+    def __runTriggered(self):
+        self.__is_running = True
+        self.__matchProgressSize()
+
+        self.__progress.show()
+
+        self.__graph.boxModel().run(manager=self.__progress.manager())
+
         graph = None
         index = self.__graph_tabs.currentIndex()
 
         for n_dict in self.__networks.values():
-            if n_dict["index"] == index:
-                graph = n_dict["graph"]
+            if n_dict.get("index") == index:
+                n_dict["graph"].update()
                 break
 
-        self.__graph.boxModel().run(perProcessCallback=graph.viewport().update)
         self.__packet_history.refresh()
         self.__graph.boxModel().readLogs()
         if self.__current_bloc is None:
@@ -286,9 +328,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.__log_viewer.setLogs(*self.__graph.boxModel().getLogs(self.__current_bloc.path()))
 
         self.__scene_state.setStates(*self.__graph.boxModel().getState())
+        self.__progress.hide()
+        self.__is_running = False
 
     def __getParentGraph(self, path):
-        return self.__getGraph(path[:path.rfind("/")])
+        return self.__getGraph(os.path.dirname(path))
 
     def __getGraph(self, path):
         for bloc, n_dict in self.__networks.iteritems():
@@ -314,7 +358,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__networks = {}
 
-        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self, isTop=True)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
         self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
@@ -345,7 +389,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if grph is None:
                 raise Exception, "Failed to save : could not find the parent graph - {}".format(path)
 
-            nod = grph.findNodeFromName(path[path.rfind("/") + 1:])
+            nod = grph.findNodeFromName(self.__shortName(path))
             if nod is None:
                 raise Exception, "Failed to save : could not find the node - {}".format(path)
 
@@ -363,7 +407,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__saveData()
 
     def __shortName(self, path):
-        return path[path.rfind("/") + 1:]
+        return os.path.basename(path)
 
     def __importBox(self):
         pth, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
@@ -386,7 +430,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def openScene(self, path):
         self.__new()
-        self.__read(path, const.RootBoxName)
+        self.__read(path, "/{}".format(const.RootBoxName))
 
         self.__resetTabIndice()
         self.__setPath(path)
@@ -397,14 +441,14 @@ class MainWindow(QtWidgets.QMainWindow):
             return
 
         self.__new()
-        self.__read(pth, const.RootBoxName)
+        self.__read(pth, "/{}".format(const.RootBoxName))
 
         self.__resetTabIndice()
         self.__setPath(pth)
         self.__graph._focus()
 
     def __read(self, filePath, rootPath):
-        reRootNode = re.compile("^{}\/".format(rootPath.replace("/", "\/")))
+        reRootNode = re.compile("^[/]{}[/]".format(rootPath.replace("/", "\/")))
         def addRootPath(path):
             if reRootNode.search(path):
                 return path
@@ -416,6 +460,11 @@ class MainWindow(QtWidgets.QMainWindow):
         ## create blocks
         for b in data["blocks"]:
             full_path = addRootPath(b["path"])
+
+            if b["type"] == "SceneContext":
+                if "/{}".format(const.RootBoxName) != os.path.dirname(full_path):
+                    continue
+
             short_name = self.__shortName(full_path)
             grph = self.__getParentGraph(full_path)
             bloc = None
@@ -449,14 +498,35 @@ class MainWindow(QtWidgets.QMainWindow):
                 bloc = node.block()
 
             if bloc is not None:
-                for k, v in b.get("params", {}).iteritems():
+                for k, vv in b.get("params", {}).iteritems():
                     parm = bloc.param(k)
                     if parm is None:
                         print("Warning : {} has not the parameter : {}".format(str(bloc), k))
                         continue
 
-                    if not parm.set(v):
-                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(v)))
+                    if not parm.set(vv["value"]):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(vv["value"])))
+
+                    if not parm.setExpression(vv["expression"]):
+                        print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
+
+                for k, vv in b.get("extraParams", {}).iteritems():
+                    type_name = vv["type"]
+                    type_class = self.__graph.boxModel().findObjectClass(type_name)
+                    if not type_class:
+                        print("Warning : unknown parameter type - {}".format(type_name))
+                        continue
+
+                    parm = bloc.addExtraParam(type_class, k)
+                    if parm is None:
+                        print("Warning : Failed to add an extra parameter : {}".format(str(bloc), k))
+                        continue
+
+                    if not parm.set(vv["value"]):
+                        print("Warning : Failed to set value {}@{} - {}".format(bloc.path(), k, str(vv["value"])))
+
+                    if not parm.setExpression(vv["expression"]):
+                        print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
 
         ## proxy ports
         for proxy in data["proxyPorts"]:
@@ -489,31 +559,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     continue
 
                 grph.addOutputProxy(type_class, name)
-
-        ## proxy params
-        for pam in data["proxyParameters"]:
-            box_path = addRootPath(pam["path"])
-            grph = self.__getGraph(box_path)
-            if grph is None:
-                raise Exception, "Failed to load : could not find the graph - {}".format(box_path)
-
-            for pdata in pam["params"]:
-                bloc_path, param_name = addRootPath(pdata["param"]).split("@")
-                parant_grp = self.__getParentGraph(bloc_path)
-                if parant_grp is None:
-                    print("Warning : could not find target parent {}".format(bloc_path))
-                    continue
-
-                node = parant_grp.findNodeFromName(self.__shortName(bloc_path))
-                if node is None:
-                    print("Warning : could not find target node {}".format(bloc_path))
-                    continue
-
-                param = node.block().param(param_name)
-                if param is None:
-                    print("Warning : could not find target param {}@{}".format(bloc_path, param_name))
-
-                grph.box().addProxyParam(param, name=pdata["name"])
 
         ## connect ports
         for con in data["connections"]:

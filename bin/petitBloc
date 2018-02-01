@@ -10,11 +10,13 @@ parser = optparse.OptionParser()
 parser.add_option("-s", dest="scene", help="Input .blcs file", action="store", default="")
 
 ## running
+parser.add_option("-c", dest="context", help="Override scene context value (mult-usable) (e.g. -c $testInt=1 -p $testBool=[0|1])", action="append", default=[])
 parser.add_option("-p", dest="parameter", help="Override parmeter value (mult-usable) (e.g. -p /scene/test@value=1.5 -p /scene/test@on=[0|1])", action="append", default=[])
 parser.add_option("-v", dest="verboseLevel", help="Verbose level(0~3)(default 1)", type="int", action="store", default=1)
 
 ## query
 parser.add_option("-i", dest="info", help="Display infomation of the block (Don't execute)", action="store", default="")
+parser.add_option("-b", dest="blocks", help="Display block list (Don't execute)", action="store_true", default=False)
 parser.add_option("-q", dest="query", help="Display the contents of the scene (Don't execute)", action="store_true", default=False)
 
 
@@ -28,12 +30,12 @@ except:
     import petitBloc
 
 
-if not opts.scene:
+if not opts.scene and not opts.info and not opts.blocks:
     parser.print_help()
     sys.exit(1)
 
 
-if not petitBloc.Run(path=opts.scene, parameters=opts.parameter, query=opts.query, info=opts.info, verbose=opts.verboseLevel):
+if not petitBloc.Run(path=opts.scene, contexts=opts.context, parameters=opts.parameter, blocks=opts.blocks, query=opts.query, info=opts.info, verbose=opts.verboseLevel):
     sys.exit(1)
 
 

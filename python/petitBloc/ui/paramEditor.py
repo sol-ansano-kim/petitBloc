@@ -1,179 +1,286 @@
 from Qt import QtWidgets
 from Qt import QtCore
+from Qt import QtGui
 from . import const
+from . import uiUtil
 from .. import util
+from .. import box
 import re
+ReEqual = re.compile("^\s*[=]\s*")
 
 
-class Label(QtWidgets.QLabel):
-    AddToBox = QtCore.Signal()
-    RemoveFromBox = QtCore.Signal()
-    RemoveProxy = QtCore.Signal()
+class ParamCreator(QtWidgets.QDialog):
+    ParamTypes = {"bool": bool, "int": int, "float": float, "str": str}
 
-    def __init__(self, text="", allowProxy=False, hasProxy=False, parent=None, isProxy=False):
-        super(Label, self).__init__(text, parent=parent)
-        self.__is_proxy = isProxy
-        self.__show_menu = allowProxy
-        self.__has_proxy = False
-        self.setProxyStatus(hasProxy)
+    def __init__(self, parent=None):
+        super(ParamCreator, self).__init__(parent=parent)
+        self.__type = None
+        self.__name = None
 
-    def setProxyStatus(self, v):
-        self.__has_proxy = v
-        font = self.font()
-        font.setItalic(self.__has_proxy)
-        font.setBold(self.__has_proxy)
-        self.setFont(font)
+        main_layout = QtWidgets.QVBoxLayout()
 
-    def mousePressEvent(self, evnt):
-        if self.__show_menu and (evnt.button() == QtCore.Qt.RightButton):
-            menu = QtWidgets.QMenu(self)
+        param_layout = QtWidgets.QHBoxLayout()
+        param_layout.addWidget(QtWidgets.QLabel("Type :"))
+        self.__type_combo = QtWidgets.QComboBox()
+        self.__type_combo.addItems(ParamCreator.ParamTypes.keys())
+        param_layout.addWidget(self.__type_combo)
+        param_layout.addWidget(QtWidgets.QLabel("Name :"))
+        self.__name_line = QtWidgets.QLineEdit()
+        param_layout.addWidget(self.__name_line)
+        main_layout.addLayout(param_layout)
 
-            if self.__is_proxy:
-                action = QtWidgets.QAction("Remove Proxy", menu)
-                action.triggered.connect(self.__removeProxy)
+        button_layout = QtWidgets.QHBoxLayout()
+        self.__add = QtWidgets.QPushButton("Add")
+        self.__cancle = QtWidgets.QPushButton("Cancle")
+        button_layout.addWidget(self.__add)
+        button_layout.addWidget(self.__cancle)
+        main_layout.addLayout(button_layout)
 
-            elif not self.__has_proxy:
-                action = QtWidgets.QAction("Add to box", menu)
-                action.triggered.connect(self.__addToBox)
+        self.__add.clicked.connect(self.accept)
+        self.__cancle.clicked.connect(self.reject)
 
-            else:
-                action = QtWidgets.QAction("Remove from box", menu)
-                action.triggered.connect(self.__removeFromBox)
+        self.__type_combo.currentIndexChanged.connect(self.__typeChanged)
+        self.__name_line.editingFinished.connect(self.__nameChanged)
+        self.__name_line.textEdited.connect(self.__nameCheck)
 
-            menu.addAction(action)
+        self.setLayout(main_layout)
 
-            pos = self.mapToGlobal(evnt.pos())
-            menu.popup(QtCore.QPoint(pos.x() - 10, pos.y() - 10))
+    def exec_(self):
+        self.__name = None
+        self.__type_combo.setCurrentIndex(0)
+        self.__typeChanged(0)
+        self.__name_line.setText("")
+        self.__nameCheck("")
 
-    def __addToBox(self):
-        self.AddToBox.emit()
+        return super(ParamCreator, self).exec_()
 
-    def __removeFromBox(self):
-        self.RemoveFromBox.emit()
+    def __typeChanged(self, a):
+        self.__type = ParamCreator.ParamTypes[self.__type_combo.itemText(a)]
 
-    def __removeProxy(self):
-        self.RemoveProxy.emit()
+    def __nameChanged(self):
+        self.__name = str(self.__name_line.text())
+
+    def __nameCheck(self, text):
+        self.__add.setEnabled((True if text else False))
+
+    def getType(self):
+        return self.__type
+
+    def getName(self):
+        return self.__name
+
+
+class ParamLine(QtWidgets.QLineEdit):
+    Value = 0
+    Expression = 1
+    ExpressionError = 2
+
+    Changed = QtCore.Signal()
+
+    def __init__(self, param, parent=None, isInt=False, isFloat=False):
+        super(ParamLine, self).__init__(parent=parent)
+        self.__style = "QLineEdit{ background-color: %s; border: 1px solid #1D1D1D; }"
+        self.__normal_color = "#1D1D1D"
+        self.__expression_color = "#0A4646"
+        self.__expression_error_color = "#640A28"
+        self.__current_state = ParamLine.Value
+        self.__param = param
+
+        if isInt:
+            self.textEdited.connect(self.__intOnly)
+            self.setAlignment(QtCore.Qt.AlignRight)
+            self.editingFinished.connect(self.__intFinished)
+        elif isFloat:
+            self.textEdited.connect(self.__floatOnly)
+            self.setAlignment(QtCore.Qt.AlignRight)
+            self.editingFinished.connect(self.__floatFinished)
+        else:
+            self.editingFinished.connect(self.__strFinished)
+
+        self.blockSignals(True)
+        self.setText(str(self.__param.get()))
+        self.blockSignals(False)
+
+        self.refresh()
+
+    def refresh(self):
+        if not self.__param.hasExpression():
+            self.__current_state = ParamLine.Value
+        elif self.__param.validExpression():
+            self.__current_state = ParamLine.Expression
+        else:
+            self.__current_state = ParamLine.ExpressionError
+
+        self.blockSignals(True)
+
+        if self.hasFocus() and self.__param.hasExpression():
+            self.setText(str(self.__param.getExpression()))
+        else:
+            self.setText(str(self.__param.get()))
+
+        self.blockSignals(False)
+
+        self.__setBackgroundColor()
+
+    def focusInEvent(self, evnt):
+        super(ParamLine, self).focusInEvent(evnt)
+        self.refresh()
+
+    def focusOutEvent(self, evnt):
+        super(ParamLine, self).focusOutEvent(evnt)
+        self.refresh()
+
+    def __setBackgroundColor(self):
+        if self.__current_state == ParamLine.Value:
+            s = self.__style % self.__normal_color
+        elif self.__current_state == ParamLine.Expression:
+            s = self.__style % self.__expression_color
+        elif self.__current_state == ParamLine.ExpressionError:
+            s = self.__style % self.__expression_error_color
+
+        self.setStyleSheet(s)
+
+    def __intOnly(self, txt):
+        if not ReEqual.search(txt):
+            self.setText(ParamLayout.RegexInt.sub("", txt))
+
+    def __floatOnly(self, txt):
+        if not ReEqual.search(txt):
+            self.setText(ParamLayout.RegexFloat.sub("", txt))
+
+    def __intFinished(self):
+        txt = str(self.text())
+
+        if ReEqual.search(txt):
+            if self.__param.setExpression(txt):
+                self.Changed.emit()
+                return
+
+        try:
+            int(txt)
+        except:
+            self.setText(str(self.__param.get()))
+        else:
+            self.__param.setExpression(None)
+            if not self.__param.set(int(txt)):
+                self.setText(str(self.__param.get()))
+
+        self.Changed.emit()
+
+    def __floatFinished(self):
+        txt = str(self.text())
+
+        if ReEqual.search(txt):
+            if self.__param.setExpression(txt):
+                self.Changed.emit()
+                return
+
+        try:
+            float(txt)
+        except:
+            self.setText(str(self.__param.get()))
+        else:
+            self.__param.setExpression(None)
+            if not self.__param.set(float(txt)):
+                self.setText(str(self.__param.get()))
+
+        self.Changed.emit()
+
+    def __strFinished(self):
+        txt = str(self.text())
+
+        if ReEqual.search(txt):
+            self.__param.setExpression(txt)
+        else:
+            self.__param.setExpression(None)
+            self.__param.set(txt)
+
+        self.Changed.emit()
 
 
 class ParamLayout(QtWidgets.QHBoxLayout):
     RegexInt = re.compile("[^0-9-]")
     RegexFloat = re.compile("[^0-9-.]")
-    AddProxyParam = QtCore.Signal(object)
-    RemoveProxyParam = QtCore.Signal(object)
+    ParameterEdited = QtCore.Signal()
+    DeleteRequest = QtCore.Signal(object)
 
-    def __init__(self, param, allowProxy=False, hasProxy=False, isProxy=False):
+    def __init__(self, param, deletable=False):
         super(ParamLayout, self).__init__()
         self.__label = None
         self.__param = param
         self.__val_edit = None
-        self.__allow_proxy = allowProxy
-        self.__has_proxy = hasProxy
-        self.__is_proxy = isProxy
+        self.__delete_button = None
+        self.__need_to_refresh = True
+        self.__deletable = deletable
         self.__initialize()
 
-    def setProxyStatus(self, v):
-        self.__has_proxy = v
-        self.__label.setProxyStatus(v)
-
-    def __addToBox(self):
-        self.AddProxyParam.emit(self.__param)
-
-    def __removeFromBox(self):
-        self.RemoveProxyParam.emit(self.__param)
-
-    def __removeProxy(self):
-        self.RemoveProxyParam.emit(self.__param)
+    def refresh(self):
+        if self.__need_to_refresh:
+            self.__val_edit.refresh()
 
     def __initialize(self):
         self.setAlignment(QtCore.Qt.AlignLeft)
-        self.__label = Label(self.__paramLabel(self.__param.name()), allowProxy=self.__allow_proxy, hasProxy=self.__has_proxy, isProxy=self.__is_proxy)
+        self.__label = QtWidgets.QLabel(self.__param.name())
         self.__label.setMinimumWidth(const.ParamLabelMinimumWidth)
         self.__label.setMaximumWidth(const.ParamLabelMaximumWidth)
         self.addWidget(self.__label)
-        self.__label.AddToBox.connect(self.__addToBox)
-        self.__label.RemoveFromBox.connect(self.__removeFromBox)
-        self.__label.RemoveProxy.connect(self.__removeProxy)
 
         tc = self.__param.typeClass()
         if tc == bool:
             self.__val_edit = QtWidgets.QCheckBox()
             self.__val_edit.setChecked(self.__param.get())
             self.__val_edit.stateChanged.connect(self.__boolChanged)
+            self.__need_to_refresh = False
         elif tc == int:
-            self.__val_edit = QtWidgets.QLineEdit(str(self.__param.get()))
-            self.__val_edit.setMaximumWidth(const.ParamEditorMaximumWidth)
-            self.__val_edit.setAlignment(QtCore.Qt.AlignRight)
-            self.__val_edit.textEdited.connect(self.__intOnly)
-            self.__val_edit.editingFinished.connect(self.__intFinished)
+            self.__val_edit = ParamLine(self.__param, isInt=True)
+            self.__val_edit.Changed.connect(self.__editedEmit)
         elif tc == float:
-            self.__val_edit = QtWidgets.QLineEdit(str(self.__param.get()))
-            self.__val_edit.setMaximumWidth(const.ParamEditorMaximumWidth)
-            self.__val_edit.setAlignment(QtCore.Qt.AlignRight)
-            self.__val_edit.textEdited.connect(self.__floatOnly)
-            self.__val_edit.editingFinished.connect(self.__floatFinished)
+            self.__val_edit = ParamLine(self.__param, isFloat=True)
+            self.__val_edit.Changed.connect(self.__editedEmit)
         elif tc == str:
-            self.__val_edit = QtWidgets.QLineEdit(str(self.__param.get()))
-            self.__val_edit.editingFinished.connect(self.__strFinished)
+            self.__val_edit = ParamLine(self.__param)
+            self.__val_edit.Changed.connect(self.__editedEmit)
+
+        self.__delete_button = QtWidgets.QPushButton()
+        self.__delete_button.setObjectName("RemoveButton")
+        self.__delete_button.setFixedSize(14, 14)
+        self.__delete_button.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.__delete_button.clicked.connect(self.__deleteParam)
+        if not self.__deletable:
+            self.__delete_button.hide()
 
         self.addWidget(self.__val_edit)
+        self.addWidget(self.__delete_button)
+
         self.setSpacing(10)
 
-        if tc != str:
-            self.addStretch(100)
+    def __deleteParam(self):
+        self.DeleteRequest.emit(self.__param)
 
     def __boolChanged(self, state):
         self.__param.set(state == QtCore.Qt.Checked)
+        self.__editedEmit()
 
-    def __intFinished(self):
-        txt = self.__val_edit.text()
-        try:
-            int(txt)
-        except:
-            self.__val_edit.setText(str(self.__param.get()))
-        else:
-            if not self.__param.set(int(txt)):
-                self.__val_edit.setText(str(self.__param.get()))
-
-    def __floatFinished(self):
-        txt = self.__val_edit.text()
-        try:
-            float(txt)
-        except:
-            self.__val_edit.setText(str(self.__param.get()))
-        else:
-            if not self.__param.set(float(txt)):
-                self.__val_edit.setText(str(self.__param.get()))
-
-    def __strFinished(self):
-        self.__param.set(str(self.__val_edit.text()))
-
-    def __intOnly(self, txt):
-        self.__val_edit.setText(ParamLayout.RegexInt.sub("", txt))
-
-    def __floatOnly(self, txt):
-        self.__val_edit.setText(ParamLayout.RegexFloat.sub("", txt))
-
-    def __paramLabel(self, txt):
-        txt = txt[0].upper() + txt[1:]
-        return txt
+    def __editedEmit(self):
+        self.ParameterEdited.emit()
 
 
 class ParamEditor(QtWidgets.QWidget):
     BlockRenamed = QtCore.Signal(object, str)
+    DeleteRequest = QtCore.Signal(object, object)
 
     def __init__(self, parent=None):
         super(ParamEditor, self).__init__()
         self.__bloc = None
         self.__param_layout = None
         self.__block_type_label = None
+        self.__name_label = None
         self.__block_name = None
-        self.__allow_proxy = False
+        self.__add_param_button = None
+        self.__param_creator = None
         self.__params = {}
         self.__initialize()
         self.__refresh()
-
-    def allowProxy(self, value):
-        self.__allow_proxy = value
 
     def setBlock(self, bloc):
         if self.__bloc == bloc:
@@ -188,14 +295,37 @@ class ParamEditor(QtWidgets.QWidget):
         self.__param_layout = QtWidgets.QVBoxLayout()
         self.__block_type_label = QtWidgets.QLabel()
         self.__block_type_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        name_layout = QtWidgets.QHBoxLayout()
         self.__block_name = QtWidgets.QLineEdit()
+        self.__name_label = QtWidgets.QLabel("Name")
+        self.__name_label.setMinimumWidth(const.ParamLabelMinimumWidth + 4)
+        self.__name_label.setMaximumWidth(const.ParamLabelMaximumWidth)
+        name_layout.addWidget(self.__name_label)
+        name_layout.addWidget(self.__block_name)
+        name_layout.setAlignment(QtCore.Qt.AlignLeft)
+        name_layout.addStretch(10)
         self.__block_name.setMaximumWidth(const.ParamEditorBlockNameMaximumWidth)
+
+        add_layout = QtWidgets.QHBoxLayout()
+        self.__add_param_button = QtWidgets.QPushButton()
+        self.__add_param_button.setObjectName("AddButton")
+        self.__add_param_button.setFixedSize(18, 18)
+        self.__add_param_button.setFocusPolicy(QtCore.Qt.NoFocus)
+        add_layout.setAlignment(QtCore.Qt.AlignCenter)
+        add_layout.addWidget(self.__add_param_button)
+
         main_layout.addWidget(self.__block_type_label)
-        main_layout.addWidget(self.__block_name)
+        main_layout.addLayout(name_layout)
         main_layout.addLayout(self.__param_layout)
+        main_layout.addLayout(add_layout)
+        self.__add_param_button.hide()
 
         self.setLayout(main_layout)
 
+        self.__param_creator = ParamCreator(self)
+
+        self.__add_param_button.clicked.connect(self.__addParam)
         self.__block_name.editingFinished.connect(self.__renameBloc)
         self.__block_name.textEdited.connect(self.__nameCheck)
 
@@ -238,58 +368,63 @@ class ParamEditor(QtWidgets.QWidget):
             self.__block_type_label.setText("")
             self.__block_name.setText("")
             self.__block_type_label.hide()
+            self.__name_label.hide()
             self.__block_name.hide()
+            self.__add_param_button.hide()
         else:
             self.__block_type_label.show()
+            self.__name_label.show()
             self.__block_name.show()
             self.__block_name.setText(self.__bloc.name())
-            self.__block_type_label.setText(self.__bloc.__class__.__name__)
+            self.__block_type_label.setText("<{}>".format(self.__bloc.__class__.__name__))
+
+            if self.__bloc and self.__bloc.expandable():
+                self.__add_param_button.show()
+            else:
+                self.__add_param_button.hide()
+
+            if isinstance(self.__bloc, box.SceneContext):
+                self.__block_name.setEnabled(False)
+            else:
+                self.__block_name.setEnabled(True)
 
         self.__build_params()
-
-    def addProxyParam(self, param):
-        box_bloc = self.__bloc.parent()
-        if box_bloc is not None and box_bloc.hasNetwork():
-            if box_bloc.addProxyParam(param) is not None:
-                self.__params[param].setProxyStatus(True)
-
-    def removeProxyParam(self, param):
-        if self.__bloc.hasNetwork():
-            if self.__bloc.removeProxyParam(param):
-                self.__clearLayout(self.__params[param])
-
-        else:
-            box_bloc = self.__bloc.parent()
-            if box_bloc is not None and box_bloc.hasNetwork():
-                if box_bloc.removeProxyParamFromParam(param):
-                    self.__params[param].setProxyStatus(False)
 
     def __build_params(self):
         if self.__bloc is None:
             return
 
-        if self.__bloc.hasNetwork():
-            for p in self.__bloc.proxyParams():
-                lay = ParamLayout(p, allowProxy=True, isProxy=True)
-                self.__params[p] = lay
-                self.__param_layout.addLayout(lay)
-                lay.RemoveProxyParam.connect(self.removeProxyParam)
+        box_bloc = self.__bloc.parent()
 
-        else:
-            box_bloc = self.__bloc.parent()
+        for p in self.__bloc.params(includeExtraParam=False):
+            lay = ParamLayout(p)
+            lay.ParameterEdited.connect(self.__update_all_params)
+            lay.DeleteRequest.connect(self.__deleteParam)
+            self.__params[p] = lay
+            self.__param_layout.addLayout(lay)
 
-            check_func = None
-            if box_bloc is not None and box_bloc.hasNetwork():
-                check_func = box_bloc.hasProxyParam
-            else:
-                check_func = lambda x: False
+        for p in self.__bloc.extraParams():
+            lay = ParamLayout(p, deletable=True)
+            lay.ParameterEdited.connect(self.__update_all_params)
+            lay.DeleteRequest.connect(self.__deleteParam)
+            self.__params[p] = lay
+            self.__param_layout.addLayout(lay)
 
-            for p in self.__bloc.params():
-                lay = ParamLayout(p, allowProxy=self.__allow_proxy, hasProxy=check_func(p))
-                lay.AddProxyParam.connect(self.addProxyParam)
-                lay.RemoveProxyParam.connect(self.removeProxyParam)
-                self.__params[p] = lay
-                self.__param_layout.addLayout(lay)
+    def __addParam(self):
+        if self.__param_creator.exec_() == QtWidgets.QDialog.Accepted:
+            type_class = self.__param_creator.getType()
+            name = self.__param_creator.getName()
+            if type_class and name:
+                self.__bloc.addExtraParam(type_class, name=name)
+                self.__refresh()
+
+    def __deleteParam(self, param):
+        self.__bloc.removeParam(param)
+        self.__refresh()
+
+    def __update_all_params(self):
+        for p in self.__params.values():
+            p.refresh()
 
     def __clearLayout(self, layout):
         while (True):
