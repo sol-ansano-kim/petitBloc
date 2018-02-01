@@ -299,13 +299,17 @@ def BlockInfo(blockType):
     if bc:
         try:
             bloc = bc()
-            print("# Block Info")
+            print("# <{}>".format(bloc.__class__.__name__))
+
+            print("    InPort")
             for inp in bloc.inputs():
-                print("    InPort : '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+                print("        '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+            print("    OutPort")
             for inp in bloc.outputs():
-                print("    OutPort : '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+                print("        '{}' ({})".format(inp.name(), inp.typeClass().__name__))
+            print("    Parameter")
             for param in bloc.params():
-                print("    Parameter : '{}' ({})".format(param.name(), param.typeClass().__name__))
+                print("        '{}' ({})".format(param.name(), param.typeClass().__name__))
 
         except Exception as e:
             print("Warning : Could not create an instance of {}".format(blockType))
@@ -317,6 +321,14 @@ def BlockInfo(blockType):
         return False
 
     return True
+
+
+def BlockList():
+    manager = blockManager.BlockManager()
+
+    print("# Block List")
+    for b in manager.blockNames():
+        print("    {}".format(b))
 
 
 def Query(filePath):

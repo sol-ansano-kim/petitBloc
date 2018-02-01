@@ -1,8 +1,11 @@
 import os
 
 
-def Run(path=None, multiProcessing=False, contexts=[], parameters=[], query=False, info=None, verbose=1):
+def Run(path=None, multiProcessing=False, contexts=[], parameters=[], blocks=False, query=False, info=None, verbose=1):
     from . import scene
+
+    if blocks:
+        return scene.BlockList()
 
     if info:
         return scene.BlockInfo(info)
