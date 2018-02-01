@@ -107,6 +107,9 @@ class BoxModel(QtCore.QObject):
     def blockClassNames(self):
         return self.__manager.blockNames()
 
+    def config(self, name):
+        return self.__manager.config(name)
+
     def connect(self, srcPort, dstPort):
         srcs = map(lambda x: x, dstPort.chains())
 

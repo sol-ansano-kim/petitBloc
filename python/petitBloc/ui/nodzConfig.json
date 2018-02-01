@@ -48,7 +48,7 @@
     // following part.
 
     // blocks
-    "box_default":
+    "Box":
     {
         "bg": [25, 25, 25, 255],
         "border": [125, 125, 125, 255],
@@ -56,7 +56,7 @@
         "text": [230, 230, 230, 255]
     },
 
-    "block_default":
+    "Block":
     {
         "bg": [50, 50, 50, 255],
         "border": [125, 125, 125, 255],
@@ -64,7 +64,7 @@
         "text": [230, 230, 230, 255]
     },
 
-    "proxy_default":
+    "ProxyBlock":
     {
         "bg": [50, 60, 70, 255],
         "border": [50, 120, 175, 255],
@@ -72,7 +72,7 @@
         "text": [50, 120, 175, 255]
     },
 
-    "context_default":
+    "SceneContext":
     {
         "bg": [25, 25, 25, 255],
         "border": [150, 120, 200, 255],
