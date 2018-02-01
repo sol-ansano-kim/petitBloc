@@ -107,6 +107,9 @@ class BoxModel(QtCore.QObject):
     def blockClassNames(self):
         return self.__manager.blockNames()
 
+    def blockTree(self):
+        return self.__manager.blockTree()
+
     def config(self, name):
         return self.__manager.config(name)
 

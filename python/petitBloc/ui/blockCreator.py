@@ -2,6 +2,13 @@ from Qt import QtWidgets
 from Qt import QtCore
 
 
+# class BlockTree(QtWidgets.QMenu):
+#     def __init__(self, blockTree, parent=None):
+#         super(BlockTree, self).__init__("Create", parent=parent)
+#         self.__tree = blockTree
+
+
+
 class BlockCreator(QtWidgets.QLineEdit):
     BlockCreatorEnd = QtCore.Signal(str)
 

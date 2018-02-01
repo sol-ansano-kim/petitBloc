@@ -35,6 +35,18 @@ class BlockManager(object):
     def config(self, name):
         return self.__blocks.get(name, {}).get("config", {})
 
+    def blockTree(self):
+        tree = {}
+
+        for b, v in self.__blocks.iteritems():
+            category = v.get("config", {}).get("category", "Not Classified")
+            if not tree.has_key(category):
+                tree[category] = []
+
+            tree[category].append(b)
+
+        return tree
+
     def findObjectClass(self, name):
         cls = self.__finded_class.get(name, None)
         if cls is not None:

@@ -7,6 +7,7 @@ from Qt import QtWidgets
 from . import model
 from . import blockCreator
 import copy
+from functools import partial
 
 
 def getConfigFile():
@@ -23,6 +24,7 @@ class Graph(nodz_main.Nodz):
 
     def __init__(self, name="", boxObject=None, parent=None, isTop=False):
         super(Graph, self).__init__(parent, configPath=getConfigFile())
+        self.__is_top = isTop
         self.__model = model.BoxModel(name=name, boxObject=boxObject)
         self.__updateConfig()
         self.__current_block = None
@@ -37,6 +39,9 @@ class Graph(nodz_main.Nodz):
         self.gridVisToggle = False
 
         self.__zoom_factor = self.config["zoom_factor"]
+
+    def isTop(self):
+        return self.__is_top
 
     def __updateConfig(self):
         for b in self.__model.blockClassNames() + ["ProxyBlock"]:
@@ -66,6 +71,9 @@ class Graph(nodz_main.Nodz):
     def box(self):
         return self.__model.box()
 
+    def hasContext(self):
+        return self.__context_node is not None
+
     def addContextBlock(self, position=None):
         if self.__context_node is None:
 
@@ -90,6 +98,13 @@ class Graph(nodz_main.Nodz):
         if itm is not None and isinstance(itm, BlocItem):
             if itm.block().hasNetwork():
                 self.ItemDobleClicked.emit(itm.block())
+
+    def mousePressEvent(self, evnt):
+        if evnt.button() == QtCore.Qt.RightButton:
+            self.__showMenu(evnt.pos())
+            return
+
+        super(Graph, self).mousePressEvent(evnt)
 
     def findNodeFromName(self, name):
         for nodename, node in self.scene().nodes.iteritems():
@@ -127,6 +142,22 @@ class Graph(nodz_main.Nodz):
 
     def currentBlock(self):
         return self.__current_block
+
+    def __showMenu(self, pos):
+        menu = QtWidgets.QMenu(self)
+        block_menu = menu.addMenu("Create Block")
+        for c, blocks in self.__model.blockTree().iteritems():
+            cate = block_menu.addMenu(c)
+            for b in blocks:
+                if b == "SceneContext" and not self.isTop():
+                    continue
+
+                action = cate.addAction(b)
+                action.triggered.connect(partial(self.addBlock, b, position=self.mapToScene(pos)))
+                if b == "SceneContext" and self.hasContext():
+                    action.setEnabled(False)
+
+        menu.popup(self.viewport().mapToGlobal(pos))
 
     def __nodeSelected(self, selectedNodes):
         if not selectedNodes:

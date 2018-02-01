@@ -116,8 +116,6 @@ class MainWindow(QtWidgets.QMainWindow):
         menubar.addMenu(file_menu)
 
         process_menu = QtWidgets.QMenu("&Blocks", self)
-        create_block = process_menu.addAction("Create Block")
-        process_menu.addSeparator()
         run_action = process_menu.addAction("&Execute")
         run_action.setShortcut(QtGui.QKeySequence("F5"))
         menubar.addMenu(process_menu)
