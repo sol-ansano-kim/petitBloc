@@ -2,6 +2,84 @@ import multiprocessing
 import copy
 import time
 from . import const
+import subprocess
+
+
+class SubprocessWorker(object):
+    def __init__(self, cmd):
+        self.__command = cmd
+        self.__p = subprocess.Popen(cmd, shell=True)
+
+    def command(self):
+        return self.__command
+
+    def isRunning(self):
+        return self.__p.poll() is None
+
+    def result(self):
+        res = self.__p.wait() == 0
+
+        return res
+
+
+class SubprocessManager(object):
+    __Manager = None
+    __Processes = None
+    __MaxProcess = multiprocessing.cpu_count() - 1 or 1
+    __WaitTime = 0.5
+    __Lock = multiprocessing.Lock()
+
+    @staticmethod
+    def Initialize():
+        if SubprocessManager.__Manager is None:
+            SubprocessManager.__Manager = multiprocessing.Manager()
+            SubprocessManager.__Processes = SubprocessManager.__Manager.dict()
+
+    @staticmethod
+    def SetMaxProcess(num):
+        if num <= 0:
+            SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+        else:
+            SubprocessManager.__MaxProcess = num
+
+    @staticmethod
+    def Reset():
+        if SubprocessManager.__Manager is not None:
+            for k, p in SubprocessManager.__Processes.items():
+                del p
+
+            SubprocessManager.__Processes.clear()
+
+        SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+
+    @staticmethod
+    def Count():
+        return len(SubprocessManager.__Processes)
+
+    @staticmethod
+    def Submit(cmd):
+        index = 0
+        while (True):
+            SubprocessManager.__Lock.acquire()
+            running_count = 0
+
+            for index, p in SubprocessManager.__Processes.items():
+                if p.isRunning():
+                    running_count += 1
+
+            if running_count < SubprocessManager.__MaxProcess:
+                worker = SubprocessWorker(cmd)
+                SubprocessManager.__Processes[index] = worker
+
+                index += 1
+
+                SubprocessManager.__Lock.release()
+
+                return worker
+
+            SubprocessManager.__Lock.release()
+
+            time.sleep(SubprocessManager.__WaitTime)
 
 
 class LogManager(object):
@@ -289,6 +367,8 @@ class ProcessManager(object):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    SubprocessManager.Initialize()
+    SubprocessManager.Reset()
     LogManager.Initialize()
     LogManager.Reset()
     ValueManager.Reset()
@@ -340,3 +420,4 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     ValueManager.Reset()
     QueueManager.Reset()
     ProcessManager.Reset()
+    SubprocessManager.Reset()

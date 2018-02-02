@@ -8,6 +8,7 @@ class WorkerManager(object):
     __LogManager = threadManager.LogManager
     __QueueManager = threadManager.QueueManager
     __ProcessManager = threadManager.ThreadManager
+    __SubProcessManager = threadManager.SubprocessManager
     __Module = threadManager
 
     @staticmethod
@@ -16,15 +17,19 @@ class WorkerManager(object):
             WorkerManager.ResetQueue()
             WorkerManager.ResetProcess()
             WorkerManager.ResetLog()
+            WorkerManager.ResetSubProcess()
+
             if not value:
                 WorkerManager.__LogManager = threadManager.LogManager
                 WorkerManager.__QueueManager = threadManager.QueueManager
                 WorkerManager.__ProcessManager = threadManager.ThreadManager
+                WorkerManager.__SubProcessManager = threadManager.SubprocessManager
                 WorkerManager.__Module = threadManager
             else:
                 WorkerManager.__LogManager = processManager.LogManager
                 WorkerManager.__QueueManager = processManager.QueueManager
                 WorkerManager.__ProcessManager = processManager.ProcessManager
+                WorkerManager.__SubProcessManager = processManager.SubprocessManager
                 WorkerManager.__Module = processManager
 
         WorkerManager.__UseProcess = value
@@ -127,3 +132,15 @@ class WorkerManager(object):
     @staticmethod
     def ResetProcess():
         WorkerManager.__ProcessManager.Reset()
+
+    @staticmethod
+    def ResetSubProcess():
+        WorkerManager.__SubProcessManager.Reset()
+
+    @staticmethod
+    def SubmitSubProcess(cmd):
+        return WorkerManager.__SubProcessManager.Submit(cmd)
+
+
+def SubmitSubProcess(cmd):
+    return WorkerManager.SubmitSubProcess(cmd)
