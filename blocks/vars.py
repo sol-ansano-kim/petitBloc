@@ -47,22 +47,3 @@ class String(block.Block):
 
     def run(self):
         self.output("value").send(self.param("value").get())
-
-
-class Range(block.Block):
-    def __init__(self):
-        super(Range, self).__init__()
-
-    def initialize(self):
-        self.addParam(int, "start")
-        self.addParam(int, "stop")
-        self.addParam(int, "step")
-        self.addOutput(int, "value")
-
-    def run(self):
-        step = self.param("step").get()
-        if step < 1:
-            step = 1
-
-        for n in range(self.param("start").get(), self.param("stop").get(), step):
-            self.output(0).send(n)
