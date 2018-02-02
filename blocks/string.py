@@ -219,3 +219,88 @@ class RegexSub(block.Block):
         self.output("result").send(re.sub(self.__pattern_dmp, self.__replace_dmp, v1))
 
         return True
+
+
+class RegexSwitch(block.Block):
+    def __init__(self):
+        super(RegexSwitch, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addInput(str, "pattern")
+        self.addOutput(str, "matched")
+        self.addOutput(str, "unmatched")
+
+    def run(self):
+        self.__pattern_eop = False
+        self.__pattern_dmp = None
+        super(RegexSwitch, self).run()
+
+    def process(self):
+        in1 = self.input("string").receive()
+        if in1.isEOP():
+            return False
+
+        v1 = in1.value()
+        in1.drop()
+
+        if not self.__pattern_eop:
+            in2 = self.input("pattern").receive()
+            if in2.isEOP():
+                self.__pattern_eop = True
+            else:
+                self.__pattern_dmp = in2.value()
+                in2.drop()
+
+        if self.__pattern_dmp is None:
+            return False
+
+        if re.search(self.__pattern_dmp, v1):
+            self.output("matched").send(v1)
+        else:
+            self.output("unmatched").send(v1)
+
+        return True
+
+
+class RegexSearch(block.Block):
+    def __init__(self):
+        super(RegexSearch, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addInput(str, "pattern")
+        self.addOutput(str, "result")
+
+    def run(self):
+        self.__pattern_eop = False
+        self.__pattern_dmp = None
+        super(RegexSearch, self).run()
+
+    def process(self):
+        in1 = self.input("string").receive()
+        if in1.isEOP():
+            return False
+
+        v1 = in1.value()
+        in1.drop()
+
+        if not self.__pattern_eop:
+            in2 = self.input("pattern").receive()
+            if in2.isEOP():
+                self.__pattern_eop = True
+            else:
+                self.__pattern_dmp = in2.value()
+                in2.drop()
+
+        if self.__pattern_dmp is None:
+            return False
+
+        res = re.search(self.__pattern_dmp, v1)
+        if not res:
+            self.output("result").send("")
+
+            return True
+
+        self.output("result").send(v1[res.start():res.end()])
+        return True
