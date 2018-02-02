@@ -5,6 +5,7 @@ from . import const
 from . import uiUtil
 from .. import util
 from .. import box
+from .. import core
 import re
 ReEqual = re.compile("^\s*[=]\s*")
 
@@ -68,6 +69,21 @@ class ParamCreator(QtWidgets.QDialog):
 
     def getName(self):
         return self.__name
+
+
+class ParamEnum(QtWidgets.QComboBox):
+    Changed = QtCore.Signal()
+
+    def __init__(self, param, parent=None):
+        super(ParamEnum, self).__init__(parent=parent)
+        self.__param = param
+        self.addItems(param.getLabels())
+        self.setCurrentIndex(param.get())
+        self.currentIndexChanged.connect(self.__indexChanged)
+
+    def __indexChanged(self, index):
+        self.__param.set(index)
+        self.Changed.emit()
 
 
 class ParamLine(QtWidgets.QLineEdit):
@@ -240,6 +256,10 @@ class ParamLayout(QtWidgets.QHBoxLayout):
         elif tc == str:
             self.__val_edit = ParamLine(self.__param)
             self.__val_edit.Changed.connect(self.__editedEmit)
+        elif tc == core.PBEnum:
+            self.__val_edit = ParamEnum(self.__param)
+            self.__val_edit.Changed.connect(self.__editedEmit)
+            self.__need_to_refresh = False
 
         self.__delete_button = QtWidgets.QPushButton()
         self.__delete_button.setObjectName("RemoveButton")

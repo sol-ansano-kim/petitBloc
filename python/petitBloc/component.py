@@ -211,6 +211,20 @@ class Component(core.ComponentBase):
 
         return p
 
+    def addEnumParam(self, name, valueList, value=None):
+        if name is None or not util.ValidateName(name):
+            name = "param"
+
+        all_names = map(lambda x: x.name(), self.__params)
+
+        name = util.GetUniqueName(name, all_names)
+
+        p = parameter.EnumParameter(name, valueList, value=value, parent=self)
+        if p:
+            self.__params.append(p)
+
+        return p
+
     def params(self, includeExtraParam=True):
         for p in self.__params:
             if not includeExtraParam and p in self.__extraParams:
