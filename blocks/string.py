@@ -11,25 +11,31 @@ class StringAdd(block.Block):
         self.addInput(str, "string2")
         self.addOutput(str, "result")
 
+    def run(self):
+        self.__str2_eop = False
+        self.__str2_dmp = None
+        super(StringAdd, self).run()
+
     def process(self):
-        v1 = None
-        v2 = None
-
         in1 = self.input("string1").receive()
-        in2 = self.input("string2").receive()
-
-        if not in1.isEOP():
-            v1 = in1.value()
-            in1.drop()
-
-        if not in2.isEOP():
-            v2 = in2.value()
-            in2.drop()
-
-        if v1 is None or v2 is None:
+        if in1.isEOP():
             return False
 
-        self.output("result").send(v1 + v2)
+        v1 = in1.value()
+        in1.drop()
+
+        if not self.__str2_eop:
+            in2 = self.input("string2").receive()
+            if in2.isEOP():
+                self.__str2_eop = True
+            else:
+                self.__str2_dmp = in2.value()
+                in2.drop()
+
+        if self.__str2_dmp is None:
+            return False
+
+        self.output("result").send(v1 + self.__str2_dmp)
 
         return True
 
@@ -44,31 +50,44 @@ class StringReplace(block.Block):
         self.addInput(str, "new")
         self.addOutput(str, "result")
 
+    def run(self):
+        self.__old_eop = False
+        self.__new_eop = False
+        self.__old_dmp = None
+        self.__new_dmp = None
+        super(StringReplace, self).run()
+
     def process(self):
-        v1 = None
-        v2 = None
-        v3 = None
-
         in1 = self.input("string").receive()
-        in2 = self.input("old").receive()
-        in3 = self.input("new").receive()
-
-        if not in1.isEOP():
-            v1 = in1.value()
-            in1.drop()
-
-        if not in2.isEOP():
-            v2 = in2.value()
-            in2.drop()
-
-        if not in3.isEOP():
-            v3 = in3.value()
-            in3.drop()
-
-        if v1 is None or v2 is None or v3 is None:
+        if in1.isEOP():
             return False
 
-        self.output("result").send(v1.replace(v2, v3))
+        v1 = in1.value()
+        in1.drop()
+
+        if not self.__old_eop:
+            in2 = self.input("old").receive()
+            if in2.isEOP():
+                self.__old_eop = True
+            else:
+                self.__old_dmp = in2.value()
+                in2.drop()
+
+        if self.__old_dmp is None:
+            return False
+
+        if not self.__new_eop:
+            in3 = self.input("new").receive()
+            if in3.isEOP():
+                self.__new_eop = True
+            else:
+                self.__new_dmp = in3.value()
+                in3.drop()
+
+        if self.__new_dmp is None:
+            return False
+
+        self.output("result").send(v1.replace(self.__old_dmp, self.__new_dmp))
 
         return True
 
@@ -82,25 +101,31 @@ class StringCount(block.Block):
         self.addInput(str, "substring")
         self.addOutput(int, "result")
 
+    def run(self):
+        self.__sub_eop = False
+        self.__sub_dmp = None
+        super(StringCount, self).run()
+
     def process(self):
-        v1 = None
-        v2 = None
-
         in1 = self.input("string").receive()
-        in2 = self.input("substring").receive()
-
-        if not in1.isEOP():
-            v1 = in1.value()
-            in1.drop()
-
-        if not in2.isEOP():
-            v2 = in2.value()
-            in2.drop()
-
-        if v1 is None or v2 is None:
+        if in1.isEOP():
             return False
 
-        self.output("result").send(v1.count(v2))
+        v1 = in1.value()
+        in1.drop()
+
+        if not self.__sub_eop:
+            in2 = self.input("substring").receive()
+            if in2.isEOP():
+                self.__sub_eop = True
+            else:
+                self.__sub_dmp = in2.value()
+                in2.drop()
+
+        if self.__sub_dmp is None:
+            return False
+
+        self.output("result").send(v1.count(self.__sub_dmp))
 
         return True
 
@@ -114,25 +139,31 @@ class RegexFindAll(block.Block):
         self.addInput(str, "pattern")
         self.addOutput(str, "result")
 
+    def run(self):
+        self.__pattern_eop = False
+        self.__pattern_dmp = None
+        super(RegexFindAll, self).run()
+
     def process(self):
-        v1 = None
-        v2 = None
-
         in1 = self.input("string").receive()
-        in2 = self.input("pattern").receive()
-
-        if not in1.isEOP():
-            v1 = in1.value()
-            in1.drop()
-
-        if not in2.isEOP():
-            v2 = in2.value()
-            in2.drop()
-
-        if v1 is None or v2 is None:
+        if in1.isEOP():
             return False
 
-        for r in re.findall(v2, v1):
+        v1 = in1.value()
+        in1.drop()
+
+        if not self.__pattern_eop:
+            in2 = self.input("pattern").receive()
+            if in2.isEOP():
+                self.__pattern_eop = True
+            else:
+                self.__pattern_dmp = in2.value()
+                in2.drop()
+
+        if self.__pattern_dmp is None:
+            return False
+
+        for r in re.findall(self.__pattern_dmp, v1):
             self.output("result").send(r)
 
         return True
@@ -148,30 +179,43 @@ class RegexSub(block.Block):
         self.addInput(str, "replace")
         self.addOutput(str, "result")
 
+    def run(self):
+        self.__pattern_eop = False
+        self.__pattern_dmp = None
+        self.__replace_eop = False
+        self.__replace_dmp = None
+        super(RegexSub, self).run()
+
     def process(self):
-        v1 = None
-        v2 = None
-        v3 = None
-
         in1 = self.input("string").receive()
-        in2 = self.input("pattern").receive()
-        in3 = self.input("replace").receive()
-
-        if not in1.isEOP():
-            v1 = in1.value()
-            in1.drop()
-
-        if not in2.isEOP():
-            v2 = in2.value()
-            in2.drop()
-
-        if not in3.isEOP():
-            v3 = in3.value()
-            in3.drop()
-
-        if v1 is None or v2 is None or v3 is None:
+        if in1.isEOP():
             return False
 
-        self.output("result").send(re.sub(v2, v3, v1))
+        v1 = in1.value()
+        in1.drop()
+
+        if not self.__pattern_eop:
+            in2 = self.input("pattern").receive()
+            if in2.isEOP():
+                self.__pattern_eop = True
+            else:
+                self.__pattern_dmp = in2.value()
+                in2.drop()
+
+        if self.__pattern_dmp is None:
+            return False
+
+        if not self.__replace_eop:
+            in2 = self.input("replace").receive()
+            if in2.isEOP():
+                self.__replace_eop = True
+            else:
+                self.__replace_dmp = in2.value()
+                in2.drop()
+
+        if self.__replace_dmp is None:
+            return False
+
+        self.output("result").send(re.sub(self.__pattern_dmp, self.__replace_dmp, v1))
 
         return True
