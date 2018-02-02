@@ -73,7 +73,9 @@ class BlockManager(object):
         self.__blocks["SceneContext"] = {"class": box.SceneContext, "config": {"category": "Scene"}}
 
         block_path = os.environ.get("PETITBLOC_BLOCK_PATH", "")
-        for block_dir in filter(lambda x: x, block_path.split(os.pathsep)):
+        built_in = os.path.abspath(os.path.join(__file__, "../blocks")).replace("\\", "/")
+
+        for block_dir in [built_in] + filter(lambda x: x, block_path.split(os.pathsep)):
             if not os.path.isdir(block_dir):
                 continue
 

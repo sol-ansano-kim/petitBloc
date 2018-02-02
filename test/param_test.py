@@ -126,6 +126,35 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p2.get(), 1)
 
 
+class TestEnum(unittest.TestCase):
+    def test_init(self):
+        self.assertIsNone(parameter.EnumParameter("test", []))
+        self.assertIsNone(parameter.EnumParameter("test", "a"))
+        self.assertIsNone(parameter.EnumParameter("test", 1))
+        self.assertIsNotNone(parameter.EnumParameter("test", ["a", "b", "c"]))
+        self.assertIsNotNone(parameter.EnumParameter("test", ["a", "b", "c"], value=0))
+
+    def test_test(self):
+        p1 = parameter.EnumParameter("test", ["a", "b", "c"])
+        self.assertEqual(p1.get(), 0)
+        self.assertEqual(p1.getLabel(), "a")
+        self.assertEqual(p1.getLabels(), ["a", "b", "c"])
+        self.assertTrue(p1.set(1))
+        self.assertEqual(p1.getLabel(), "b")
+        self.assertFalse(p1.set(4))
+        self.assertEqual(p1.getLabel(), "b")
+
+        p2 = parameter.EnumParameter("test", ["a", "b", "c"], value=2)
+        self.assertEqual(p2.get(), 2)
+        self.assertEqual(p2.getLabel(), "c")
+
+        p3 = parameter.EnumParameter("test", ["a", "b", "c"], value=5)
+        self.assertEqual(p3.get(), 0)
+
+        p4 = parameter.EnumParameter("test", ["a", "b", "c"], value=-1)
+        self.assertEqual(p4.get(), 0)
+
+
 class TestBlock(unittest.TestCase):
     def test_init(self):
         b = block.Block()

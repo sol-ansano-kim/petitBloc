@@ -139,7 +139,8 @@ class QueueManager(object):
     @staticmethod
     def DeleteQueue(q):
         QueueManager.__Count -= 1
-        QueueManager.__Queues.remove(q)
+        if q in QueueManager.__Queues:
+            QueueManager.__Queues.remove(q)
         del q
 
 
@@ -224,7 +225,8 @@ class ThreadManager(object):
     @staticmethod
     def DeleteProcess(p):
         p.terminate()
-        ThreadManager.__Threads.remove(p)
+        if p in ThreadManager.__Threads:
+            ThreadManager.__Threads.remove(p)
 
     @staticmethod
     def Join():
@@ -248,27 +250,22 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         s.resetState()
 
     while (work_schedule):
-        next_bloc = None
-        while (True):
-            bloc = work_schedule.pop(0)
-            if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
-                continue
+        bloc = work_schedule.pop(0)
+        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
+            continue
 
-            suspend = False
+        suspend = False
 
-            for up in bloc.upstream():
-                if up.isWaiting():
-                    suspend = True
-                    break
+        for up in bloc.upstream():
+            if up.isWaiting():
+                suspend = True
+                break
 
-            if suspend:
-                work_schedule.append(bloc)
-                continue
+        if suspend:
+            work_schedule.append(bloc)
+            continue
 
-            next_bloc = bloc
-            break
-
-        ThreadManager.Submit(next_bloc)
+        ThreadManager.Submit(bloc)
 
     ThreadManager.Join()
 

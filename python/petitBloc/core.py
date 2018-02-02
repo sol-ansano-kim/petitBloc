@@ -6,6 +6,10 @@ class Proxy():
     pass
 
 
+class PBEnum():
+    pass
+
+
 class ParameterBase(object):
     def __init__(self, name, typeClass=None, value=None, parent=None):
         super(ParameterBase, self).__init__()
@@ -355,6 +359,9 @@ class ComponentBase(object):
         return False
 
     def addParam(self, typeClass=None, name=None, value=None):
+        return None
+
+    def addEnumParam(self, name, valueList, value=None):
         return None
 
     def params(self, includeExtraParam=True):

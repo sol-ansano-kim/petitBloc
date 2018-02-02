@@ -238,3 +238,50 @@ class Parameter(core.ParameterBase):
             return True
 
         return False
+
+
+class EnumParameter(core.ParameterBase):
+    def __new__(self, name, vList, value=None, parent=None):
+        if value is not None and not isinstance(value, int):
+            return None
+
+        if not isinstance(vList, list):
+            return None
+
+        if len(vList) < 1:
+            return None
+
+        return super(EnumParameter, self).__new__(self, name, typeClass=int, value=value, parent=parent)
+
+    def __init__(self, name, vList, value=None, parent=None):
+        super(EnumParameter, self).__init__(name, typeClass=int, value=value, parent=parent)
+        self.__value = value
+        if value is None or value < 0 or value > len(vList):
+            self.__value = 0
+
+        self.__enum = {}
+        for i, v in enumerate(vList):
+            self.__enum[i] = v
+
+    def typeClass(self):
+        return core.PBEnum
+
+    def getLabels(self):
+        return self.__enum.values()
+
+    def getLabel(self):
+        return self.__enum[self.__value]
+
+    def get(self):
+        return self.__value
+
+    def set(self, value):
+        if not isinstance(value, Number):
+            return False
+
+        if value < 0 or value > len(self.__enum):
+            return False
+
+        self.__value = int(value)
+
+        return True

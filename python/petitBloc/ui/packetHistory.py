@@ -18,10 +18,10 @@ class PacketModel(QtCore.QAbstractTableModel):
         if role != QtCore.Qt.DisplayRole:
             return None
 
-        if orient is QtCore.Qt.Orientation.Vertical:
+        if orient is QtCore.Qt.Vertical:
             return str(section)
 
-        if orient is QtCore.Qt.Orientation.Horizontal and (section >= 0 and section <= self.__col):
+        if orient is QtCore.Qt.Horizontal and (section >= 0 and section <= self.__col):
             return self.__ports[section]
 
         return None

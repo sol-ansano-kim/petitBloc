@@ -1,4 +1,5 @@
 import os
+import re
 from Nodz import nodz_main
 from Nodz import nodz_utils
 from Qt import QtGui
@@ -8,6 +9,9 @@ from . import model
 from . import blockCreator
 import copy
 from functools import partial
+
+
+ReFirstSlash = re.compile("^/+")
 
 
 def getConfigFile():
@@ -146,8 +150,29 @@ class Graph(nodz_main.Nodz):
     def __showMenu(self, pos):
         menu = QtWidgets.QMenu(self)
         block_menu = menu.addMenu("Create Block")
+
+        categories = {}
+
+        def getCategory(name):
+            name = ReFirstSlash.sub("", name)
+            cate = categories.get(name)
+            if cate is not None:
+                return cate
+
+            pname = os.path.dirname(name)
+
+            if pname:
+                parent = getCategory(pname)
+            else:
+                parent = block_menu
+
+            cate = parent.addMenu(os.path.basename(name))
+            categories[name] = cate
+
+            return cate
+
         for c, blocks in self.__model.blockTree().iteritems():
-            cate = block_menu.addMenu(c)
+            cate = getCategory(c)
             for b in blocks:
                 if b == "SceneContext" and not self.isTop():
                     continue
@@ -1026,16 +1051,19 @@ class ChainItem(nodz_main.ConnectionItem):
 
     def _updatePen(self):
         color = None
+        config = None
 
         for p in [self.source, self.target]:
             if p is None:
                 continue
 
+            if config is None:
+                config = p.scene().views()[0].config
+
             color = p.brush.color()
             if p.port().isInPort():
                 break
 
-        config = self.source.scene().views()[0].config
         if color is None:
             color = nodz_utils._convertDataToColor(config['connection_color'])
 
