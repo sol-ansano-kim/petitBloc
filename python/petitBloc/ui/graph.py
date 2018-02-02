@@ -1051,16 +1051,19 @@ class ChainItem(nodz_main.ConnectionItem):
 
     def _updatePen(self):
         color = None
+        config = None
 
         for p in [self.source, self.target]:
             if p is None:
                 continue
 
+            if config is None:
+                config = p.scene().views()[0].config
+
             color = p.brush.color()
             if p.port().isInPort():
                 break
 
-        config = self.source.scene().views()[0].config
         if color is None:
             color = nodz_utils._convertDataToColor(config['connection_color'])
 
