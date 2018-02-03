@@ -1,5 +1,6 @@
 from Qt import QtWidgets
 from Qt import QtCore
+import pprint
 
 
 class PacketModel(QtCore.QAbstractTableModel):
@@ -53,7 +54,7 @@ class PacketModel(QtCore.QAbstractTableModel):
         if row >= len(vals):
             return None
 
-        return vals[row]
+        return pprint.pformat(vals[row])
 
     def setBlock(self, bloc):
         self.__bloc = bloc
