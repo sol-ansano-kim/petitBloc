@@ -304,3 +304,50 @@ class RegexSearch(block.Block):
 
         self.output("result").send(v1[res.start():res.end()])
         return True
+
+
+class FloatToString(block.Block):
+    def __init__(self):
+        super(FloatToString, self).__init__()
+
+    def initialize(self):
+        self.addParam(int, "demical", value=3)
+        self.addInput(float, "float")
+        self.addOutput(str, "string")
+
+    def process(self):
+        demi = self.param("demical").get()
+        demi = 1 if demi < 1 else demi
+        in_p = self.input("float").receive()
+
+        if in_p.isEOP():
+            return False
+
+        v = in_p.value()
+        in_p.drop()
+
+        self.output("string").send("{0:.{demi}g}".format(v, demi=demi))
+
+        return True
+
+
+class StringToFloat(block.Block):
+    def __init__(self):
+        super(StringToFloat, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addOutput(float, "float")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        v = in_p.value()
+        in_p.drop()
+
+        self.output("float").send(float(v))
+
+        return True
