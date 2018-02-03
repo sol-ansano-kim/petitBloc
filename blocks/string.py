@@ -12,17 +12,22 @@ class StringAdd(block.Block):
         self.addOutput(str, "result")
 
     def run(self):
+        self.__str1_eop = False
         self.__str2_eop = False
+        self.__str1_dmp = None
         self.__str2_dmp = None
         super(StringAdd, self).run()
 
     def process(self):
-        in1 = self.input("string1").receive()
-        if in1.isEOP():
-            return False
+        if not self.__str1_eop:
+            in1 = self.input("string1").receive()
+            if in1.isEOP():
+                self.__str1_eop = True
+            else:
+                self.__str1_dmp = in1.value()
 
-        v1 = in1.value()
-        in1.drop()
+        if self.__str1_dmp is None:
+            return False
 
         if not self.__str2_eop:
             in2 = self.input("string2").receive()
@@ -30,12 +35,14 @@ class StringAdd(block.Block):
                 self.__str2_eop = True
             else:
                 self.__str2_dmp = in2.value()
-                in2.drop()
 
         if self.__str2_dmp is None:
             return False
 
-        self.output("result").send(v1 + self.__str2_dmp)
+        if self.__str1_eop and self.__str2_eop:
+            return False
+
+        self.output("result").send(self.__str1_dmp + self.__str2_dmp)
 
         return True
 
