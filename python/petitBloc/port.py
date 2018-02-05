@@ -119,6 +119,9 @@ class OutPort(core.PortBase):
         elif issubclass(self.typeClass(), Number) and isinstance(value, Number):
             pack = packet.Packet(self.typeClass()(value))
 
+        elif issubclass(self.typeClass(), basestring) and isinstance(value, basestring):
+            pack = packet.Packet(self.typeClass()(value))
+
         if pack is None:
             return False
 
