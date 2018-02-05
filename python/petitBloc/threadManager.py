@@ -3,6 +3,81 @@ import Queue
 import copy
 import time
 from . import const
+import subprocess
+import multiprocessing
+
+
+class SubprocessWorker(object):
+    def __init__(self, cmd):
+        self.__command = cmd
+        self.__p = subprocess.Popen(cmd, shell=True)
+
+    def command(self):
+        return self.__command
+
+    def isRunning(self):
+        return self.__p.poll() is None
+
+    def result(self):
+        res = self.__p.wait() == 0
+        SubprocessManager.DeleteProcess(self)
+
+        return res
+
+
+class SubprocessManager(object):
+    __Processes = []
+    __MaxProcess = multiprocessing.cpu_count() - 1 or 1
+    __WaitTime = 0.5
+    __Lock = threading.Lock()
+
+    @staticmethod
+    def SetMaxProcess(num):
+        if num <= 0:
+            SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+        else:
+            SubprocessManager.__MaxProcess = num
+
+    @staticmethod
+    def Reset():
+        for p in SubprocessManager.__Processes:
+            del p
+
+        SubprocessManager.__Processes = []
+        SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+
+    @staticmethod
+    def Count():
+        return len(SubprocessManager.__Processes)
+
+    @staticmethod
+    def DeleteProcess(p):
+        SubprocessManager.__Lock.acquire()
+
+        if p in SubprocessManager.__Processes:
+            SubprocessManager.__Processes.remove(p)
+
+        SubprocessManager.__Lock.release()
+
+    @staticmethod
+    def Submit(cmd):
+        while (True):
+            SubprocessManager.__Lock.acquire()
+
+            if SubprocessManager.Count() < SubprocessManager.__MaxProcess:
+                worker = SubprocessWorker(cmd)
+                SubprocessManager.__Processes.append(worker)
+                SubprocessManager.__Lock.release()
+
+                return worker
+
+            SubprocessManager.__Lock.release()
+
+            for p in SubprocessManager.__Processes:
+                if not p.isRunning():
+                    SubprocessManager.DeleteProcess(p)
+
+            time.sleep(SubprocessManager.__WaitTime)
 
 
 class LogManager(object):
@@ -241,6 +316,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     LogManager.Reset()
     QueueManager.Reset()
     ThreadManager.Reset()
+    SubprocessManager.Reset()
     ThreadManager.SetMaxProcess(maxProcess)
     ThreadManager.SetPerProcessCallback(perProcessCallback)
 
@@ -286,3 +362,4 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
 
     QueueManager.Reset()
     ThreadManager.Reset()
+    SubprocessManager.Reset()

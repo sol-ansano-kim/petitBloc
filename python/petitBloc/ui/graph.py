@@ -171,9 +171,11 @@ class Graph(nodz_main.Nodz):
 
             return cate
 
-        for c, blocks in self.__model.blockTree().iteritems():
+        block_tree = self.__model.blockTree()
+        for c in sorted(block_tree.keys()):
             cate = getCategory(c)
-            for b in blocks:
+            blocks = block_tree.get(c, [])
+            for b in sorted(blocks):
                 if b == "SceneContext" and not self.isTop():
                     continue
 
