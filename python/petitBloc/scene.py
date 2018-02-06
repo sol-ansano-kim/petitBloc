@@ -111,7 +111,10 @@ def __read(filePath):
 
                 else:
                     try:
-                        bloc = bc(name=short_name)
+                        bloc = bc()
+                        if short_name is not None:
+                            bloc.rename(short_name)
+
                         parent.addBlock(bloc)
 
                     except Exception as e:

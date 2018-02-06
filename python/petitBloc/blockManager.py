@@ -11,11 +11,14 @@ class BlockManager(object):
     def __new__(self):
         if BlockManager.__Instance is None:
             BlockManager.__Instance = super(BlockManager, self).__new__(self)
+            BlockManager.__Instance.reload()
 
         return BlockManager.__Instance
 
     def __init__(self):
         super(BlockManager, self).__init__()
+
+    def reload(self):
         self.__blocks = {}
         self.__modules = []
         self.__loaded = []

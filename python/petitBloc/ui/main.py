@@ -15,6 +15,7 @@ from . import uiUtil
 from . import sceneState
 from . import progress
 from .. import scene
+from .. import blockManager
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -52,6 +53,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setStyleSheet(style)
 
     def __initialize(self):
+        ## force reload
+        b = blockManager.BlockManager()
+        b.reload()
+
         self.setObjectName(const.ObjectName)
 
         centeral = QtWidgets.QWidget()

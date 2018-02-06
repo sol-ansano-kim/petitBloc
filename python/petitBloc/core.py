@@ -35,7 +35,7 @@ class ParameterBase(object):
         return False
 
     def setExpression(self, expression):
-        return False
+        return True
 
     def getExpression(self):
         return ""
