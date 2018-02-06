@@ -1,12 +1,12 @@
 import os
 import re
 from Nodz import nodz_main
-from Nodz import nodz_utils
 from Qt import QtGui
 from Qt import QtCore
 from Qt import QtWidgets
 from . import model
 from . import blockCreator
+from . import uiUtil
 import copy
 from functools import partial
 
@@ -588,11 +588,11 @@ class BlocItem(nodz_main.NodeItem):
             # Attribute base.
 
             brush_color = config[bloc_class_name].get("port_bg", config[preset]['bg'])
-            self._attrBrush.setColor(nodz_utils._convertDataToColor(brush_color))
+            self._attrBrush.setColor(uiUtil.ConvertDataToColor(brush_color))
             if self.alternate:
-                self._attrBrushAlt.setColor(nodz_utils._convertDataToColor(brush_color, True, config['alternate_value']))
+                self._attrBrushAlt.setColor(uiUtil.ConvertDataToColor(brush_color, True, config['alternate_value']))
 
-            self._attrPen.setColor(nodz_utils._convertDataToColor([0, 0, 0, 0]))
+            self._attrPen.setColor(uiUtil.ConvertDataToColor([0, 0, 0, 0]))
             painter.setPen(self._attrPen)
             painter.setBrush(self._attrBrush)
 
@@ -604,7 +604,7 @@ class BlocItem(nodz_main.NodeItem):
 
             # Attribute label.
             text_color = config[bloc_class_name].get("port_text", config[preset]['text'])
-            painter.setPen(nodz_utils._convertDataToColor(text_color))
+            painter.setPen(uiUtil.ConvertDataToColor(text_color))
             painter.setFont(self._attrTextFont)
 
             # Search non-connectable attributes.
@@ -613,7 +613,7 @@ class BlocItem(nodz_main.NodeItem):
                     port = attrData['port']
                     if (nodzInst.sourceSlot.slotType == 'plug' and attrData['socket'] == False) or (nodzInst.sourceSlot.slotType == 'socket' and attrData['plug'] == False):
                         # Set non-connectable attributes color.
-                        painter.setPen(nodz_utils._convertDataToColor(config['non_connectable_color']))
+                        painter.setPen(uiUtil.ConvertDataToColor(config['non_connectable_color']))
 
             textRect = QtCore.QRect(rect.left() + self.radius,
                                      rect.top(),
@@ -685,9 +685,9 @@ class OutputPortItem(nodz_main.PlugItem):
         config = nodzInst.config
         if nodzInst.drawingConnection:
             if self.parentItem() == nodzInst.currentHoveredNode:
-                painter.setBrush(nodz_utils._convertDataToColor(config['non_connectable_color']))
+                painter.setBrush(uiUtil.ConvertDataToColor(config['non_connectable_color']))
                 if (self.slotType == nodzInst.sourceSlot.slotType or (self.slotType != nodzInst.sourceSlot.slotType and not nodzInst.sourceSlot.port().match(self.port()))):
-                    painter.setBrush(nodz_utils._convertDataToColor(config['non_connectable_color']))
+                    painter.setBrush(uiUtil.ConvertDataToColor(config['non_connectable_color']))
                 else:
                     _penValid = QtGui.QPen()
                     _penValid.setStyle(QtCore.Qt.SolidLine)
@@ -860,9 +860,9 @@ class InputPortItem(nodz_main.SocketItem):
         config = nodzInst.config
         if nodzInst.drawingConnection:
             if self.parentItem() == nodzInst.currentHoveredNode:
-                painter.setBrush(nodz_utils._convertDataToColor(config['non_connectable_color']))
+                painter.setBrush(uiUtil.ConvertDataToColor(config['non_connectable_color']))
                 if (self.slotType == nodzInst.sourceSlot.slotType or (self.slotType != nodzInst.sourceSlot.slotType and not self.port().match(nodzInst.sourceSlot.port()))):
-                    painter.setBrush(nodz_utils._convertDataToColor(config['non_connectable_color']))
+                    painter.setBrush(uiUtil.ConvertDataToColor(config['non_connectable_color']))
                 else:
                     _penValid = QtGui.QPen()
                     _penValid.setStyle(QtCore.Qt.SolidLine)
@@ -1067,7 +1067,7 @@ class ChainItem(nodz_main.ConnectionItem):
                 break
 
         if color is None:
-            color = nodz_utils._convertDataToColor(config['connection_color'])
+            color = uiUtil.ConvertDataToColor(config['connection_color'])
 
         self._pen = QtGui.QPen(color)
         self._pen.setWidth(config['connection_width'])
