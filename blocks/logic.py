@@ -17,12 +17,14 @@ class BoolSelector(block.Block):
             return False
 
         val = val_p.value()
+        val_p.drop()
 
         con_p = self.input("condition").receive()
         if con_p.isEOP():
             return False
 
         con = con_p.value()
+        con_p.drop()
 
         if con:
             self.output("matched").send(val)
@@ -49,12 +51,14 @@ class IntSelector(block.Block):
             return False
 
         val = val_p.value()
+        val_p.drop()
 
         con_p = self.input("condition").receive()
         if con_p.isEOP():
             return False
 
         con = con_p.value()
+        con_p.drop()
 
         if con:
             self.output("matched").send(val)
@@ -81,12 +85,14 @@ class FloatSelector(block.Block):
             return False
 
         val = val_p.value()
+        val_p.drop()
 
         con_p = self.input("condition").receive()
         if con_p.isEOP():
             return False
 
         con = con_p.value()
+        con_p.drop()
 
         if con:
             self.output("matched").send(val)
@@ -113,12 +119,14 @@ class StringSelector(block.Block):
             return False
 
         val = val_p.value()
+        val_p.drop()
 
         con_p = self.input("condition").receive()
         if con_p.isEOP():
             return False
 
         con = con_p.value()
+        con_p.drop()
 
         if con:
             self.output("matched").send(val)
