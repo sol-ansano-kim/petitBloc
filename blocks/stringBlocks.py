@@ -228,9 +228,9 @@ class RegexSub(block.Block):
         return True
 
 
-class RegexSwitch(block.Block):
+class RegexSelector(block.Block):
     def __init__(self):
-        super(RegexSwitch, self).__init__()
+        super(RegexSelector, self).__init__()
 
     def initialize(self):
         self.addInput(str, "string")
@@ -241,7 +241,7 @@ class RegexSwitch(block.Block):
     def run(self):
         self.__pattern_eop = False
         self.__pattern_dmp = None
-        super(RegexSwitch, self).run()
+        super(RegexSelector, self).run()
 
     def process(self):
         in1 = self.input("string").receive()
