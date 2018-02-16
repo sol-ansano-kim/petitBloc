@@ -87,7 +87,7 @@ class PacketBase(object):
         return copy.deepcopy(self.__value)
 
     def _del(self):
-        del self.__value
+        self.__value = None
         del self
 
     def pickUp(self):
