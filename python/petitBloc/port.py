@@ -128,6 +128,8 @@ class OutPort(core.PortBase):
         if self.__value_queue is not None and not pack.isEOP():
             self.__value_queue.put(pack.value())
 
+        pack.setRefCount(len(self.__out_chains))
+
         for chain in self.__out_chains:
             chain.send(pack)
 

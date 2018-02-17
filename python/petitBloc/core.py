@@ -96,6 +96,9 @@ class PacketBase(object):
     def drop(self):
         pass
 
+    def setRefCount(self, v):
+        pass
+
     def refCount(self):
         return -1
 

@@ -44,8 +44,6 @@ class Chain(core.ChainBase):
         if self.__packets is None:
             return False
 
-        pack.pickUp()
-
         self.__packets.put(pack)
 
         return True

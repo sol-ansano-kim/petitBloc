@@ -50,6 +50,9 @@ class Packet(core.PacketBase):
     def refCount(self):
         return self.__ref_count
 
+    def setRefCount(self, v):
+        self.__ref_count = v
+
     def pickUp(self):
         self.__ref_count += 1
 
