@@ -323,6 +323,9 @@ class ComponentBase(object):
     def isFailed(self):
         return self.__state is ComponentBase.Failed
 
+    def isOver(self):
+        return (self.__state is ComponentBase.Terminated) or (self.__state is ComponentBase.Failed)
+
     def resetState(self):
         self.__state = ComponentBase.Initialized
 
