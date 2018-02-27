@@ -25,6 +25,7 @@ class StringAdd(block.Block):
                 self.__str1_eop = True
             else:
                 self.__str1_dmp = in1.value()
+                in1.drop()
 
         if self.__str1_dmp is None:
             return False
@@ -35,6 +36,7 @@ class StringAdd(block.Block):
                 self.__str2_eop = True
             else:
                 self.__str2_dmp = in2.value()
+                in2.drop()
 
         if self.__str2_dmp is None:
             return False
