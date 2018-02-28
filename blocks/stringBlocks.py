@@ -25,6 +25,7 @@ class StringAdd(block.Block):
                 self.__str1_eop = True
             else:
                 self.__str1_dmp = in1.value()
+                in1.drop()
 
         if self.__str1_dmp is None:
             return False
@@ -35,6 +36,7 @@ class StringAdd(block.Block):
                 self.__str2_eop = True
             else:
                 self.__str2_dmp = in2.value()
+                in2.drop()
 
         if self.__str2_dmp is None:
             return False
@@ -228,9 +230,9 @@ class RegexSub(block.Block):
         return True
 
 
-class RegexSwitch(block.Block):
+class RegexSelector(block.Block):
     def __init__(self):
-        super(RegexSwitch, self).__init__()
+        super(RegexSelector, self).__init__()
 
     def initialize(self):
         self.addInput(str, "string")
@@ -241,7 +243,7 @@ class RegexSwitch(block.Block):
     def run(self):
         self.__pattern_eop = False
         self.__pattern_dmp = None
-        super(RegexSwitch, self).run()
+        super(RegexSelector, self).run()
 
     def process(self):
         in1 = self.input("string").receive()

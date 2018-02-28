@@ -35,11 +35,11 @@ class InPort(core.PortBase):
         if self.__in_chain == chain:
             self.__in_chain = None
 
-    def receive(self):
+    def receive(self, timeout=None):
         if self.__in_chain is None:
             return packet.EndOfPacket
 
-        p = self.__in_chain.receive()
+        p = self.__in_chain.receive(timeout=timeout)
         if self.__value_queue is not None and not p.isEOP():
             self.__value_queue.put(p.value())
 
@@ -127,6 +127,8 @@ class OutPort(core.PortBase):
 
         if self.__value_queue is not None and not pack.isEOP():
             self.__value_queue.put(pack.value())
+
+        pack.setRefCount(len(self.__out_chains))
 
         for chain in self.__out_chains:
             chain.send(pack)

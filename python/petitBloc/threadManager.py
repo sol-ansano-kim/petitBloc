@@ -239,13 +239,14 @@ class ProcessWorker(threading.Thread):
             LogManager.Error(self.__obj.path(), e)
 
         LogManager.TimeReport(self.__obj.path(), time.time() - st)
+        self.terminate()
 
     def start(self):
         self.__obj.activate()
         super(ProcessWorker, self).start()
 
     def terminate(self):
-        if not self.__obj.isTerminated():
+        if not self.__obj.isOver():
             self.__obj.terminate(self.__success)
 
 class ThreadManager(object):

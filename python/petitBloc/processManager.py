@@ -294,7 +294,7 @@ class ProcessWorker(multiprocessing.Process):
         super(ProcessWorker, self).start()
 
     def terminate(self):
-        if not self.__obj.isTerminated():
+        if not self.__obj.isOver():
             self.__obj.terminate(self.__has_error.value == 0)
 
         ValueManager.DeleteValue(self.__has_error)

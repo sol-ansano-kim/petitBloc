@@ -87,13 +87,16 @@ class PacketBase(object):
         return copy.deepcopy(self.__value)
 
     def _del(self):
-        del self.__value
+        self.__value = None
         del self
 
     def pickUp(self):
         pass
 
     def drop(self):
+        pass
+
+    def setRefCount(self, v):
         pass
 
     def refCount(self):
@@ -319,6 +322,9 @@ class ComponentBase(object):
 
     def isFailed(self):
         return self.__state is ComponentBase.Failed
+
+    def isOver(self):
+        return (self.__state is ComponentBase.Terminated) or (self.__state is ComponentBase.Failed)
 
     def resetState(self):
         self.__state = ComponentBase.Initialized
