@@ -230,8 +230,8 @@ class ValueManager(object):
 
     @staticmethod
     def DeleteValue(v):
-        ValueManager.__Count -= 1
         if v in ValueManager.__Values:
+            ValueManager.__Count -= 1
             ValueManager.__Values.remove(v)
         del v
 
@@ -263,8 +263,8 @@ class QueueManager(object):
 
     @staticmethod
     def DeleteQueue(q):
-        QueueManager.__Count -= 1
         if q in QueueManager.__Queues:
+            QueueManager.__Count -= 1
             QueueManager.__Queues.remove(q)
         q.close()
         del q
@@ -306,6 +306,7 @@ class ProcessManager(object):
     __Processes = []
     __MaxProcess = multiprocessing.cpu_count() - 1 or 1
     __PerProcessCallback = None
+    __Lock = multiprocessing.Lock()
 
     @staticmethod
     def SetPerProcessCallback(callback):
@@ -340,16 +341,40 @@ class ProcessManager(object):
     @staticmethod
     def Submit(obj, args=(), kwargs={}):
         while (len(ProcessManager.__Processes) >= ProcessManager.__MaxProcess):
-            for p in ProcessManager.__Processes:
-                if p.is_alive():
-                    continue
-                else:
-                    ProcessManager.RunPerProcessCallback()
-                    ProcessManager.DeleteProcess(p)
+            ProcessManager.LockAcquire()
+            ProcessManager.CleanUp()
+            ProcessManager.LockRelease()
 
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
         ProcessManager.__Processes.append(p)
         p.start()
+
+    @staticmethod
+    def CleanUp():
+        for p in ProcessManager.__Processes:
+            if not p.is_alive():
+                ProcessManager.RunPerProcessCallback()
+                ProcessManager.DeleteProcess(p)
+
+    @staticmethod
+    def IsWorking():
+        ProcessManager.CleanUp()
+
+        working = False
+        for p in ProcessManager.__Processes:
+            if p.is_alive():
+                working = True
+                break
+
+        return working
+
+    @staticmethod
+    def LockAcquire():
+        ProcessManager.__Lock.acquire()
+
+    @staticmethod
+    def LockRelease():
+        ProcessManager.__Lock.release()
 
     @staticmethod
     def DeleteProcess(p):
@@ -366,14 +391,34 @@ class ProcessManager(object):
                     ProcessManager.DeleteProcess(p)
 
 
+def __needToWait(bloc):
+    suspend = __parentSuspend(bloc)
+
+    if not suspend:
+        for up in bloc.upstream():
+            if up.isWaiting():
+                suspend = True
+                break
+
+    return suspend
+
+
+def __parentSuspend(bloc):
+    parent = bloc.parent()
+    if parent and parent.isWaiting():
+        return True
+
+    return False
+
+
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     SubprocessManager.Initialize()
     SubprocessManager.Reset()
+    ProcessManager.Reset()
     LogManager.Initialize()
     LogManager.Reset()
     ValueManager.Reset()
     QueueManager.Reset()
-    ProcessManager.Reset()
     ProcessManager.SetMaxProcess(maxProcess)
     ProcessManager.SetPerProcessCallback(perProcessCallback)
 
@@ -387,17 +432,26 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
             continue
 
-        suspend = False
-
-        for up in bloc.upstream():
-            if up.isWaiting():
-                suspend = True
-                break
+        ProcessManager.LockAcquire()
+        suspend = __needToWait(bloc)
 
         if suspend:
+            if not ProcessManager.IsWorking() and __parentSuspend(bloc):
+                stuck = True
+                for s in work_schedule:
+                    if not __parentSuspend(s):
+                        stuck = False
+                        break
+
+                if stuck:
+                    ProcessManager.LockRelease()
+                    return
+
             work_schedule.append(bloc)
+            ProcessManager.LockRelease()
             continue
 
+        ProcessManager.LockRelease()
         ProcessManager.Submit(bloc)
 
     ProcessManager.Join()

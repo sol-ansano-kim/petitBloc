@@ -181,9 +181,9 @@ class Box(component.Component):
         return True
 
     def getSchedule(self):
-        schedule = []
         initblocs = []
         blocs = []
+        schedule = [self]
 
         if self.__context is not None:
             schedule.append(self.__context)
@@ -220,7 +220,6 @@ class Box(component.Component):
             schedule.append(bloc.getSchedule())
 
         schedule.append(self.__out_proxy)
-        schedule.append(self)
 
         return schedule
 
