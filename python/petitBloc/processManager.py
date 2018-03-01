@@ -392,23 +392,34 @@ class ProcessManager(object):
 
 
 def __needToWait(bloc):
-    suspend = __parentSuspend(bloc)
+    suspend = __parentSuspended(bloc)
 
     if not suspend:
-        for up in bloc.upstream():
-            if up.isWaiting():
+        for up in bloc.upstream(includeProxy=True):
+            if up.isWaiting() or __parentSuspended(up):
                 suspend = True
                 break
 
     return suspend
 
 
-def __parentSuspend(bloc):
+def __parentSuspended(bloc):
     parent = bloc.parent()
     if parent and parent.isWaiting():
         return True
 
     return False
+
+
+def __upstreamSuspended(bloc):
+    suspend = False
+
+    for up in bloc.upstream(includeProxy=True):
+        if __parentSuspended(up):
+            suspend = True
+            break
+
+    return suspend
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
@@ -436,16 +447,16 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         suspend = __needToWait(bloc)
 
         if suspend:
-            if not ProcessManager.IsWorking() and __parentSuspend(bloc):
+            if not ProcessManager.IsWorking() and __parentSuspended(bloc):
                 stuck = True
                 for s in work_schedule:
-                    if not __parentSuspend(s):
+                    if not __parentSuspended(s) and not __upstreamSuspended(s):
                         stuck = False
                         break
 
                 if stuck:
                     ProcessManager.LockRelease()
-                    return
+                    break
 
             work_schedule.append(bloc)
             ProcessManager.LockRelease()
@@ -455,8 +466,13 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         ProcessManager.Submit(bloc)
 
     ProcessManager.Join()
+    # TODO : sometime pipe would be broken
+    # do it more smarter..
+    time.sleep(0.01)
 
     for s in schedule:
+        s.clear()
+
         if not s.hasNetwork():
             continue
 

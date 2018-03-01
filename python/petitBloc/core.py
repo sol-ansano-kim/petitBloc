@@ -140,6 +140,9 @@ class PortBase(object):
 
         return False
 
+    def clear(self):
+        pass
+
     def isConnected(self):
         return False
 
@@ -209,6 +212,9 @@ class ChainBase(object):
     def empty(self):
         return True
 
+    def clear(self):
+        pass
+
     def disconnect(self):
         self.__src.disconnect(self)
         self.__dst.disconnect(self)
@@ -275,6 +281,9 @@ class ComponentBase(object):
 
     def name(self):
         return self.__name
+
+    def clear(self):
+        pass
 
     def ancestor(self):
         if self.__parent is None:
@@ -390,8 +399,8 @@ class ComponentBase(object):
     def input(self, index_or_name):
         return None
 
-    def upstream(self):
+    def upstream(self, includeProxy=False):
         return []
         
-    def downstream(self):
+    def downstream(self, includeProxy=False):
         return []

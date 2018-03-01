@@ -49,6 +49,16 @@ class Component(core.ComponentBase):
 
         super(Component, self).terminate(success=success)
 
+    def clear(self):
+        for out in self.__outputs:
+            out.clear()
+
+        for inp in self.__inputs:
+            inp.clear()
+
+        for p in self.__params:
+            p.terminate()
+
     def addInput(self, typeClass, name=None):
         if name is None or not util.ValidateName(name):
             name = "input"
@@ -138,7 +148,7 @@ class Component(core.ComponentBase):
 
         return False
 
-    def upstream(self):
+    def upstream(self, includeProxy=False):
         upstreams = []
         for inp in self.__inputs:
             for chn in inp.chains():
@@ -147,7 +157,7 @@ class Component(core.ComponentBase):
                     continue
 
                 up = src.parent()
-                if isinstance(up, core.Proxy):
+                if not includeProxy and isinstance(up, core.Proxy):
                     continue
 
                 if up:
@@ -155,7 +165,7 @@ class Component(core.ComponentBase):
 
         return upstreams
         
-    def downstream(self):
+    def downstream(self, includeProxy=False):
         downstreams = []
         for oup in self.__outputs:
             for chn in oup.chains():
@@ -167,7 +177,7 @@ class Component(core.ComponentBase):
                 if dst is None:
                     continue
 
-                if isinstance(down, core.Proxy):
+                if not includeProxy and isinstance(down, core.Proxy):
                     continue
 
                 if down:

@@ -10,18 +10,12 @@ class ConditionalBox(box.Box):
     def __str__(self):
         return "ConditionalBox<'{}'>".format(self.name())
 
-    def initialize(self):
-        self.addInput(bool, "condition")
+    def clear(self):
+        if self.__condtion is not None:
+            workerManager.WorkerManager.DeleteValue(self.__condtion)
+            self.__condtion = None
 
-    def run(self):
-        con = self.input("condition").receive()
-
-        if con.isEOP():
-            return False
-
-        v = con.value()
-        con.drop()
-        self.__condtion.value = 1 if v else 0
+        super(ConditionalBox, self).clear()
 
     def activate(self):
         self.__condtion = workerManager.WorkerManager.CreateValue("i", 0)
@@ -38,8 +32,7 @@ class ConditionalBox(box.Box):
     def terminate(self, success=True):
         if self.__condtion is not None:
             v = self.__condtion.value
-            workerManager.WorkerManager.DeleteValue(self.__condtion)
-            self.__condtion = None
+            self.clear()
             super(ConditionalBox, self).terminate()
 
             if not v:
@@ -47,3 +40,16 @@ class ConditionalBox(box.Box):
 
         else:
             super(ConditionalBox, self).terminate(success=success)
+
+    def initialize(self):
+        self.addInput(bool, "condition")
+
+    def run(self):
+        con = self.input("condition").receive()
+
+        if con.isEOP():
+            return False
+
+        v = con.value()
+        con.drop()
+        self.__condtion.value = 1 if v else 0

@@ -2,6 +2,7 @@ import imp
 import os
 from . import core
 from . import box
+from . import conditionalBox
 from . import util
 
 
@@ -73,6 +74,7 @@ class BlockManager(object):
 
     def __searchBlocks(self):
         self.__blocks["Box"] = {"class": box.Box, "config": {"category": "Scene"}}
+        self.__blocks["ConditionalBox"] = {"class": conditionalBox.ConditionalBox, "config": {"category": "Scene"}}
         self.__blocks["SceneContext"] = {"class": box.SceneContext, "config": {"category": "Scene"}}
 
         block_path = os.environ.get("PETITBLOC_BLOCK_PATH", "")
