@@ -444,6 +444,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
                         break
 
                 if stuck:
+                    work_schedule.append(bloc)
                     ThreadManager.LockRelase()
                     break
 
@@ -456,9 +457,10 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
 
     ThreadManager.Join()
 
-    for s in schedule:
+    for s in work_schedule:
         s.clear()
 
+    for s in schedule:
         if not s.hasNetwork():
             continue
 

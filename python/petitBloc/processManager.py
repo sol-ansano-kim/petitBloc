@@ -455,6 +455,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
                         break
 
                 if stuck:
+                    work_schedule.append(bloc)
                     ProcessManager.LockRelease()
                     break
 
@@ -473,6 +474,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     for s in schedule:
         s.clear()
 
+    for s in schedule:
         if not s.hasNetwork():
             continue
 

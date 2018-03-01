@@ -58,10 +58,8 @@ class InPort(core.PortBase):
             self.__in_chain.activate()
 
     def clear(self):
+        self.__values = []
         if self.__value_queue is not None:
-            while (not self.__value_queue.empty()):
-                self.__values.append(self.__value_queue.get())
-
             workerManager.WorkerManager.DeleteQueue(self.__value_queue)
             self.__value_queue = None
 
@@ -120,10 +118,8 @@ class OutPort(core.PortBase):
             chain.sendEOP()
 
     def clear(self):
+        self.__values = []
         if self.__value_queue is not None:
-            while (not self.__value_queue.empty()):
-                self.__values.append(self.__value_queue.get())
-
             workerManager.WorkerManager.DeleteQueue(self.__value_queue)
             self.__value_queue = None
 
