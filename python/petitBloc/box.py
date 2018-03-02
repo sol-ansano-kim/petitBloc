@@ -100,8 +100,8 @@ class ProxyBlock(core.Proxy, component.Component):
 
         name = util.GetUniqueName(name, all_names)
 
-        in_p = self.addInput(typeClass, name=name + "In")
-        out_p = self.addOutput(typeClass, name=name + "Out")
+        in_p = self.addInput(typeClass, name=name + "_in")
+        out_p = self.addOutput(typeClass, name=name + "_out")
 
         if in_p is not None and out_p is not None:
             self.__ports[name] = {"in": in_p, "out": out_p, "end": False}

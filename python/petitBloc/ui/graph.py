@@ -782,7 +782,11 @@ class OutputPortItem(nodz_main.PlugItem):
 
                         return
                     else:
-                        ip, op = nodzInst.addOutputProxy(self.port().typeClass(), self.port().name())
+                        new_name = self.port().name()
+                        prnt = self.port().parent()
+                        if prnt:
+                            new_name = "{}_{}".format(prnt.name(), new_name)
+                        ip, op = nodzInst.addOutputProxy(self.port().typeClass(), new_name)
                         proxy_node = nodzInst.outProxyNode()
                         target_port = proxy_node.sockets[ip.name()]
                         self.newConnection.target = target_port
@@ -962,7 +966,11 @@ class InputPortItem(nodz_main.SocketItem):
                         return
 
                     else:
-                        ip, op = nodzInst.addInputProxy(self.port().typeClass(), self.port().name())
+                        new_name = self.port().name()
+                        prnt = self.port().parent()
+                        if prnt:
+                            new_name = "{}_{}".format(prnt.name(), new_name)
+                        ip, op = nodzInst.addInputProxy(self.port().typeClass(), new_name)
                         proxy_node = nodzInst.inProxyNode()
                         target_port = proxy_node.plugs[op.name()]
                         self.newConnection.target = target_port
