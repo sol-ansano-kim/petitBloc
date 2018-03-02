@@ -121,6 +121,10 @@ class ProxyBlock(core.Proxy, component.Component):
             for c in ports["out"].chains():
                 self.parent().removeChain(c)
                 c.disconnect()
+
+            self.removeInput(ports["in"])
+            self.removeOutput(ports["out"])
+
         else:
             for c in ports["in"].chains():
                 self.parent().removeChain(c)
@@ -128,6 +132,9 @@ class ProxyBlock(core.Proxy, component.Component):
             for c in ports["out"].chains():
                 c.src().parent().removeChain(c)
                 c.disconnect()
+
+            self.removeInput(ports["in"])
+            self.removeOutput(ports["out"])
 
         return True
 
