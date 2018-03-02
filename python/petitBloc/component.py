@@ -157,7 +157,7 @@ class Component(core.ComponentBase):
                     continue
 
                 up = src.parent()
-                if not includeProxy and isinstance(up, core.Proxy):
+                if not includeProxy and up.isProxy():
                     continue
 
                 if up:
@@ -177,7 +177,7 @@ class Component(core.ComponentBase):
                 if dst is None:
                     continue
 
-                if not includeProxy and isinstance(down, core.Proxy):
+                if not includeProxy and down.isProxy():
                     continue
 
                 if down:

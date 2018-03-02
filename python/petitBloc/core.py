@@ -6,6 +6,18 @@ class Proxy():
     pass
 
 
+class PortIn():
+    pass
+
+
+class PortOut():
+    pass
+
+
+class NetworkBlock():
+    pass
+
+
 class PBEnum():
     pass
 
@@ -159,11 +171,14 @@ class PortBase(object):
     def typeClass(self):
         return self.__type_class
 
+    def isProxy(self):
+        return isinstance(self, Proxy)
+
     def isInPort(self):
-        return False
+        return isinstance(self, PortIn)
 
     def isOutPort(self):
-        return False
+        return isinstance(self, PortOut)
 
     def activate(self):
         pass
@@ -270,8 +285,11 @@ class ComponentBase(object):
     def type(self):
         return self.__class_name
 
+    def isProxy(self):
+        return isinstance(self, Proxy)
+
     def hasNetwork(self):
-        return False
+        return isinstance(self, NetworkBlock)
 
     def expandable(self):
         return False

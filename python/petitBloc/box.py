@@ -154,7 +154,7 @@ class ProxyBlock(core.Proxy, component.Component):
         return keep
 
 
-class Box(component.Component):
+class Box(core.NetworkBlock, component.Component):
     def __init__(self, name="", parent=None):
         super(Box, self).__init__(name=name, parent=parent)
         self.__context = None
@@ -173,9 +173,6 @@ class Box(component.Component):
             return self
 
         return self.parent().ancestor()
-
-    def hasNetwork(self):
-        return True
 
     def expandable(self):
         return True

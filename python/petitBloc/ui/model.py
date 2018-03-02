@@ -178,7 +178,7 @@ class BoxModel(QtCore.QObject):
                 boxies.append(b)
 
             block_data = {}
-            if isinstance(b, box.ProxyBlock):
+            if b.isProxy():
                 if b.parent() == self.__box:
                     continue
 

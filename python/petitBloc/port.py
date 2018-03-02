@@ -5,7 +5,7 @@ from . import workerManager
 import copy
 
 
-class InPort(core.PortBase):
+class InPort(core.PortIn, core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(InPort, self).__init__(typeClass, name=name, parent=parent)
         self.__in_chain = None
@@ -14,9 +14,6 @@ class InPort(core.PortBase):
 
     def packetHistory(self):
         return copy.copy(self.__values)
-
-    def isInPort(self):
-        return True
 
     def isConnected(self):
         return self.__in_chain is not None
@@ -78,7 +75,7 @@ class InPort(core.PortBase):
             self.__in_chain.terminate()
 
 
-class OutPort(core.PortBase):
+class OutPort(core.PortOut, core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(OutPort, self).__init__(typeClass, name=name, parent=parent)
         self.__out_chains = []
@@ -87,9 +84,6 @@ class OutPort(core.PortBase):
 
     def packetHistory(self):
         return copy.copy(self.__values)
-
-    def isOutPort(self):
-        return True
 
     def isConnected(self):
         return len(self.__out_chains) > 0
