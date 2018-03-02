@@ -121,9 +121,6 @@ class OutPort(core.PortOut, core.PortBase):
             c.clear()
 
     def send(self, value):
-        if not self.__out_chains:
-            return False
-
         pack = None
         if isinstance(value, self.typeClass()):
             pack = packet.Packet(value)
@@ -139,6 +136,9 @@ class OutPort(core.PortOut, core.PortBase):
 
         if self.__value_queue is not None and not pack.isEOP():
             self.__value_queue.put(pack.value())
+
+        if not self.__out_chains:
+            return False
 
         pack.setRefCount(len(self.__out_chains))
 
