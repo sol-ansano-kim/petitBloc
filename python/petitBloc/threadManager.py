@@ -436,6 +436,8 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         suspend = __needToWait(bloc)
 
         if suspend:
+            work_schedule.append(bloc)
+
             if not ThreadManager.IsWorking() and __parentSuspended(bloc):
                 stuck = True
                 for s in work_schedule:
@@ -444,11 +446,9 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
                         break
 
                 if stuck:
-                    work_schedule.append(bloc)
                     ThreadManager.LockRelase()
                     break
 
-            work_schedule.append(bloc)
             ThreadManager.LockRelase()
             continue
 
