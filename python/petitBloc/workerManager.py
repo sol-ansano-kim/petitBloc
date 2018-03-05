@@ -9,6 +9,7 @@ class WorkerManager(object):
     __QueueManager = threadManager.QueueManager
     __ProcessManager = threadManager.ThreadManager
     __SubProcessManager = threadManager.SubprocessManager
+    __ValueManager = threadManager.ValueManager
     __Module = threadManager
 
     @staticmethod
@@ -18,18 +19,21 @@ class WorkerManager(object):
             WorkerManager.ResetProcess()
             WorkerManager.ResetLog()
             WorkerManager.ResetSubProcess()
+            WorkerManager.ResetValues()
 
             if not value:
                 WorkerManager.__LogManager = threadManager.LogManager
                 WorkerManager.__QueueManager = threadManager.QueueManager
                 WorkerManager.__ProcessManager = threadManager.ThreadManager
                 WorkerManager.__SubProcessManager = threadManager.SubprocessManager
+                WorkerManager.__ValueManager = threadManager.ValueManager
                 WorkerManager.__Module = threadManager
             else:
                 WorkerManager.__LogManager = processManager.LogManager
                 WorkerManager.__QueueManager = processManager.QueueManager
                 WorkerManager.__ProcessManager = processManager.ProcessManager
                 WorkerManager.__SubProcessManager = processManager.SubprocessManager
+                WorkerManager.__ValueManager = processManager.ValueManager
                 WorkerManager.__Module = processManager
 
         WorkerManager.__UseProcess = value
@@ -114,8 +118,20 @@ class WorkerManager(object):
         WorkerManager.__QueueManager.DeleteQueue(q)
 
     @staticmethod
+    def CreateValue(valueType, defaultValue=None):
+        return WorkerManager.__ValueManager.CreateValue(valueType, defaultValue)
+
+    @staticmethod
+    def DeleteValue(v):
+        WorkerManager.__ValueManager.DeleteValue(v)
+
+    @staticmethod
     def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         WorkerManager.__Module.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
+
+    @staticmethod
+    def ValueCount():
+        return WorkerManager.__ValueManager.Count()
 
     @staticmethod
     def QueueCount():
@@ -136,6 +152,10 @@ class WorkerManager(object):
     @staticmethod
     def ResetSubProcess():
         WorkerManager.__SubProcessManager.Reset()
+
+    @staticmethod
+    def ResetValues():
+        WorkerManager.__ValueManager.Reset()
 
     @staticmethod
     def SubmitSubProcess(cmd):

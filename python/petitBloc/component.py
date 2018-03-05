@@ -49,6 +49,28 @@ class Component(core.ComponentBase):
 
         super(Component, self).terminate(success=success)
 
+    def byPass(self):
+        for out in self.__outputs:
+            out.clear()
+
+        for inp in self.__inputs:
+            inp.clear()
+
+        for p in self.__params:
+            p.terminate()
+
+        super(Component, self).byPass()
+
+    def clear(self):
+        for out in self.__outputs:
+            out.clear()
+
+        for inp in self.__inputs:
+            inp.clear()
+
+        for p in self.__params:
+            p.terminate()
+
     def addInput(self, typeClass, name=None):
         if name is None or not util.ValidateName(name):
             name = "input"
@@ -138,7 +160,7 @@ class Component(core.ComponentBase):
 
         return False
 
-    def upstream(self):
+    def upstream(self, ignoreProxy=True):
         upstreams = []
         for inp in self.__inputs:
             for chn in inp.chains():
@@ -147,15 +169,26 @@ class Component(core.ComponentBase):
                     continue
 
                 up = src.parent()
-                if isinstance(up, core.Proxy):
+
+                if up is None:
                     continue
+
+                if up.isProxy():
+                    if ignoreProxy:
+                        continue
+
+                    proxied = up.proxySource()
+                    if proxied is None:
+                        continue
+
+                    up = proxied.parent()
 
                 if up:
                     upstreams.append(up)
 
         return upstreams
         
-    def downstream(self):
+    def downstream(self, ignoreProxy=True):
         downstreams = []
         for oup in self.__outputs:
             for chn in oup.chains():
@@ -167,11 +200,22 @@ class Component(core.ComponentBase):
                 if dst is None:
                     continue
 
-                if isinstance(down, core.Proxy):
+                if not down:
                     continue
 
-                if down:
+                if not down.isProxy():
                     downstreams.append(down)
+                    continue
+
+                if ignoreProxy:
+                    continue
+
+                for d in down.proxyDestination():
+                    d_parent = d.parent()
+                    if d_parent is None:
+                        continue
+
+                    downstreams.append(d_parent)
 
         return downstreams
 

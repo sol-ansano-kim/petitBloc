@@ -5,7 +5,7 @@ from . import workerManager
 import copy
 
 
-class InPort(core.PortBase):
+class InPort(core.PortIn, core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(InPort, self).__init__(typeClass, name=name, parent=parent)
         self.__in_chain = None
@@ -14,9 +14,6 @@ class InPort(core.PortBase):
 
     def packetHistory(self):
         return copy.copy(self.__values)
-
-    def isInPort(self):
-        return True
 
     def isConnected(self):
         return self.__in_chain is not None
@@ -57,6 +54,15 @@ class InPort(core.PortBase):
         if self.__in_chain:
             self.__in_chain.activate()
 
+    def clear(self):
+        self.__values = []
+        if self.__value_queue is not None:
+            workerManager.WorkerManager.DeleteQueue(self.__value_queue)
+            self.__value_queue = None
+
+        for c in self.chains():
+            c.clear()
+
     def terminate(self):
         if self.__value_queue is not None:
             while (not self.__value_queue.empty()):
@@ -69,7 +75,7 @@ class InPort(core.PortBase):
             self.__in_chain.terminate()
 
 
-class OutPort(core.PortBase):
+class OutPort(core.PortOut, core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(OutPort, self).__init__(typeClass, name=name, parent=parent)
         self.__out_chains = []
@@ -78,9 +84,6 @@ class OutPort(core.PortBase):
 
     def packetHistory(self):
         return copy.copy(self.__values)
-
-    def isOutPort(self):
-        return True
 
     def isConnected(self):
         return len(self.__out_chains) > 0
@@ -108,10 +111,16 @@ class OutPort(core.PortBase):
         for chain in self.__out_chains:
             chain.sendEOP()
 
-    def send(self, value):
-        if not self.__out_chains:
-            return False
+    def clear(self):
+        self.__values = []
+        if self.__value_queue is not None:
+            workerManager.WorkerManager.DeleteQueue(self.__value_queue)
+            self.__value_queue = None
 
+        for c in self.chains():
+            c.clear()
+
+    def send(self, value):
         pack = None
         if isinstance(value, self.typeClass()):
             pack = packet.Packet(value)
@@ -127,6 +136,9 @@ class OutPort(core.PortBase):
 
         if self.__value_queue is not None and not pack.isEOP():
             self.__value_queue.put(pack.value())
+
+        if not self.__out_chains:
+            return False
 
         pack.setRefCount(len(self.__out_chains))
 

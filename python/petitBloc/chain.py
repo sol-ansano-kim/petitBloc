@@ -15,9 +15,7 @@ class Chain(core.ChainBase):
 
         return self.__packets.empty()
 
-    def disconnect(self):
-        super(Chain, self).disconnect()
-
+    def clear(self):
         if self.__packets is not None:
             while (not self.__packets.empty()):
                 self.__packets.get().drop()
@@ -25,17 +23,29 @@ class Chain(core.ChainBase):
             workerManager.WorkerManager.DeleteQueue(self.__packets)
             self.__packets = None
 
+    def disconnect(self):
+        super(Chain, self).disconnect()
+
+        self.clear()
+
     def activate(self):
+        src = self.src()
+        dst = self.dst()
+
+        if src is None or dst is None:
+            return
+
+        if src.isByPassing():
+            return
+
+        if dst.isByPassing():
+            return
+
         if self.__packets is None:
             self.__packets = workerManager.WorkerManager.CreateQueue()
 
     def terminate(self):
-        if self.__packets is not None:
-            while (not self.__packets.empty()):
-                self.__packets.get().drop()
-
-            workerManager.WorkerManager.DeleteQueue(self.__packets)
-            self.__packets = None
+        self.clear()
 
     def send(self, pack):
         if self.dst() is None:

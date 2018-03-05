@@ -6,6 +6,18 @@ class Proxy():
     pass
 
 
+class PortIn():
+    pass
+
+
+class PortOut():
+    pass
+
+
+class NetworkBlock():
+    pass
+
+
 class PBEnum():
     pass
 
@@ -140,12 +152,18 @@ class PortBase(object):
 
         return False
 
+    def clear(self):
+        pass
+
     def isConnected(self):
         return False
 
     def chains(self):
         for i in range(0):
             yield i
+
+    def carry(self, pack):
+        return False
 
     def send(self):
         return False
@@ -156,11 +174,14 @@ class PortBase(object):
     def typeClass(self):
         return self.__type_class
 
+    def isProxy(self):
+        return isinstance(self, Proxy)
+
     def isInPort(self):
-        return False
+        return isinstance(self, PortIn)
 
     def isOutPort(self):
-        return False
+        return isinstance(self, PortOut)
 
     def activate(self):
         pass
@@ -173,6 +194,15 @@ class PortBase(object):
 
     def packetHistory(self):
         return []
+
+    def byPass(self):
+        pass
+
+    def isByPassing(self):
+        if not self.__parent:
+            return False
+
+        return self.__parent.isByPassing()
 
 
 class ChainBase(object):
@@ -209,6 +239,9 @@ class ChainBase(object):
     def empty(self):
         return True
 
+    def clear(self):
+        pass
+
     def disconnect(self):
         self.__src.disconnect(self)
         self.__dst.disconnect(self)
@@ -233,12 +266,16 @@ class ChainBase(object):
     def needToCast(self):
         return self.__need_to_cast
 
+    def byPass(self):
+        self.sendEOP()
+
 
 class ComponentBase(object):
     Initialized = 0
     Active = 1
     Terminated = 2
     Failed = 3
+    ByPassing = 4
 
     def __init__(self, name="", parent=None):
         self.__name = name
@@ -264,8 +301,11 @@ class ComponentBase(object):
     def type(self):
         return self.__class_name
 
+    def isProxy(self):
+        return isinstance(self, Proxy)
+
     def hasNetwork(self):
-        return False
+        return isinstance(self, NetworkBlock)
 
     def expandable(self):
         return False
@@ -275,6 +315,9 @@ class ComponentBase(object):
 
     def name(self):
         return self.__name
+
+    def clear(self):
+        pass
 
     def ancestor(self):
         if self.__parent is None:
@@ -323,6 +366,9 @@ class ComponentBase(object):
     def isFailed(self):
         return self.__state is ComponentBase.Failed
 
+    def isByPassing(self):
+        return self.__state is ComponentBase.ByPassing
+
     def isOver(self):
         return (self.__state is ComponentBase.Terminated) or (self.__state is ComponentBase.Failed)
 
@@ -337,6 +383,9 @@ class ComponentBase(object):
             self.__state = ComponentBase.Terminated
         else:
             self.__state = ComponentBase.Failed
+
+    def byPass(self):
+        self.__state = ComponentBase.ByPassing
 
     def addInput(self, typeClass, name=None):
         return None
@@ -390,8 +439,8 @@ class ComponentBase(object):
     def input(self, index_or_name):
         return None
 
-    def upstream(self):
+    def upstream(self, ignoreProxy=True):
         return []
         
-    def downstream(self):
+    def downstream(self, ignoreProxy=True):
         return []

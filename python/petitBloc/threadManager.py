@@ -187,6 +187,49 @@ class LogManager(object):
         LogManager.__DebugLog[path] = log_list
 
 
+class ValueManager(object):
+    class __Value(object):
+        def __init__(self, valueType, defaultValue=None):
+            self.__value_type = valueType
+            self.__value = defaultValue
+
+        @property
+        def value(self):
+            return self.__value
+
+        @value.setter
+        def value(self, v):
+            self.__value = v
+
+    __Count = 0
+    __Values = []
+
+    @staticmethod
+    def Reset():
+        for v in ValueManager.__Values:
+            del v
+
+    @staticmethod
+    def Count():
+        return ValueManager.__Count
+
+    @staticmethod
+    def CreateValue(valueType, defaultValue=None):
+        ValueManager.__Count += 1
+
+        v = ValueManager.__Value(valueType, defaultValue=defaultValue)
+        ValueManager.__Values.append(v)
+
+        return v
+
+    @staticmethod
+    def DeleteValue(v):
+        if v in ValueManager.__Values:
+            ValueManager.__Count -= 1
+            ValueManager.__Values.remove(v)
+        del v
+
+
 class QueueManager(object):
     __Count = 0
     __Queues = []
@@ -213,8 +256,8 @@ class QueueManager(object):
 
     @staticmethod
     def DeleteQueue(q):
-        QueueManager.__Count -= 1
         if q in QueueManager.__Queues:
+            QueueManager.__Count -= 1
             QueueManager.__Queues.remove(q)
         del q
 
@@ -239,10 +282,10 @@ class ProcessWorker(threading.Thread):
             LogManager.Error(self.__obj.path(), e)
 
         LogManager.TimeReport(self.__obj.path(), time.time() - st)
-        self.terminate()
 
     def start(self):
         self.__obj.activate()
+
         super(ProcessWorker, self).start()
 
     def terminate(self):
@@ -253,6 +296,7 @@ class ThreadManager(object):
     __Threads = []
     __MaxThreads = 999
     __PerProcessCallback = None
+    __Lock = threading.Lock()
 
     @staticmethod
     def SetPerProcessCallback(callback):
@@ -287,16 +331,41 @@ class ThreadManager(object):
     @staticmethod
     def Submit(obj, args=(), kwargs={}):
         while (len(ThreadManager.__Threads) >= ThreadManager.__MaxThreads):
-            for p in ThreadManager.__Threads:
-                if p.is_alive():
-                    continue
-                else:
-                    ThreadManager.RunPerProcessCallback()
-                    ThreadManager.DeleteProcess(p)
+            ThreadManager.LockAcquire()
+            ThreadManager.CleaunUp()
+            ThreadManager.LockRelease()
 
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
         ThreadManager.__Threads.append(p)
         p.start()
+
+    @staticmethod
+    def CleaunUp():
+        for p in ThreadManager.__Threads:
+            if not p.is_alive():
+                ThreadManager.RunPerProcessCallback()
+                ThreadManager.DeleteProcess(p)
+
+    @staticmethod
+    def IsWorking():
+        working = False
+
+        ThreadManager.CleaunUp()
+
+        for p in ThreadManager.__Threads:
+            if p.is_alive():
+                working = True
+                break
+
+        return working
+
+    @staticmethod
+    def LockAcquire():
+        ThreadManager.__Lock.acquire()
+
+    @staticmethod
+    def LockRelase():
+        ThreadManager.__Lock.release()
 
     @staticmethod
     def DeleteProcess(p):
@@ -313,10 +382,31 @@ class ThreadManager(object):
                     ThreadManager.DeleteProcess(p)
 
 
+def __needToWait(bloc):
+    suspend = __parentSuspended(bloc)
+
+    if not suspend:
+        for up in bloc.upstream(ignoreProxy=False):
+            if not up.isByPassing() and up.isWaiting():
+                suspend = True
+                break
+
+    return suspend
+
+
+def __parentSuspended(bloc):
+    parent = bloc.parent()
+    if parent and parent.isWaiting():
+        return True
+
+    return False
+
+
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    ThreadManager.Reset()
     LogManager.Reset()
     QueueManager.Reset()
-    ThreadManager.Reset()
+    ValueManager.Reset()
     SubprocessManager.Reset()
     ThreadManager.SetMaxProcess(maxProcess)
     ThreadManager.SetPerProcessCallback(perProcessCallback)
@@ -327,24 +417,26 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         s.resetState()
 
     while (work_schedule):
+        ThreadManager.CleaunUp()
+
         bloc = work_schedule.pop(0)
-        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
+        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed() or bloc.isByPassing():
             continue
 
-        suspend = False
+        ThreadManager.LockAcquire()
 
-        for up in bloc.upstream():
-            if up.isWaiting():
-                suspend = True
-                break
-
-        if suspend:
+        if __needToWait(bloc):
             work_schedule.append(bloc)
+            ThreadManager.LockRelase()
             continue
 
+        ThreadManager.LockRelase()
         ThreadManager.Submit(bloc)
 
     ThreadManager.Join()
+
+    for s in work_schedule:
+        s.clear()
 
     for s in schedule:
         if not s.hasNetwork():
@@ -362,5 +454,6 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         perProcessCallback()
 
     QueueManager.Reset()
+    ValueManager.Reset()
     ThreadManager.Reset()
     SubprocessManager.Reset()

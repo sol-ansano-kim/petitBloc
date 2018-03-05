@@ -1,6 +1,7 @@
 from Qt import QtCore
 from .. import box
 from .. import chain
+from .. import proxy
 from .. import blockManager
 from .. import workerManager
 from . import uiUtil
@@ -58,31 +59,23 @@ class BoxModel(QtCore.QObject):
 
     def cleanUpInputProxies(self):
         inputs = []
-        outputs = []
 
-        for proxy in self.__box.inputProxies():
-            inp = self.__box.inputProxyIn(proxy)
-            outp = self.__box.inputProxyOut(proxy)
-            if not inp.isConnected() and not outp.isConnected():
-                self.__box.removeInputProxy(proxy)
-                inputs.append(inp.name())
-                outputs.append(outp.name())
+        for prx in self.__box.inputProxies():
+            if not prx.isConnected():
+                self.__box.removeInputProxy(prx)
+                inputs.append(prx)
 
-        return (inputs, outputs)
+        return inputs
 
     def cleanUpOutputProxies(self):
-        inputs = []
         outputs = []
 
-        for proxy in self.__box.outputProxies():
-            inp = self.__box.outputProxyIn(proxy)
-            outp = self.__box.outputProxyOut(proxy)
-            if not inp.isConnected() and not outp.isConnected():
-                self.__box.removeOutputProxy(proxy)
-                inputs.append(inp.name())
-                outputs.append(outp.name())
+        for prx in self.__box.outputProxies():
+            if not prx.isConnected():
+                self.__box.removeOutputProxy(prx)
+                outputs.append(prx)
 
-        return (inputs, outputs)
+        return outputs
 
     def addInputProxy(self, typeClass, name):
         return self.__box.addInputProxy(typeClass, name)
@@ -120,7 +113,10 @@ class BoxModel(QtCore.QObject):
             if srcs[0].src() == srcPort:
                 return
 
-        chn = chain.Chain(srcPort, dstPort)
+        if srcPort.isProxy() or dstPort.isProxy():
+            chn = proxy.ProxyChain(srcPort, dstPort)
+        else:
+            chn = chain.Chain(srcPort, dstPort)
 
         if chn is None:
             raise Exception, "Failed to connect {} to {}".format(srcPort.path(), dstPort.path())
@@ -178,7 +174,7 @@ class BoxModel(QtCore.QObject):
                 boxies.append(b)
 
             block_data = {}
-            if isinstance(b, box.ProxyBlock):
+            if b.isProxy():
                 if b.parent() == self.__box:
                     continue
 
@@ -216,25 +212,37 @@ class BoxModel(QtCore.QObject):
             data["proxyPorts"].append(box_data)
 
             for pn in sorted(b.inputProxies()):
-                op = b.inputProxyOut(pn)
-                if op is None:
-                    continue
-
-                in_data.append({"name": pn, "type": op.typeClass().__name__})
+                in_data.append({"name": pn.name(), "type": pn.typeClass().__name__})
 
             for pn in sorted(b.outputProxies()):
-                ip = b.outputProxyIn(pn)
-                out_data.append({"name": pn, "type": ip.typeClass().__name__})
+                out_data.append({"name": pn.name(), "type": pn.typeClass().__name__})
 
         ## connection data
         for b in blocks:
-            for p in b.inputs():
+            if b.isProxy():
+                inputs = map(lambda x: x.inPort(), b.proxies())
+            else:
+                inputs = b.inputs()
+
+            for p in inputs:
                 if not p.isConnected():
                     continue
 
+                src_path = None
+                dst_path = None
                 src_port = map(lambda x: x.src(), p.chains())[0]
 
-                data["connections"].append({"path": uiUtil.PopRootPath(p.path()), "src": uiUtil.PopRootPath(src_port.path())})
+                if src_port.isProxy():
+                    src_path = src_port.parent().path()
+                else:
+                    src_path = src_port.path()
+
+                if p.isProxy():
+                    dst_path = p.parent().path()
+                else:
+                    dst_path = p.path()
+
+                data["connections"].append({"path": uiUtil.PopRootPath(dst_path), "src": uiUtil.PopRootPath(src_path)})
 
         return data
 

@@ -3,6 +3,7 @@ import json
 import operator
 from . import box
 from . import chain
+from . import proxy
 from . import blockManager
 from . import workerManager
 from . import const
@@ -158,8 +159,8 @@ def __read(filePath):
                         print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
 
     ## proxy ports
-    for proxy in data["proxyPorts"]:
-        full_path = __addRootPath(proxy["path"])
+    for prx in data["proxyPorts"]:
+        full_path = __addRootPath(prx["path"])
         parent = root.findBlock(full_path)
 
         if parent is None or not isinstance(parent, box.Box):
@@ -167,7 +168,7 @@ def __read(filePath):
 
             continue
 
-        for inp in proxy.get("in", []):
+        for inp in prx.get("in", []):
             type_name = inp["type"]
             type_class = manager.findObjectClass(type_name)
             if not type_class:
@@ -175,7 +176,7 @@ def __read(filePath):
 
             parent.addInputProxy(type_class, inp["name"])
 
-        for outp in proxy.get("out", []):
+        for outp in prx.get("out", []):
             type_name = outp["type"]
             type_class = manager.findObjectClass(type_name)
             if not type_class:
@@ -187,28 +188,49 @@ def __read(filePath):
     for con in data["connections"]:
         src_full_path, src_port_name = __addRootPath(con["src"]).split(".")
         dst_full_path, dst_port_name = __addRootPath(con["path"]).split(".")
+        chain_class = chain.Chain
 
         src_bloc = root.findBlock(src_full_path)
         if src_bloc is None:
             print("Warning: Could not find the source block - {}".format(src_full_path))
             continue
 
-        src_port = src_bloc.output(src_port_name)
-        if src_port is None:
-            print("Warning : Could not find the source port - {}.{}".format(src_full_path, src_port_name))
-            continue
+        if src_bloc.isProxy():
+            src_proxy = src_bloc.proxy(src_port_name)
+            if src_proxy is None:
+                print("Warning : Could not find the source port - {}.{}".format(src_full_path, src_port_name))
+                continue
+
+            src_port = src_proxy.outPort()
+            chain_class = proxy.ProxyChain
+
+        else:
+            src_port = src_bloc.output(src_port_name)
+            if src_port is None:
+                print("Warning : Could not find the source port - {}.{}".format(src_full_path, src_port_name))
+                continue
 
         dst_bloc = root.findBlock(dst_full_path)
         if dst_bloc is None:
             print("Warning: Could not find the destination block - {}".format(dst_full_path))
             continue
 
-        dst_port = dst_bloc.input(dst_port_name)
-        if dst_port is None:
-            print("Warning : Could not find the destination port - {}.{}".format(dst_full_path, dst_port_name))
-            continue
+        if dst_bloc.isProxy():
+            dst_proxy = dst_bloc.proxy(dst_port_name)
+            if dst_proxy is None:
+                print("Warning : Could not find the source port - {}.{}".format(src_full_path, src_port_name))
+                continue
 
-        res = chain.Chain(src_port, dst_port)
+            dst_port = dst_proxy.inPort()
+            chain_class = proxy.ProxyChain
+
+        else:
+            dst_port = dst_bloc.input(dst_port_name)
+            if dst_port is None:
+                print("Warning : Could not find the destination port - {}.{}".format(dst_full_path, dst_port_name))
+                continue
+
+        res = chain_class(src_port, dst_port)
         if res is None:
             print("Warning : Faild to connect {}.{} >> {}.{}".format(src_port.path(), dst_port.path()))
 
