@@ -220,25 +220,11 @@ class Box(core.NetworkBlock, component.Component):
     def addOutputProxy(self, typeClass, name=None):
         return self.__out_proxy.addProxy(typeClass, name=name)
 
-    def removeInputProxyPort(self, proxyPort):
-        name = self.__in_proxy.proxyName(proxyPort)
-        if name is None:
-            return False
+    def removeInputProxy(self, prt):
+        return self.__in_proxy.removeProxy(prt)
 
-        return self.removeInputProxy(name)
-
-    def removeOutputProxyPort(self, proxyPort):
-        name = self.__out_proxy.proxyName(proxyPort)
-        if name is None:
-            return False
-
-        return self.removeOutputProxy(name)
-
-    def removeInputProxy(self, name):
-        return self.__in_proxy.removeProxy(name)
-
-    def removeOutputProxy(self, name):
-        return self.__out_proxy.removeProxy(name)
+    def removeOutputProxy(self, prt):
+        return self.__out_proxy.removeProxy(prt)
 
     def inProxyBlock(self):
         return self.__in_proxy

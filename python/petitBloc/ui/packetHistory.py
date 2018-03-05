@@ -70,17 +70,10 @@ class PacketModel(QtCore.QAbstractTableModel):
         if self.__bloc is not None:
             ports = []
 
-            if self.__bloc.hasNetwork():
-                for p in self.__bloc.inputProxies():
-                    ports.append(self.__bloc.inputProxyIn(p))
-                for p in self.__bloc.outputProxies():
-                    ports.append(self.__bloc.outputProxyOut(p))
-
-            else:
-                for p in self.__bloc.inputs():
-                    ports.append(p)
-                for p in self.__bloc.outputs():
-                    ports.append(p)
+            for p in self.__bloc.inputs():
+                ports.append(p)
+            for p in self.__bloc.outputs():
+                ports.append(p)
 
             for p in ports:
                 self.__ports.append(p.name())

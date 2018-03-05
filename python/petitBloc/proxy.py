@@ -2,7 +2,7 @@ from . import core
 from . import component
 from . import util
 from . import chain
-from . import packet
+import copy
 
 
 class ProxyChain(core.Proxy, chain.Chain):
@@ -10,8 +10,15 @@ class ProxyChain(core.Proxy, chain.Chain):
         super(ProxyChain, self).__init__(srcPort, dstPort)
 
     def activate(self):
-        if self.dst() is None:
+        src = self.src()
+        dst = self.dst()
+
+        if src is None or dst is None:
             return
+
+        if src.isProxy():
+            if src.proxySource() is None:
+                return
 
         if not self.dst().isProxy():
             super(ProxyChain, self).activate()
@@ -31,6 +38,13 @@ class ProxyInPort(core.Proxy, core.PortIn, core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(ProxyInPort, self).__init__(typeClass, name=name, parent=parent)
         self.__in_chain = None
+
+    def path(self):
+        parent = self.parent()
+        if not parent:
+            return self.name()
+
+        return "{}.{}".format(parent.path(), self.name())
 
     def isConnected(self):
         return self.__in_chain is not None
@@ -74,6 +88,13 @@ class ProxyOutPort(core.Proxy, core.PortOut, core.PortBase):
         super(ProxyOutPort, self).__init__(typeClass, name=name, parent=parent)
         self.__out_chains = []
 
+    def path(self):
+        parent = self.parent()
+        if not parent:
+            return self.name()
+
+        return "{}.{}".format(parent.path(), self.name())
+
     def isConnected(self):
         return len(self.__out_chains) > 0
 
@@ -113,12 +134,39 @@ class ProxyOutPort(core.Proxy, core.PortOut, core.PortBase):
 
         return destinations
 
+    def isByPassing(self):
+        if self.parent().isByPassing():
+            return True
+
+        for c in self.parent().inPort().chains():
+            if c.src().isByPassing():
+                return True
+
+        return False
+
+    def byPass(self):
+        for c in self.__out_chains:
+            c.byPass()
+
+    def activate(self):
+        if self.proxySource() is None:
+            for c in self.__out_chains:
+                dst = c.dst()
+
+                if dst is None:
+                    continue
+
+                if dst.isProxy():
+                    continue
+
+                c.sendEOP()
+
 
 class ProxyPort(core.Proxy, core.PortIn, core.PortOut, core.PortBase):
     def __init__(self, typeClass, name=None, parent=None):
         super(ProxyPort, self).__init__(typeClass, name=name, parent=parent)
-        self.__in = ProxyInPort(typeClass, name="_in".format(self.name()), parent=self)
-        self.__out = ProxyOutPort(typeClass, name="_out".format(self.name()), parent=self)
+        self.__in = ProxyInPort(typeClass, name="in".format(self.name()), parent=self)
+        self.__out = ProxyOutPort(typeClass, name="out".format(self.name()), parent=self)
 
     def inPort(self):
         return self.__in
@@ -135,6 +183,24 @@ class ProxyPort(core.Proxy, core.PortIn, core.PortOut, core.PortBase):
     def proxyDestination(self):
         return self.__out.proxyDestination()
 
+    def isConnected(self):
+        return self.__in.isConnected() or self.__out.isConnected()
+
+    def activate(self):
+        self.__in.activate()
+        self.__out.activate()
+
+    def byPass(self):
+        self.__in.byPass()
+        self.__out.byPass()
+
+    def isByPassing(self):
+        parent =  self.parent()
+        if parent is None:
+            return False
+
+        return parent.isByPassing()
+
 
 class ProxyBlock(core.Proxy, component.Component):
     In = 0
@@ -144,21 +210,6 @@ class ProxyBlock(core.Proxy, component.Component):
         super(ProxyBlock, self).__init__(name=name, parent=parent)
         self.__ports = []
         self.__direction = direction
-
-    # def output(self, name):
-    #     for pp in self.__ports:
-
-    #         if pp["out"].name() == name:
-    #             return pp["out"]
-
-    #     return None
-
-    # def input(self, name):
-    #     for pp in self.__ports:
-    #         if pp["in"].name() == name:
-    #             return pp["in"]
-
-    #     return None
 
     def hasConnection(self, port):
         for p in self.__ports:
@@ -178,7 +229,7 @@ class ProxyBlock(core.Proxy, component.Component):
         return self.__direction is ProxyBlock.Out
 
     def proxies(self):
-        return self.__ports
+        return copy.copy(self.__ports)
 
     def hasProxy(self, name):
         for p in self.__ports:
@@ -186,6 +237,13 @@ class ProxyBlock(core.Proxy, component.Component):
                 return True
 
         return False
+
+    def proxy(self, name):
+        for p in self.__ports:
+            if p.name() == name:
+                return p
+
+        return None
 
     def proxyIn(self, name):
         for p in self.__ports:
@@ -201,15 +259,6 @@ class ProxyBlock(core.Proxy, component.Component):
 
         return None
 
-    # def proxyName(self, port):
-    #     for name, ports in self.__ports.iteritems():
-    #         if ports["in"] == port:
-    #             return name
-    #         if ports["out"] == port:
-    #             return name
-
-    #     return None
-
     def getContext(self):
         return {}
 
@@ -221,27 +270,21 @@ class ProxyBlock(core.Proxy, component.Component):
 
         name = util.GetUniqueName(name, all_names)
 
-        p = ProxyPort(typeClass, name=name)
+        p = ProxyPort(typeClass, name=name, parent=self)
         self.__ports.append(p)
 
         return p
 
-    def removeProxy(self, name):
-        port = None
-        for p in self.__ports:
-            if p.name() == name:
-                port = p
-                break
-
-        if not port:
+    def removeProxy(self, prx):
+        if prx not in self.__ports:
             return False
 
-        self.__ports.remove(port)
+        self.__ports.remove(prx)
 
-        for c in port.inPort().chains():
+        for c in prx.inPort().chains():
             c.disconnect()
 
-        for c in port.outPort().chains():
+        for c in prx.outPort().chains():
             c.disconnect()
 
         return True
@@ -250,3 +293,9 @@ class ProxyBlock(core.Proxy, component.Component):
         super(ProxyBlock, self).activate()
         for port in self.__ports:
             port.activate()
+
+    def byPass(self):
+        for p in self.__ports:
+            p.byPass()
+
+        super(ProxyBlock, self).byPass()

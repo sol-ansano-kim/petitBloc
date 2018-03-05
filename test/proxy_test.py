@@ -183,6 +183,54 @@ class ProxyPortTest(unittest.TestCase):
         self.assertTrue(add1.input(0).isConnected())
         self.assertTrue(add2.input(0).isConnected())
 
+    def test_incomp(self):
+        box1 = box.Box("bigBox")
+        box2 = box.Box("smallBox")
+        num = MakeNumber()
+        double = Double()
+        dmp = DmpFloat()
+        add = Add()
+
+        box1.addBlock(box2)
+        box1.addBlock(num)
+        box2.addBlock(double)
+        box1.addBlock(add)
+        box1.addBlock(dmp)
+        box2.addInputProxy(float, "inFloat")
+        box2.addOutputProxy(float, "outFloat")
+
+        cn1 = proxy.ProxyChain(box2.inputProxyOut("inFloat"), double.input(0))
+        cn2 = proxy.ProxyChain(box2.outputProxyOut("outFloat"), dmp.input(0))
+
+        workerManager.WorkerManager.SetUseProcess(True)
+        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+
+        cn1.disconnect()
+        cn2.disconnect()
+
+        cn1 = proxy.ProxyChain(num.output(0), box2.inputProxyIn("inFloat"))
+        cn2 = proxy.ProxyChain(double.output(0), box2.outputProxyIn("outFloat"))
+
+        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+
+        proxy.ProxyChain(num.output(0), box2.inputProxyIn("inFloat"))
+        proxy.ProxyChain(box2.inputProxyOut("inFloat"), double.input(0))
+        proxy.ProxyChain(double.output(0), box2.outputProxyIn("outFloat"))
+        proxy.ProxyChain(box2.outputProxyOut("outFloat"), add.input(0))
+        chain.Chain(add.output(0), dmp.input(0))
+
+        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+
+        vals = []
+        for i in range(100):
+            vals.append(float(i * 2) + 1)
+
+        dmped = []
+        while (not dmp.dmp.empty()):
+            dmped.append(dmp.dmp.get())
+
+        self.assertEqual(vals, dmped)
+
     def test_run(self):
         box1 = box.Box("bigBox")
         box2 = box.Box("smallBox")

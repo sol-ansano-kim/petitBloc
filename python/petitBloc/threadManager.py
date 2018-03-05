@@ -285,6 +285,7 @@ class ProcessWorker(threading.Thread):
 
     def start(self):
         self.__obj.activate()
+
         super(ProcessWorker, self).start()
 
     def terminate(self):
@@ -386,7 +387,7 @@ def __needToWait(bloc):
 
     if not suspend:
         for up in bloc.upstream(ignoreProxy=False):
-            if up.isWaiting() or __parentSuspended(up):
+            if not up.isByPassing() and up.isWaiting():
                 suspend = True
                 break
 
@@ -399,17 +400,6 @@ def __parentSuspended(bloc):
         return True
 
     return False
-
-
-def __upstreamSuspended(bloc):
-    suspend = False
-
-    for up in bloc.upstream(ignoreProxy=False):
-        if __parentSuspended(up):
-            suspend = True
-            break
-
-    return suspend
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
@@ -427,28 +417,16 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         s.resetState()
 
     while (work_schedule):
+        ThreadManager.CleaunUp()
+
         bloc = work_schedule.pop(0)
-        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
+        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed() or bloc.isByPassing():
             continue
 
         ThreadManager.LockAcquire()
 
-        suspend = __needToWait(bloc)
-
-        if suspend:
+        if __needToWait(bloc):
             work_schedule.append(bloc)
-
-            if not ThreadManager.IsWorking() and __parentSuspended(bloc):
-                stuck = True
-                for s in work_schedule:
-                    if not __parentSuspended(s) and not __upstreamSuspended(s):
-                        stuck = False
-                        break
-
-                if stuck:
-                    ThreadManager.LockRelase()
-                    break
-
             ThreadManager.LockRelase()
             continue
 

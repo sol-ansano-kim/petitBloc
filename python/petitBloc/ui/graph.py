@@ -369,34 +369,32 @@ class SubNet(Graph):
         self.BlockDeleted.connect(self.cleanUpProxies)
 
     def cleanUpProxies(self):
-        inputs, outputs = self.boxModel().cleanUpInputProxies()
-        for p in outputs:
-            self.deleteAttribute(self.__proxy_in, self.__proxy_in.attrs.index(p))
+        inputs = self.boxModel().cleanUpInputProxies()
         for p in inputs:
-            self.ProxyPortRemoved.emit(self.boxModel().box(), self.__proxy_in, p)
+            self.deleteAttribute(self.__proxy_in, self.__proxy_in.attrs.index(p.name()))
+            self.ProxyPortRemoved.emit(self.boxModel().box(), self.__proxy_in, p.name())
 
-        inputs, outputs = self.boxModel().cleanUpOutputProxies()
-        for p in inputs:
-            self.deleteAttribute(self.__proxy_out, self.__proxy_out.attrs.index(p))
+        outputs = self.boxModel().cleanUpOutputProxies()
         for p in outputs:
-            self.ProxyPortRemoved.emit(self.boxModel().box(), self.__proxy_out, p)
+            self.deleteAttribute(self.__proxy_out, self.__proxy_out.attrs.index(p.name()))
+            self.ProxyPortRemoved.emit(self.boxModel().box(), self.__proxy_out, p.name())
 
         self.__proxy_in.scene().updateScene()
         self.__proxy_out.scene().updateScene()
 
     def addInputProxy(self, typeClass, name):
-        ip, op = self.boxModel().addInputProxy(typeClass, name)
+        prx = self.boxModel().addInputProxy(typeClass, name)
         proxy_node = self.inProxyNode()
-        self.createAttribute(node=proxy_node, port=op, plug=True, socket=False, dataType=op.typeClass(), proxyNode=proxy_node)
-        self.ProxyPortAdded.emit(self.box(), proxy_node, ip)
-        return ip, op
+        self.createAttribute(node=proxy_node, port=prx.outPort(), plug=True, socket=False, dataType=prx.typeClass(), proxyNode=proxy_node)
+        self.ProxyPortAdded.emit(self.box(), proxy_node, prx.inPort())
+        return prx
 
     def addOutputProxy(self, typeClass, name):
-        ip, op = self.boxModel().addOutputProxy(typeClass, name)
+        prx = self.boxModel().addOutputProxy(typeClass, name)
         proxy_node = self.outProxyNode()
-        self.createAttribute(node=proxy_node, port=ip, plug=False, socket=True, dataType=ip.typeClass(), proxyNode=proxy_node)
-        self.ProxyPortAdded.emit(self.box(), proxy_node, op)
-        return ip, op
+        self.createAttribute(node=proxy_node, port=prx.inPort(), plug=False, socket=True, dataType=prx.typeClass(), proxyNode=proxy_node)
+        self.ProxyPortAdded.emit(self.box(), proxy_node, prx.outPort())
+        return prx
 
     def removeInputProxy(self, port):
         self.boxModel().removeInputProxy(port)
@@ -480,6 +478,12 @@ class BlocItem(nodz_main.NodeItem):
             return
 
         self.attrPreset = preset
+        port_name = None
+
+        if port.isProxy():
+            port_name = port.parent().name()
+        else:
+            port_name = port.name()
 
         if plug:
             if proxyNode:
@@ -497,7 +501,7 @@ class BlocItem(nodz_main.NodeItem):
                                           preset=preset,
                                           dataType=dataType)
 
-            self.plugs[port.name()] = plugInst
+            self.plugs[port_name] = plugInst
 
         if socket:
             if proxyNode:
@@ -514,21 +518,21 @@ class BlocItem(nodz_main.NodeItem):
                                            preset=preset,
                                            dataType=dataType)
 
-            self.sockets[port.name()] = socketInst
+            self.sockets[port_name] = socketInst
 
         self.attrCount += 1
 
         if index == -1 or index > self.attrCount:
-            self.attrs.append(port.name())
+            self.attrs.append(port_name)
         else:
-            self.attrs.insert(index, port.name())
+            self.attrs.insert(index, port_name)
 
-        self.attrsData[port.name()] = {'name': port.name(),
-                                       'port': port,
-                                       'socket': socket,
-                                       'plug': plug,
-                                       'preset': preset,
-                                       'dataType': dataType}
+        self.attrsData[port_name] = {'name': port_name,
+                                     'port': port,
+                                     'socket': socket,
+                                     'plug': plug,
+                                     'preset': preset,
+                                     'dataType': dataType}
 
         self.update()
 
@@ -671,7 +675,11 @@ class ProxyItem(BlocItem):
 
 class OutputPortItem(nodz_main.PlugItem):
     def __init__(self, parent, port, index, preset, dataType):
-        super(OutputPortItem, self).__init__(parent, port.name(), index, preset, dataType)
+        name = port.name()
+        if port.isProxy():
+            name = port.parent().name()
+
+        super(OutputPortItem, self).__init__(parent, name, index, preset, dataType)
         self.__port = port
 
     def port(self):
@@ -786,9 +794,9 @@ class OutputPortItem(nodz_main.PlugItem):
                         prnt = self.port().parent()
                         if prnt:
                             new_name = "{}_{}".format(prnt.name(), new_name)
-                        ip, op = nodzInst.addOutputProxy(self.port().typeClass(), new_name)
+                        prx = nodzInst.addOutputProxy(self.port().typeClass(), new_name)
                         proxy_node = nodzInst.outProxyNode()
-                        target_port = proxy_node.sockets[ip.name()]
+                        target_port = proxy_node.sockets[prx.name()]
                         self.newConnection.target = target_port
                         self.newConnection.source = self
                         self.newConnection.target_point = target_port.center()
@@ -850,7 +858,11 @@ class OutputPortItem(nodz_main.PlugItem):
 
 class InputPortItem(nodz_main.SocketItem):
     def __init__(self, parent, port, index, preset, dataType):
-        super(InputPortItem, self).__init__(parent, port.name(), index, preset, dataType)
+        name = port.name()
+        if port.isProxy():
+            name = port.parent().name()
+
+        super(InputPortItem, self).__init__(parent, name, index, preset, dataType)
         self.__port = port
 
     def port(self):
@@ -970,9 +982,9 @@ class InputPortItem(nodz_main.SocketItem):
                         prnt = self.port().parent()
                         if prnt:
                             new_name = "{}_{}".format(prnt.name(), new_name)
-                        ip, op = nodzInst.addInputProxy(self.port().typeClass(), new_name)
+                        prx = nodzInst.addInputProxy(self.port().typeClass(), new_name)
                         proxy_node = nodzInst.inProxyNode()
-                        target_port = proxy_node.plugs[op.name()]
+                        target_port = proxy_node.plugs[prx.name()]
                         self.newConnection.target = target_port
                         self.newConnection.source = self
                         self.newConnection.target_point = target_port.center()

@@ -29,7 +29,19 @@ class Chain(core.ChainBase):
         self.clear()
 
     def activate(self):
-        if self.dst() is not None and self.__packets is None:
+        src = self.src()
+        dst = self.dst()
+
+        if src is None or dst is None:
+            return
+
+        if src.isByPassing():
+            return
+
+        if dst.isByPassing():
+            return
+
+        if self.__packets is None:
             self.__packets = workerManager.WorkerManager.CreateQueue()
 
     def terminate(self):

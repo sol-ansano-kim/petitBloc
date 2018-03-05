@@ -195,6 +195,15 @@ class PortBase(object):
     def packetHistory(self):
         return []
 
+    def byPass(self):
+        pass
+
+    def isByPassing(self):
+        if not self.__parent:
+            return False
+
+        return self.__parent.isByPassing()
+
 
 class ChainBase(object):
     def __new__(self, srcPort, dstPort):
@@ -257,12 +266,16 @@ class ChainBase(object):
     def needToCast(self):
         return self.__need_to_cast
 
+    def byPass(self):
+        self.sendEOP()
+
 
 class ComponentBase(object):
     Initialized = 0
     Active = 1
     Terminated = 2
     Failed = 3
+    ByPassing = 4
 
     def __init__(self, name="", parent=None):
         self.__name = name
@@ -353,6 +366,9 @@ class ComponentBase(object):
     def isFailed(self):
         return self.__state is ComponentBase.Failed
 
+    def isByPassing(self):
+        return self.__state is ComponentBase.ByPassing
+
     def isOver(self):
         return (self.__state is ComponentBase.Terminated) or (self.__state is ComponentBase.Failed)
 
@@ -367,6 +383,9 @@ class ComponentBase(object):
             self.__state = ComponentBase.Terminated
         else:
             self.__state = ComponentBase.Failed
+
+    def byPass(self):
+        self.__state = ComponentBase.ByPassing
 
     def addInput(self, typeClass, name=None):
         return None

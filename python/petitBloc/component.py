@@ -49,6 +49,18 @@ class Component(core.ComponentBase):
 
         super(Component, self).terminate(success=success)
 
+    def byPass(self):
+        for out in self.__outputs:
+            out.terminate()
+
+        for inp in self.__inputs:
+            inp.terminate()
+
+        for p in self.__params:
+            p.terminate()
+
+        super(Component, self).byPass()
+
     def clear(self):
         for out in self.__outputs:
             out.clear()

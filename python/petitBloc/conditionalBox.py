@@ -36,6 +36,10 @@ class ConditionalBox(box.Box):
             super(ConditionalBox, self).terminate()
 
             if not v:
+                for b in self.getSchedule():
+                    b.byPass()
+
+            if not v:
                 self.resetState()
 
         else:
@@ -48,6 +52,7 @@ class ConditionalBox(box.Box):
         con = self.input("condition").receive()
 
         if con.isEOP():
+            self.__condtion.value = 0
             return False
 
         v = con.value()
