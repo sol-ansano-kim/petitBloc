@@ -450,9 +450,6 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     time.sleep(0.01)
 
     for s in schedule:
-        s.clear()
-
-    for s in schedule:
         if not s.hasNetwork():
             continue
 
