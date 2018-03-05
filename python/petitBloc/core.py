@@ -162,6 +162,9 @@ class PortBase(object):
         for i in range(0):
             yield i
 
+    def carry(self, pack):
+        return False
+
     def send(self):
         return False
 
@@ -417,8 +420,8 @@ class ComponentBase(object):
     def input(self, index_or_name):
         return None
 
-    def upstream(self, includeProxy=False):
+    def upstream(self, ignoreProxy=True):
         return []
         
-    def downstream(self, includeProxy=False):
+    def downstream(self, ignoreProxy=True):
         return []

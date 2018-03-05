@@ -7,6 +7,7 @@ from petitBloc import box
 from petitBloc import chain
 from petitBloc import conditionalBox
 from petitBloc import workerManager
+from petitBloc import proxy
 import threading
 import multiprocessing
 import Queue
@@ -173,10 +174,10 @@ class ConditionalTest(unittest.TestCase):
         in_p = box2.addInputProxy(int, "in")
         out_p = box2.addOutputProxy(int, "out")
 
-        self.assertIsNotNone(chain.Chain(make.output(0), in_p[0]))
-        self.assertIsNotNone(chain.Chain(in_p[1], plus.input(0)))
-        self.assertIsNotNone(chain.Chain(plus.output(0), out_p[0]))
-        self.assertIsNotNone(chain.Chain(out_p[1], dmp.input(0)))
+        self.assertIsNotNone(proxy.ProxyChain(make.output(0), in_p.inPort()))
+        self.assertIsNotNone(proxy.ProxyChain(in_p.outPort(), plus.input(0)))
+        self.assertIsNotNone(proxy.ProxyChain(plus.output(0), out_p.inPort()))
+        self.assertIsNotNone(proxy.ProxyChain(out_p.outPort(), dmp.input(0)))
         self.assertIsNotNone(chain.Chain(bl.output(0), box2.input(0)))
 
         schedules = box1.getSchedule()

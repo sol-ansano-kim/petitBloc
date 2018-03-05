@@ -148,7 +148,7 @@ class Component(core.ComponentBase):
 
         return False
 
-    def upstream(self, includeProxy=False):
+    def upstream(self, ignoreProxy=True):
         upstreams = []
         for inp in self.__inputs:
             for chn in inp.chains():
@@ -157,15 +157,26 @@ class Component(core.ComponentBase):
                     continue
 
                 up = src.parent()
-                if not includeProxy and up.isProxy():
+
+                if up is None:
                     continue
+
+                if up.isProxy():
+                    if ignoreProxy:
+                        continue
+
+                    proxied = up.proxySource()
+                    if proxied is None:
+                        continue
+
+                    up = proxied.parent()
 
                 if up:
                     upstreams.append(up)
 
         return upstreams
         
-    def downstream(self, includeProxy=False):
+    def downstream(self, ignoreProxy=True):
         downstreams = []
         for oup in self.__outputs:
             for chn in oup.chains():
@@ -177,11 +188,22 @@ class Component(core.ComponentBase):
                 if dst is None:
                     continue
 
-                if not includeProxy and down.isProxy():
+                if not down:
                     continue
 
-                if down:
+                if not down.isProxy():
                     downstreams.append(down)
+                    continue
+
+                if ignoreProxy:
+                    continue
+
+                for d in down.proxyDestination():
+                    d_parent = d.parent()
+                    if d_parent is None:
+                        continue
+
+                    downstreams.append(d_parent)
 
         return downstreams
 

@@ -160,12 +160,10 @@ class Box(core.NetworkBlock, component.Component):
         for ip in bloc.inputs():
             for c in ip.chains():
                 c.disconnect()
-                self.removeChain(c)
 
         for op in bloc.inputs():
             for c in op.chains():
                 c.disconnect()
-                self.removeChain(c)
 
         return True
 

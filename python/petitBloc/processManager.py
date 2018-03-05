@@ -395,7 +395,7 @@ def __needToWait(bloc):
     suspend = __parentSuspended(bloc)
 
     if not suspend:
-        for up in bloc.upstream(includeProxy=True):
+        for up in bloc.upstream(ignoreProxy=False):
             if up.isWaiting() or __parentSuspended(up):
                 suspend = True
                 break
@@ -414,7 +414,7 @@ def __parentSuspended(bloc):
 def __upstreamSuspended(bloc):
     suspend = False
 
-    for up in bloc.upstream(includeProxy=True):
+    for up in bloc.upstream(ignoreProxy=False):
         if __parentSuspended(up):
             suspend = True
             break
