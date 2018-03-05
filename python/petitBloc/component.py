@@ -51,10 +51,10 @@ class Component(core.ComponentBase):
 
     def byPass(self):
         for out in self.__outputs:
-            out.terminate()
+            out.clear()
 
         for inp in self.__inputs:
-            inp.terminate()
+            inp.clear()
 
         for p in self.__params:
             p.terminate()
