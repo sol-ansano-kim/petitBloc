@@ -23,6 +23,7 @@ class MainWindow(QtWidgets.QMainWindow):
         super(MainWindow, self).__init__(parent=parent)
         self.__graph = None
         self.__graph_tabs = None
+        self.__info_tabs = None
         self.__editor_tabs = None
         self.__run = None
         self.__parm_editor = None
@@ -65,7 +66,9 @@ class MainWindow(QtWidgets.QMainWindow):
         centeral.setLayout(main_layout)
 
         # tabs
+        self.__info_tabs = QtWidgets.QTabWidget()
         self.__editor_tabs = QtWidgets.QTabWidget()
+        self.__editor_tabs.setMinimumHeight(200)
         self.__graph_tabs = QtWidgets.QTabWidget()
         self.__graph_tabs.setTabsClosable(True)
 
@@ -78,20 +81,26 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # editor tabs
         self.__parm_editor = paramEditor.ParamEditor()
+        self.__editor_tabs.addTab(self.__parm_editor, "Param Editor")
+
+        ## info tabs
         self.__packet_history = packetHistory.PacketHistory()
         self.__log_viewer = logViewer.LogViewer()
-        self.__editor_tabs.addTab(self.__parm_editor, "Param Editor")
-        self.__editor_tabs.addTab(self.__packet_history, "Packet History")
-        self.__editor_tabs.addTab(self.__log_viewer, "Log")
+        self.__info_tabs.addTab(self.__packet_history, "Packet History")
+        self.__info_tabs.addTab(self.__log_viewer, "Log")
 
-        main_contents = QtWidgets.QSplitter()
-        main_contents.addWidget(self.__graph_tabs)
-        main_contents.addWidget(self.__editor_tabs)
+        right_splitter = QtWidgets.QSplitter(QtCore.Qt.Vertical)
+        main_splitter = QtWidgets.QSplitter()
+        main_splitter.addWidget(self.__graph_tabs)
+        main_splitter.addWidget(right_splitter)
+
+        right_splitter.addWidget(self.__editor_tabs)
+        right_splitter.addWidget(self.__info_tabs)
 
         # scene state
         self.__scene_state = sceneState.SceneState()
 
-        main_layout.addWidget(main_contents)
+        main_layout.addWidget(main_splitter)
         main_layout.addWidget(self.__scene_state)
         self.__resetTabIndice()
 

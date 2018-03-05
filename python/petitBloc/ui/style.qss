@@ -109,14 +109,27 @@ QTabBar::tab:!selected {
 }
 
 
-QSplitter::handle
+QSplitter::handle:horizontal
 {
     background-color: transparent;
     border-left: 1px dashed #757575;
-    margin-left: 6px;
+    margin-left: 3px;
+    margin-right: 3px;
+    margin-top: 40px;
+    margin-bottom: 20px;
     max-width: 10px;
 }
 
+QSplitter::handle:vertical
+{
+    background-color: transparent;
+    border-bottom: 1px dashed #757575;
+    margin-top: 0px;
+    margin-bottom: 3px;
+    margin-right: 1px;
+    margin-left: 1px;
+    max-height: 10px;
+}
 
 QPushButton#AddButton
 {
