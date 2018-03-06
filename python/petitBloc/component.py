@@ -3,6 +3,7 @@ from . import util
 from . import core
 from . import workerManager
 from . import parameter
+from . import const
 
 
 class Component(core.ComponentBase):
@@ -13,6 +14,8 @@ class Component(core.ComponentBase):
         self.__params = []
         self.__extraParams = []
         self.initialize()
+        if not self.hasNetwork() and not self.isProxy():
+            self.__outputs.append(port.OutPort(bool, name=const.BlockResultPortName, parent=self))
 
     def debug(self, message):
         workerManager.WorkerManager.Debug(self.path(), message)
@@ -75,7 +78,7 @@ class Component(core.ComponentBase):
         if name is None or not util.ValidateName(name):
             name = "input"
 
-        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
+        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs) + [const.BlockResultPortName]
 
         name = util.GetUniqueName(name, all_names)
 
@@ -88,12 +91,12 @@ class Component(core.ComponentBase):
         if name is None or not util.ValidateName(name):
             name = "output"
 
-        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs)
+        all_names = map(lambda x: x.name(), self.__inputs + self.__outputs) + [const.BlockResultPortName]
 
         name = util.GetUniqueName(name, all_names)
 
         p = port.OutPort(typeClass, name=name, parent=self)
-        self.__outputs.append(p)    
+        self.__outputs.append(p)
 
         return p
 

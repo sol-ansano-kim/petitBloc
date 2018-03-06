@@ -2,6 +2,7 @@ from . import core
 from . import component
 from . import util
 from . import chain
+from . import const
 import copy
 
 
@@ -266,7 +267,7 @@ class ProxyBlock(core.Proxy, component.Component):
         if name is None or not util.ValidateName(name):
             name = "proxy"
 
-        all_names = map(lambda x: x.name(), self.__ports)
+        all_names = map(lambda x: x.name(), self.__ports) + [const.BlockResultPortName]
 
         name = util.GetUniqueName(name, all_names)
 

@@ -287,6 +287,10 @@ class ProcessWorker(multiprocessing.Process):
             self.__has_error.value = 1
             LogManager.Error(self.__obj.path(), e)
 
+        res = self.__obj.output(const.BlockResultPortName)
+        if res:
+            res.send(self.__has_error.value == 0)
+
         LogManager.TimeReport(self.__obj.path(), time.time() - st)
 
     def start(self):
@@ -422,6 +426,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     ProcessManager.SetMaxProcess(maxProcess)
     ProcessManager.SetPerProcessCallback(perProcessCallback)
 
+    need_to_terminate = []
     work_schedule = copy.copy(schedule)
 
     for s in work_schedule:
@@ -431,7 +436,16 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         ProcessManager.CleanUp()
 
         bloc = work_schedule.pop(0)
-        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed() or bloc.isByPassing():
+        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
+            continue
+
+        if bloc.isByPassing():
+            res = bloc.output(const.BlockResultPortName)
+            if res:
+                res.activate()
+                res.send(False)
+                need_to_terminate.append(res)
+
             continue
 
         ProcessManager.LockAcquire()
@@ -460,6 +474,9 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
                 break
 
         s.terminate(success)
+
+    for p in need_to_terminate:
+        p.terminate()
 
     if perProcessCallback is not None:
         perProcessCallback()
