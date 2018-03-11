@@ -4,6 +4,7 @@ env = Environment()
 
 install_nodz = True
 install_qtpy = True
+install_enum = True
 install_exts = True
 dist_path = os.path.abspath(ARGUMENTS.get("dist", "release"))
 
@@ -18,6 +19,12 @@ try:
     install_qtpy = int(ARGUMENTS.get("install-qtpy", "1")) != 0
 except:
     install_qtpy = True
+
+
+try:
+    install_enum = int(ARGUMENTS.get("install-enum", "1")) != 0
+except:
+    install_enum = True
 
 
 try:
@@ -44,6 +51,9 @@ if install_nodz:
 
 if install_qtpy:
     env.Install(os.path.join(dist_path, "petitBloc/python/petitBloc/ui/external"), "Qt.py/Qt.py")
+
+if install_enum:
+    env.Install(os.path.join(dist_path, "petitBloc/python"), "python/enum.py")
 
 if install_exts:
     env.Install(os.path.join(dist_path, "petitBloc/python/petitBloc/exts"), Glob("python/petitBloc/exts/*.py"))
