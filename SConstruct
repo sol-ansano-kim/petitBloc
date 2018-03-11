@@ -50,7 +50,7 @@ if install_nodz:
     env.Install(os.path.join(dist_path, "petitBloc/python/petitBloc/ui/external/Nodz"), "Nodz/default_config.json")
 
 if install_qtpy:
-    env.Install(os.path.join(dist_path, "petitBloc/python/petitBloc/ui/external"), "Qt.py/Qt.py")
+    env.Install(os.path.join(dist_path, "petitBloc/python/petitBloc/ui/external"), "Qt_dot_py/Qt.py")
 
 if install_enum:
     env.Install(os.path.join(dist_path, "petitBloc/python"), "python/enum.py")
