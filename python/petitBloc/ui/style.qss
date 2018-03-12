@@ -365,3 +365,18 @@ QProgressBar::chunk
 {
     background-color: rgb(40, 90, 120);
 }
+
+QTabBar::close-button
+{
+    image: url("icons/close_normal.png");
+}
+
+QTabBar::close-button:hover
+{
+    image: url("icons/close_hover.png");
+}
+
+QTabBar::close-button:pressed
+{
+    image: url("icons/close_pressed.png");
+}
