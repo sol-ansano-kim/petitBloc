@@ -378,7 +378,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__graph = graph.Graph(name=const.RootBoxName, parent=self, isTop=True)
         self.__graph_tabs.addTab(self.__graph, "Scene")
-        self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide).hide()
+
+        btn = self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide)
+        if not btn:
+           btn = self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.LeftSide)
+        if btn:
+           btn.hide()
+
         self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
 
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
