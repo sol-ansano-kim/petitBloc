@@ -19,10 +19,10 @@ class PacketModel(QtCore.QAbstractTableModel):
         if role != QtCore.Qt.DisplayRole:
             return None
 
-        if orient is QtCore.Qt.Vertical:
+        if orient == QtCore.Qt.Vertical:
             return str(section)
 
-        if orient is QtCore.Qt.Horizontal and (section >= 0 and section <= self.__col):
+        if orient == QtCore.Qt.Horizontal and (section >= 0 and section <= self.__col):
             return self.__ports[section]
 
         return None
@@ -67,7 +67,7 @@ class PacketModel(QtCore.QAbstractTableModel):
         self.__row = 0
         self.__col = 0
 
-        if self.__bloc is not None:
+        if self.__bloc is not None and not self.__bloc.hasNetwork():
             ports = []
 
             for p in self.__bloc.inputs():
@@ -76,6 +76,9 @@ class PacketModel(QtCore.QAbstractTableModel):
                 ports.append(p)
 
             for p in ports:
+                if p.name() == "success":
+                    continue
+
                 self.__ports.append(p.name())
                 self.__col += 1
 

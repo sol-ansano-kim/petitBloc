@@ -175,6 +175,7 @@ QTableView
 {
     background-color: #323232;
     border: 2px solid #222222;
+    gridline-color: #222222;
 }
 
 QTableView:item
@@ -278,6 +279,55 @@ QScrollBar::down-arrow:vertical
 }
 
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
+{
+    background: transparent;
+}
+
+
+QScrollBar:horizontal
+{
+    padding: 1px;
+    background: #222222;
+    height: 14px;
+    margin: 0 14 0 14;
+}
+
+QScrollBar::handle:horizontal
+{
+    background: #646464;
+}
+
+QScrollBar::add-line:horizontal
+{
+    background: #222222;
+    width: 14px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal
+{
+    background: #222222;
+    width: 14px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::left-arrow:horizontal
+{
+    image: url("icons/arrow_left.png");
+    height: 14px;
+    width: 14px;
+}
+
+QScrollBar::right-arrow:horizontal
+{
+    image: url("icons/arrow_right.png");
+    height: 20px;
+    width: 14px;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal
 {
     background: transparent;
 }
