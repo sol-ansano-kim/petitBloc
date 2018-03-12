@@ -1,4 +1,3 @@
-import external
 
 
 def Show(path=None):

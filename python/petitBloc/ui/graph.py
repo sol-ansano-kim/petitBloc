@@ -61,7 +61,12 @@ class Graph(nodz_main.Nodz):
         inFactor = self.__zoom_factor
         outFactor = 1 / inFactor
 
-        if event.delta() > 0:
+        delta = 0
+        if hasattr(event, "delta"):
+            delta = event.delta()
+        else:
+            delta = event.angleDelta().y()
+        if delta > 0:
             zoomFactor = inFactor
         else:
             zoomFactor = outFactor
