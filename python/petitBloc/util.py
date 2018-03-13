@@ -2,7 +2,7 @@ import re
 import json
 
 
-ReConvention = re.compile("^[a-zA-Z][a-zA-Z0-9_]*$")
+ReConvention = re.compile("^[a-zA-Z0-9_]*$")
 ReForbiddenName = re.compile("[^a-zA-z0-9_]")
 ReNumber = re.compile("[0-9]+$")
 
