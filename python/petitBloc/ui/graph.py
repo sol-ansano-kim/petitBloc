@@ -765,7 +765,6 @@ class OutputPortItem(nodz_main.PlugItem):
 
         nodzInst.portConnected(self.port(), socket_item.port())
         nodzInst.signal_PlugConnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
-        nodzInst.cleanUpProxies()
 
     def disconnect(self, connection):
         """
@@ -930,10 +929,13 @@ class InputPortItem(nodz_main.SocketItem):
         Connect to the given plug item.
 
         """
+        need_to_cleanup = False
+
         if len(self.connected_slots) > 0:
             # Already connected.
             self.connections[0]._remove()
             self.connected_slots = list()
+            need_to_cleanup = True
 
         # Populate connection.
         connection.plugItem = plug_item
@@ -952,6 +954,8 @@ class InputPortItem(nodz_main.SocketItem):
         nodzInst.portConnected(plug_item.port(), self.port())
 
         nodzInst.signal_SocketConnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+        if need_to_cleanup:
+            nodzInst.cleanUpProxies()
 
     def disconnect(self, connection):
         """
