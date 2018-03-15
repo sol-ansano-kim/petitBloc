@@ -52,6 +52,9 @@ class Graph(nodz_main.Nodz):
     def proxyPaths(self):
         return []
 
+    def cleanUpProxies(self):
+        pass
+
     def __updateConfig(self):
         for b in self.__model.blockClassNames() + ["ProxyBlock"]:
             base = copy.deepcopy(self.config.get(b, self.config.get("Block")))
@@ -762,6 +765,7 @@ class OutputPortItem(nodz_main.PlugItem):
 
         nodzInst.portConnected(self.port(), socket_item.port())
         nodzInst.signal_PlugConnected.emit(connection.plugNode, connection.plugAttr, connection.socketNode, connection.socketAttr)
+        nodzInst.cleanUpProxies()
 
     def disconnect(self, connection):
         """
