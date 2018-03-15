@@ -25,15 +25,16 @@ class Graph(nodz_main.Nodz):
     BoxCreated = QtCore.Signal(object, bool)
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
+    CopyBlocks = QtCore.Signal(dict, object)
+    PasteBlocks = QtCore.Signal(object)
 
-    def __init__(self, name="", boxObject=None, parent=None, isTop=False):
+    def __init__(self, name="", boxObject=None, parent=None):
         super(Graph, self).__init__(parent, configPath=getConfigFile())
-        self.__is_top = isTop
         self.__model = model.BoxModel(name=name, boxObject=boxObject)
         self.__updateConfig()
         self.__current_block = None
         # TODO : SceneContext
-        self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames(), excludeList=([] if isTop else ["SceneContext"]))
+        self.__creator = blockCreator.BlockCreator(self, self.__model.blockClassNames(), excludeList=([] if isinstance(self, Graph) else ["SceneContext"]))
         self.__creator.BlockCreatorEnd.connect(self.addBlock)
         self.__context_node = None
         self.signal_NodeDeleted.connect(self.__nodeDeleted)
@@ -43,9 +44,13 @@ class Graph(nodz_main.Nodz):
         self.gridVisToggle = False
 
         self.__zoom_factor = self.config["zoom_factor"]
+        self.__cntl_pressed = False
 
     def isTop(self):
-        return self.__is_top
+        return True
+
+    def proxyPaths(self):
+        return []
 
     def __updateConfig(self):
         for b in self.__model.blockClassNames() + ["ProxyBlock"]:
@@ -142,10 +147,26 @@ class Graph(nodz_main.Nodz):
             return False
 
         if evnt.type() == QtCore.QEvent.KeyPress:
+            key = evnt.key()
             self.KeyPressed.emit(evnt.key())
-            if evnt.key() == QtCore.Qt.Key_Tab:
+            if key == QtCore.Qt.Key_Tab:
                 self.__creator.show(self.mapFromGlobal(QtGui.QCursor.pos()))
                 return True
+
+            if key == QtCore.Qt.Key_Control:
+                self.__cntl_pressed = True
+
+            if key == QtCore.Qt.Key_C and self.__cntl_pressed:
+                include = map(lambda x : x.block().path(), self.scene().selectedItems())
+                exclude = self.proxyPaths()
+                self.CopyBlocks.emit(self.__model.serialize(include=include, exclude=exclude), self.boxModel().box())
+
+            if key == QtCore.Qt.Key_V and self.__cntl_pressed:
+                self.PasteBlocks.emit(self.__model.box())
+
+        if evnt.type() == QtCore.QEvent.KeyRelease:
+            if evnt.key() == QtCore.Qt.Key_Control:
+                self.__cntl_pressed = False
 
         return False
 
@@ -372,6 +393,12 @@ class SubNet(Graph):
         self.scene().addItem(self.__proxy_out)
 
         self.BlockDeleted.connect(self.cleanUpProxies)
+
+    def isTop(self):
+        return False
+
+    def proxyPaths(self):
+        return [self.__proxy_in.block().path(), self.__proxy_out.block().path()]
 
     def cleanUpProxies(self):
         inputs = self.boxModel().cleanUpInputProxies()

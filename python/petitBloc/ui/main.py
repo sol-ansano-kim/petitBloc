@@ -1,6 +1,7 @@
 import operator
 import re
 import os
+import copy
 from Qt import QtWidgets
 from Qt import QtCore
 from Qt import QtGui
@@ -16,6 +17,9 @@ from . import sceneState
 from . import progress
 from .. import scene
 from .. import blockManager
+
+
+ReBlockPath = re.compile("^(?P<blockPath>[a-zA-Z0-9_/]+)")
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -35,6 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__current_bloc = None
         self.__progress = None
         self.__is_running = False
+        self.__clipboard = {}
         self.__initialize()
         self.__setStyleSheet()
 
@@ -74,7 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # scene graph
         ## TODO : USE __new()
-        self.__graph = graph.Graph(name=const.RootBoxName, parent=self, isTop=True)
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
         self.__graph_tabs.addTab(self.__graph, "Scene")
         btn = self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide)
         if not btn:
@@ -178,8 +183,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
         self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
-
         self.__graph.BoxCreated.connect(self.__boxCreated)
+        self.__graph.CopyBlocks.connect(self.__copyBlocks)
+        self.__graph.PasteBlocks.connect(self.__pasteBlocks)
 
         self.__setPath(None)
 
@@ -188,7 +194,7 @@ class MainWindow(QtWidgets.QMainWindow):
             if n_dict["graph"].renameNode(bloc, newName):
                 return
 
-        raise Exception, "Failed to find the node : {}".format(oldName)
+        raise Exception, "Failed to find the node : {}".format(bloc.name())
 
     def __noLogTriggered(self):
         self.__log_viewer.setLogLevel(0)
@@ -222,10 +228,12 @@ class MainWindow(QtWidgets.QMainWindow):
         grph = graph.SubNet(boxObject=boxBloc)
         grph.ItemDobleClicked.connect(self.__showGraphTab)
         grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
-        grph.BoxDeleted.connect(self.__boxDeleted)
         grph.ProxyPortAdded.connect(self.__addProxyPort)
         grph.ProxyPortRemoved.connect(self.__removeProxyPort)
         grph.BoxCreated.connect(self.__boxCreated)
+        grph.BoxDeleted.connect(self.__boxDeleted)
+        grph.CopyBlocks.connect(self.__copyBlocks)
+        grph.PasteBlocks.connect(self.__pasteBlocks)
 
         self.__networks[boxBloc] = {"graph": grph, "init": init}
 
@@ -350,7 +358,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__is_running = False
 
     def __getParentGraph(self, path):
-        return self.__getGraph(os.path.dirname(path))
+        return self.__getGraph(self.__parentName(path))
 
     def __getGraph(self, path):
         for bloc, n_dict in self.__networks.iteritems():
@@ -376,7 +384,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__networks = {}
 
-        self.__graph = graph.Graph(name=const.RootBoxName, parent=self, isTop=True)
+        self.__graph = graph.Graph(name=const.RootBoxName, parent=self)
         self.__graph_tabs.addTab(self.__graph, "Scene")
 
         btn = self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.RightSide)
@@ -390,8 +398,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
         self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
-
         self.__graph.BoxCreated.connect(self.__boxCreated)
+        self.__graph.CopyBlocks.connect(self.__copyBlocks)
+        self.__graph.PasteBlocks.connect(self.__pasteBlocks)
 
         self.__resetTabIndice()
         self.__setPath(None)
@@ -404,10 +413,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__saveData()
 
-    def __saveData(self):
-        data = self.__graph.boxModel().serialize()
+    def __updatePositionData(self, data, rootPath):
         for b in data["blocks"]:
-            path = uiUtil.AddRootPath(b["path"])
+            path = uiUtil.AddRootPath(b["path"], rootPath)
             grph = self.__getParentGraph(path)
 
             if grph is None:
@@ -419,6 +427,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
             pos = nod.pos() + nod.nodeCenter
             b["pos"] = [pos.x(), pos.y()]
+
+    def __saveData(self):
+        data = self.__graph.boxModel().serialize()
+        root_path = self.__graph.boxModel().box().path()
+        self.__updatePositionData(data, root_path)
 
         scene.Write(self.__filepath, data)
 
@@ -439,8 +452,43 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__setPath(pth)
         self.__saveData()
 
+    def __copyBlocks(self, data, rootBox):
+        self.__updatePositionData(data, rootBox.path())
+        self.__clipboard = data
+
+    def __pasteBlocks(self, rootBox):
+        data = copy.deepcopy(self.__clipboard)
+        net_dict = self.__networks.get(rootBox)
+        if not net_dict:
+            print("Error : could not find the box network: {}".format(rootBox.path()))
+            return
+
+        grph = net_dict["graph"]
+        cursor_pos = grph.mapToScene(grph.mapFromGlobal(QtGui.QCursor.pos()))
+        cur_pos = [cursor_pos.x(), cursor_pos.y()]
+        centerx = 0
+        centery = 0
+
+        for b in data.get("blocks", []):
+            pos = b.get("pos")
+            if pos:
+                centerx = (centerx + pos[0]) * 0.5 if centerx else pos[0]
+                centery = (centery + pos[1]) * 0.5 if centery else pos[1]
+
+        for b in data.get("blocks", []):
+            pos = b.get("pos")
+            if pos:
+                b["pos"] = [pos[0] - centerx + cur_pos[0], pos[1] - centery + cur_pos[1]]
+            else:
+                b["pos"] = cur_pos
+
+        self.__insertBlocks(data, rootBox.path())
+
     def __shortName(self, path):
         return os.path.basename(path)
+
+    def __parentName(self, path):
+        return os.path.dirname(path)
 
     def __importBox(self):
         res = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
@@ -492,22 +540,64 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__setPath(pth)
         self.__graph._focus()
 
-    def __read(self, filePath, rootPath):
+    def __insertBlocks(self, data, rootPath):
         reRootNode = re.compile("^[/]{}[/]".format(rootPath.replace("/", "\/")))
+        renamed_maps = {}
+
         def addRootPath(path):
             if reRootNode.search(path):
                 return path
 
             return "{}/{}".format(rootPath, path)
 
-        data = scene.Read(filePath)
+        def remapPath(path, verbose=False):
+            res = ReBlockPath.search(path)
+            if not res:
+                return addRootPath(path)
+
+            block_path = res.group("blockPath")
+            if not block_path:
+                return addRootPath(path)
+
+            renamed = renamed_maps.get(path, "")
+            if renamed:
+                return renamed
+
+            parent_name = self.__parentName(block_path)
+            short_name = self.__shortName(block_path)
+            new_block_path = ""
+
+            if parent_name:
+                renamed = renamed_maps.get(parent_name, "")
+                new_block_path = "{}/{}".format(renamed, short_name)
+            else:
+                renamed = renamed_maps.get(short_name, "")
+                new_block_path = renamed
+
+            if not renamed:
+                return addRootPath(path)
+
+            return "{}{}".format(new_block_path, path[res.end():])
+
+        sorted_blocks = []
+        block_depth_map = {}
+
+        for b in data.get("blocks", []):
+            depth = b["path"].count("/")
+            if not block_depth_map.has_key(depth):
+                block_depth_map[depth] = []
+
+            block_depth_map[depth].append(b)
+
+        for block_datas in block_depth_map.values():
+            sorted_blocks += block_datas
 
         ## create blocks
-        for b in data["blocks"]:
-            full_path = addRootPath(b["path"])
+        for b in sorted_blocks:
+            full_path = remapPath(b["path"])
 
             if b["type"] == "SceneContext":
-                if "/{}".format(const.RootBoxName) != os.path.dirname(full_path):
+                if "/{}".format(const.RootBoxName) != self.__parentName(full_path):
                     continue
 
             short_name = self.__shortName(full_path)
@@ -523,6 +613,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     continue
 
                 bloc = node.block()
+                renamed_maps[b["path"]] = bloc.path()
 
                 pos = b.get("pos")
                 if pos:
@@ -536,11 +627,13 @@ class MainWindow(QtWidgets.QMainWindow):
                     posf = grph.mapToScene(grph.viewport().rect().center())
 
                 node = grph.addBlock(b["type"], blockName=short_name, position=posf, init=False)
+
                 if node is None:
                     print("Warning : Unknown block type : {}".format(b["type"]))
                     continue
 
                 bloc = node.block()
+                renamed_maps[b["path"]] = bloc.path()
 
             if bloc is not None:
                 for k, vv in b.get("params", {}).iteritems():
@@ -574,8 +667,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
 
         ## proxy ports
-        for proxy in data["proxyPorts"]:
-            full_path = addRootPath(proxy["path"])
+        for proxy in data.get("proxyPorts", []):
+            full_path = remapPath(proxy["path"])
             grph = self.__getGraph(full_path)
 
             if grph is None:
@@ -606,11 +699,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 grph.addOutputProxy(type_class, name)
 
         ## connect ports
-        for con in data["connections"]:
+        for con in data.get("connections", []):
             parent = None
 
-            src_node_path, src_port = addRootPath(con["src"]).split(".")
-            dst_node_path, dst_port = addRootPath(con["path"]).split(".")
+            src_node_path, src_port = remapPath(con["src"]).split(".")
+            dst_node_path, dst_port = remapPath(con["path"]).split(".")
+
             src_depth = src_node_path.count("/")
             dst_depth = dst_node_path.count("/")
             src_parent = self.__getParentGraph(src_node_path)
@@ -647,6 +741,10 @@ class MainWindow(QtWidgets.QMainWindow):
                             continue
 
             src_parent.createConnection(self.__shortName(src_node_path), src_port, self.__shortName(dst_node_path), dst_port)
+
+    def __read(self, filePath, rootPath):
+        data = scene.Read(filePath)
+        self.__insertBlocks(data, rootPath)
 
     def __currentBlockChanged(self, bloc):
         self.__current_bloc = bloc
