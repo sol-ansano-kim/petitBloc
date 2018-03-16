@@ -292,6 +292,9 @@ class ProcessWorker(threading.Thread):
 
         super(ProcessWorker, self).start()
 
+    def obj(self):
+        return self.__obj
+
     def terminate(self):
         if not self.__obj.isOver():
             self.__obj.terminate(self.__success)
@@ -339,6 +342,7 @@ class ThreadManager(object):
             ThreadManager.CleaunUp()
             ThreadManager.LockRelease()
 
+        LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
         ThreadManager.__Threads.append(p)
         p.start()
@@ -374,6 +378,8 @@ class ThreadManager(object):
     @staticmethod
     def DeleteProcess(p):
         p.terminate()
+        LogManager.Debug("__main__", "  {0:>10}      {1}".format("End -", p.obj().path()))
+
         if p in ThreadManager.__Threads:
             ThreadManager.__Threads.remove(p)
 
@@ -407,8 +413,12 @@ def __parentSuspended(bloc):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
-    ThreadManager.Reset()
     LogManager.Reset()
+
+    st = time.time()
+    LogManager.Debug("__main__", "## PetitBloc Start")
+
+    ThreadManager.Reset()
     QueueManager.Reset()
     ValueManager.Reset()
     SubprocessManager.Reset()
@@ -418,6 +428,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     need_to_terminate = []
     work_schedule = copy.copy(schedule)
 
+    t1 = time.time()
     for s in work_schedule:
         s.resetState()
 
@@ -440,6 +451,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         ThreadManager.LockAcquire()
 
         if __needToWait(bloc):
+            LogManager.Debug("__main__", "  {0:>10}      {1}".format("Suspend -", bloc.path()))
             work_schedule.append(bloc)
             ThreadManager.LockRelase()
             continue
@@ -448,6 +460,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         ThreadManager.Submit(bloc)
 
     ThreadManager.Join()
+    t2 = time.time()
 
     for s in schedule:
         if not s.hasNetwork():
@@ -471,3 +484,10 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     ValueManager.Reset()
     ThreadManager.Reset()
     SubprocessManager.Reset()
+    t3 = time.time()
+
+    LogManager.Debug("__main__", "## PetitBloc End")
+    LogManager.Debug("__main__", "Time log")
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Initializing", round(t1 - st, 5)))
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Computing", round(t2 - t1, 5)))
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Finalizing", round(t3 - t2, 5)))
