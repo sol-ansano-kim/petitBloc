@@ -253,15 +253,15 @@ class MainWindow(QtWidgets.QMainWindow):
             self.__networks[bloc]["graph"].initProxyNode()
             self.__networks[bloc]["init"] = False
 
-    def __boxDeleted(self, bloc):
-        path = bloc.path()
+    def __boxDeleted(self, bx):
+        path = "{}/".format(bx.path())
 
         remove_blocs = []
         remove_widgets = []
         remove_indices = []
 
         for bloc, n_dict in self.__networks.iteritems():
-            if bloc.path().startswith(path):
+            if bloc == bx or bloc.path().startswith(path):
                 remove_blocs.append(bloc)
                 widget = n_dict.get("graph")
                 index = n_dict.get("index")
