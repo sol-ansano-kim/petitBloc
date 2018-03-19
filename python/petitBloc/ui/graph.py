@@ -25,8 +25,6 @@ class Graph(nodz_main.Nodz):
     BoxCreated = QtCore.Signal(object, bool)
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
-    CopyBlocks = QtCore.Signal(dict, object)
-    PasteBlocks = QtCore.Signal(object)
 
     def __init__(self, name="", boxObject=None, parent=None):
         super(Graph, self).__init__(parent, configPath=getConfigFile())
@@ -44,7 +42,6 @@ class Graph(nodz_main.Nodz):
         self.gridVisToggle = False
 
         self.__zoom_factor = self.config["zoom_factor"]
-        self.__cntl_pressed = False
 
     def isTop(self):
         return True
@@ -155,23 +152,6 @@ class Graph(nodz_main.Nodz):
             if key == QtCore.Qt.Key_Tab:
                 self.__creator.show(self.mapFromGlobal(QtGui.QCursor.pos()))
                 return True
-
-            if key == QtCore.Qt.Key_Control:
-                self.__cntl_pressed = True
-
-            if (key == QtCore.Qt.Key_C or key == QtCore.Qt.Key_X) and self.__cntl_pressed:
-                include = map(lambda x : x.block().path(), self.scene().selectedItems())
-                exclude = self.proxyPaths()
-                self.CopyBlocks.emit(self.__model.serialize(include=include, exclude=exclude), self.boxModel().box())
-                if key == QtCore.Qt.Key_X:
-                    self._deleteSelectedNodes()
-
-            if key == QtCore.Qt.Key_V and self.__cntl_pressed:
-                self.PasteBlocks.emit(self.__model.box())
-
-        if evnt.type() == QtCore.QEvent.KeyRelease:
-            if evnt.key() == QtCore.Qt.Key_Control:
-                self.__cntl_pressed = False
 
         return False
 
@@ -379,6 +359,10 @@ class Graph(nodz_main.Nodz):
     def initProxyNode(self):
         pass
 
+    def copy(self):
+        include = map(lambda x : x.block().path(), self.scene().selectedItems())
+        exclude = self.proxyPaths()
+        return self.__model.serialize(include=include, exclude=exclude)
 
 class SubNet(Graph):
     ProxyPortAdded = QtCore.Signal(object, object, object)

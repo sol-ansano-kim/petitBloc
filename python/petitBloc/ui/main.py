@@ -141,6 +141,22 @@ class MainWindow(QtWidgets.QMainWindow):
         import_action.triggered.connect(self.__import)
         menubar.addMenu(file_menu)
 
+        edit_menu = QtWidgets.QMenu("&Edit", self)
+        copy_action = edit_menu.addAction("&Copy")
+        copy_action.setShortcut(QtGui.QKeySequence("Ctrl+C"))
+        cut_action = edit_menu.addAction("C&ut")
+        cut_action.setShortcut(QtGui.QKeySequence("Ctrl+X"))
+        paste_action = edit_menu.addAction("&Paste")
+        paste_action.setShortcut(QtGui.QKeySequence("Ctrl+V"))
+        edit_menu.addAction(copy_action)
+        edit_menu.addAction(cut_action)
+        edit_menu.addSeparator()
+        edit_menu.addAction(paste_action)
+        menubar.addMenu(edit_menu)
+        copy_action.triggered.connect(self.__copy)
+        cut_action.triggered.connect(self.__cut)
+        paste_action.triggered.connect(self.__paste)
+
         process_menu = QtWidgets.QMenu("&Blocks", self)
         run_action = process_menu.addAction("&Execute")
         run_action.setShortcut(QtGui.QKeySequence("F5"))
@@ -184,8 +200,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
         self.__graph.BoxCreated.connect(self.__boxCreated)
-        self.__graph.CopyBlocks.connect(self.__copyBlocks)
-        self.__graph.PasteBlocks.connect(self.__pasteBlocks)
 
         self.__setPath(None)
 
@@ -232,8 +246,6 @@ class MainWindow(QtWidgets.QMainWindow):
         grph.ProxyPortRemoved.connect(self.__removeProxyPort)
         grph.BoxCreated.connect(self.__boxCreated)
         grph.BoxDeleted.connect(self.__boxDeleted)
-        grph.CopyBlocks.connect(self.__copyBlocks)
-        grph.PasteBlocks.connect(self.__pasteBlocks)
 
         self.__networks[boxBloc] = {"graph": grph, "init": init}
 
@@ -399,8 +411,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
         self.__graph.BoxCreated.connect(self.__boxCreated)
-        self.__graph.CopyBlocks.connect(self.__copyBlocks)
-        self.__graph.PasteBlocks.connect(self.__pasteBlocks)
 
         self.__resetTabIndice()
         self.__setPath(None)
@@ -452,19 +462,24 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__setPath(pth)
         self.__saveData()
 
-    def __copyBlocks(self, data, rootBox):
-        self.__updatePositionData(data, rootBox.path())
+    def __copy(self):
+        graph = self.__getCurrentGraph()
+        data = graph.copy()
+        self.__updatePositionData(data, graph.box().path())
         self.__clipboard = data
 
-    def __pasteBlocks(self, rootBox):
-        data = copy.deepcopy(self.__clipboard)
-        net_dict = self.__networks.get(rootBox)
-        if not net_dict:
-            print("Error : could not find the box network: {}".format(rootBox.path()))
-            return
+    def __cut(self):
+        graph = self.__getCurrentGraph()
+        self.__copy()
+        graph._deleteSelectedNodes()
 
-        grph = net_dict["graph"]
-        cursor_pos = grph.mapToScene(grph.mapFromGlobal(QtGui.QCursor.pos()))
+    def __paste(self):
+        graph = self.__getCurrentGraph()
+        root_box = graph.box()
+
+        data = copy.deepcopy(self.__clipboard)
+
+        cursor_pos = graph.mapToScene(graph.mapFromGlobal(QtGui.QCursor.pos()))
         cur_pos = [cursor_pos.x(), cursor_pos.y()]
         centerx = 0
         centery = 0
@@ -482,13 +497,27 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 b["pos"] = cur_pos
 
-        self.__insertBlocks(data, rootBox.path())
+        self.__insertBlocks(data, root_box.path())
 
     def __shortName(self, path):
         return os.path.basename(path)
 
     def __parentName(self, path):
         return os.path.dirname(path)
+
+    def __getCurrentGraph(self):
+        graph = None
+        index = self.__graph_tabs.currentIndex()
+
+        for n_dict in self.__networks.values():
+            if n_dict["index"] == index:
+                graph = n_dict["graph"]
+                break
+
+        if graph is None:
+            raise Exception, "Error : could not find the current graph"
+
+        return graph
 
     def __import(self):
         res = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
@@ -501,16 +530,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not pth:
             return
 
-        graph = None
-        index = self.__graph_tabs.currentIndex()
-
-        for n_dict in self.__networks.values():
-            if n_dict["index"] == index:
-                graph = n_dict["graph"]
-                break
-
-        if graph is None:
-            raise Exception, "Failed to import : could not find the current graph"
+        graph = self.__getCurrentGraph()
 
         self.__read(pth, graph.box().path())
 
