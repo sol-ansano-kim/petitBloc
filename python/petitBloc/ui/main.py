@@ -310,9 +310,9 @@ class MainWindow(QtWidgets.QMainWindow):
         node = par_dict["graph"].findNode(boxBloc)
 
         if port.isInPort():
-            par_dict["graph"].createAttribute(node=node, port=port, plug=False, socket=True, preset="attr_preset_1", dataType=port.typeClass(), proxyNode=proxyNode)
+            par_dict["graph"].createAttribute(node=node, port=port, plug=False, socket=True, preset="port_default", dataType=port.typeClass(), proxyNode=proxyNode)
         else:
-            par_dict["graph"].createAttribute(node=node, port=port, plug=True, socket=False, preset="attr_preset_1", dataType=port.typeClass(), proxyNode=proxyNode)
+            par_dict["graph"].createAttribute(node=node, port=port, plug=True, socket=False, preset="port_default", dataType=port.typeClass(), proxyNode=proxyNode)
 
     def __removeProxyPort(self, boxBloc, proxyNode, name):
         par_dict = self.__networks.get(boxBloc.parent(), None)
