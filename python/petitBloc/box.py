@@ -182,6 +182,9 @@ class Box(core.NetworkBlock, component.Component):
     def deleteContext(self):
         self.__context = None
 
+    def hasContext(self):
+        return self.__context is not None
+
     def getContext(self):
         if self.__context is None:
             return {}

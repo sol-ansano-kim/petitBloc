@@ -564,6 +564,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __insertBlocks(self, data, rootPath):
         reRootNode = re.compile("^[/]{}[/]".format(rootPath.replace("/", "\/")))
         renamed_maps = {}
+        has_context = self.__getGraph("/{}".format(const.RootBoxName)).box().hasContext()
 
         def addRootPath(path):
             if reRootNode.search(path):
@@ -618,6 +619,9 @@ class MainWindow(QtWidgets.QMainWindow):
             full_path = remapPath(b["path"])
 
             if b["type"] == "SceneContext":
+                if has_context:
+                    continue
+
                 if "/{}".format(const.RootBoxName) != self.__parentName(full_path):
                     continue
 
