@@ -159,10 +159,12 @@ class Graph(nodz_main.Nodz):
             if key == QtCore.Qt.Key_Control:
                 self.__cntl_pressed = True
 
-            if key == QtCore.Qt.Key_C and self.__cntl_pressed:
+            if (key == QtCore.Qt.Key_C or key == QtCore.Qt.Key_X) and self.__cntl_pressed:
                 include = map(lambda x : x.block().path(), self.scene().selectedItems())
                 exclude = self.proxyPaths()
                 self.CopyBlocks.emit(self.__model.serialize(include=include, exclude=exclude), self.boxModel().box())
+                if key == QtCore.Qt.Key_X:
+                    self._deleteSelectedNodes()
 
             if key == QtCore.Qt.Key_V and self.__cntl_pressed:
                 self.PasteBlocks.emit(self.__model.box())
@@ -335,9 +337,6 @@ class Graph(nodz_main.Nodz):
 
             elif issubclass(port.typeClass(), basestring):
                 preset = "box_str_port"
-
-            else:
-                preset = "str_port"
 
         else:
             if port.typeClass() == bool:
