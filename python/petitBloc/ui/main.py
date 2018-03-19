@@ -138,7 +138,7 @@ class MainWindow(QtWidgets.QMainWindow):
         save_action.triggered.connect(self.__save)
         save_as_action.triggered.connect(self.__saveAs)
         open_action.triggered.connect(self.__open)
-        import_action.triggered.connect(self.__importBox)
+        import_action.triggered.connect(self.__import)
         menubar.addMenu(file_menu)
 
         process_menu = QtWidgets.QMenu("&Blocks", self)
@@ -490,7 +490,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __parentName(self, path):
         return os.path.dirname(path)
 
-    def __importBox(self):
+    def __import(self):
         res = QtWidgets.QFileDialog.getOpenFileName(self, "Import", "", "*.blcs")
 
         if isinstance(res, tuple):
@@ -509,9 +509,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 graph = n_dict["graph"]
                 break
 
-        node = graph.addBlock("Box", blockName=uiUtil.BaseName(pth), position=graph.mapToScene(graph.viewport().rect().center()))
+        if graph is None:
+            raise Exception, "Failed to import : could not find the current graph"
 
-        self.__read(pth, node.block().path())
+        self.__read(pth, graph.box().path())
 
         self.__resetTabIndice()
 
