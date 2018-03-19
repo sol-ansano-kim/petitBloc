@@ -23,7 +23,7 @@ class BlockManager(object):
         self.__blocks = {}
         self.__modules = []
         self.__loaded = []
-        self.__finded_class = {"bool": bool, "int": int, "float": float, "str": str}
+        self.__finded_class = {"bool": bool, "int": int, "float": float, "str": str, "list": list, "dict": dict, "tuple": tuple}
         self.__searchBlocks()
 
     def blockNames(self):
