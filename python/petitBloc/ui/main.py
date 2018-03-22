@@ -510,7 +510,7 @@ class MainWindow(QtWidgets.QMainWindow):
         index = self.__graph_tabs.currentIndex()
 
         for n_dict in self.__networks.values():
-            if n_dict["index"] == index:
+            if n_dict.get("index") == index:
                 graph = n_dict["graph"]
                 break
 
