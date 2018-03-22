@@ -79,6 +79,10 @@ QMenuBar::item, QMenu::item
     background-color: #323232;
 }
 
+QTabWidget:tab-bar
+{
+    left: 0;
+}
 
 QTabWidget::pane
 {
