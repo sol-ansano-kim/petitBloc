@@ -28,6 +28,17 @@ class ProxyChain(core.Proxy, chain.Chain):
         for d in self.dst().proxyDestination():
             d.activate()
 
+    def requiredNumber(self):
+        dst = self.dst()
+
+        if dst is None:
+            return 0
+
+        if not dst.isProxy():
+            return 1
+
+        return len(dst.proxyDestination())
+
     def send(self, pack):
         if self.dst() is not None and self.dst().isProxy():
             return self.dst().carry(pack)

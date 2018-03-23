@@ -236,6 +236,12 @@ class ChainBase(object):
     def isConnected(self):
         return (self.__src is not None) and (self.__dst is not None)
 
+    def requiredNumber(self):
+        if self.__dst is None:
+            return 0
+
+        return 1
+
     def empty(self):
         return True
 
