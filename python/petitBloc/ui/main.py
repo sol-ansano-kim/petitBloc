@@ -239,6 +239,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.__networks.has_key(boxBloc):
             return
 
+        current_graph = self.__getCurrentGraph()
+        data = current_graph.copy()
+
+        self.__updatePositionData(data, current_graph.box().path())
+        current_graph._deleteSelectedNodes()
+
         grph = graph.SubNet(boxObject=boxBloc)
         grph.ItemDobleClicked.connect(self.__showGraphTab)
         grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
@@ -248,6 +254,9 @@ class MainWindow(QtWidgets.QMainWindow):
         grph.BoxDeleted.connect(self.__boxDeleted)
 
         self.__networks[boxBloc] = {"graph": grph, "init": init}
+
+        ## TODO : Is this really ok ? (999.0, 999.0)
+        self.__pasteToGraph(grph, boxBloc, data, centerPos=QtCore.QPointF(999.0, 999.0))
 
     def __showGraphTab(self, bloc):
         widget_created = False
@@ -424,16 +433,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__saveData()
 
     def __updatePositionData(self, data, rootPath):
-        for b in data["blocks"]:
+        for b in data.get("blocks", []):
             path = uiUtil.AddRootPath(b["path"], rootPath)
             grph = self.__getParentGraph(path)
 
             if grph is None:
-                raise Exception, "Failed to save : could not find the parent graph - {}".format(path)
+                raise Exception, "Failed to update position : could not find the parent graph - {}".format(path)
 
             nod = grph.findNodeFromName(self.__shortName(path))
             if nod is None:
-                raise Exception, "Failed to save : could not find the node - {}".format(path)
+                raise Exception, "Failed to update position : could not find the node - {}".format(path)
 
             pos = nod.pos() + nod.nodeCenter
             b["pos"] = [pos.x(), pos.y()]
@@ -479,8 +488,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         data = copy.deepcopy(self.__clipboard)
 
-        cursor_pos = graph.mapToScene(graph.mapFromGlobal(QtGui.QCursor.pos()))
-        cur_pos = [cursor_pos.x(), cursor_pos.y()]
+        self.__pasteToGraph(graph, root_box, data)
+
+    def __pasteToGraph(self, graph, root_box, data, centerPos=None):
+        if not centerPos:
+            centerPos = graph.mapToScene(graph.mapFromGlobal(QtGui.QCursor.pos()))
+        cen_pos = [centerPos.x(), centerPos.y()]
         centerx = 0
         centery = 0
 
@@ -493,9 +506,9 @@ class MainWindow(QtWidgets.QMainWindow):
         for b in data.get("blocks", []):
             pos = b.get("pos")
             if pos:
-                b["pos"] = [pos[0] - centerx + cur_pos[0], pos[1] - centery + cur_pos[1]]
+                b["pos"] = [pos[0] - centerx + cen_pos[0], pos[1] - centery + cen_pos[1]]
             else:
-                b["pos"] = cur_pos
+                b["pos"] = cen_pos
 
         self.__insertBlocks(data, root_box.path())
 
