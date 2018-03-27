@@ -96,7 +96,10 @@ class PacketBase(object):
         return self.__type_class
 
     def value(self):
-        return copy.deepcopy(self.__value)
+        if isinstance(self.__value, (dict, list)):
+            return copy.deepcopy(self.__value)
+
+        return self.__value
 
     def _del(self):
         self.__value = None
