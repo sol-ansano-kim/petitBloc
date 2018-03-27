@@ -5,7 +5,7 @@ from . import core
 
 
 ReContextParam = re.compile("[$][a-zA-Z0-9_]+")
-RePathParam = re.compile("[.]{0,2}[/][^@]*[@][a-zA-Z0-9_]+")
+RePathParam = re.compile("[.]{0,2}[/][a-zA-Z0-9_/]*[@][a-zA-Z0-9_]+")
 ReEqual = re.compile("^\s*[=]\s*")
 
 
