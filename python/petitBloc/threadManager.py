@@ -338,13 +338,12 @@ class ThreadManager(object):
     @staticmethod
     def Submit(obj, args=(), kwargs={}):
         while (len(ThreadManager.__Threads) >= ThreadManager.__MaxThreads):
-            ThreadManager.LockAcquire()
             ThreadManager.CleaunUp()
-            ThreadManager.LockRelease()
 
         LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
         ThreadManager.__Threads.append(p)
+
         p.start()
 
     @staticmethod
@@ -372,7 +371,7 @@ class ThreadManager(object):
         ThreadManager.__Lock.acquire()
 
     @staticmethod
-    def LockRelase():
+    def LockRelease():
         ThreadManager.__Lock.release()
 
     @staticmethod
@@ -453,10 +452,10 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         if __needToWait(bloc):
             LogManager.Debug("__main__", "  {0:>10}      {1}".format("Suspend -", bloc.path()))
             work_schedule.append(bloc)
-            ThreadManager.LockRelase()
+            ThreadManager.LockRelease()
             continue
 
-        ThreadManager.LockRelase()
+        ThreadManager.LockRelease()
         ThreadManager.Submit(bloc)
 
     ThreadManager.Join()

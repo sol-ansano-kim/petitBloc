@@ -348,13 +348,12 @@ class ProcessManager(object):
     @staticmethod
     def Submit(obj, args=(), kwargs={}):
         while (len(ProcessManager.__Processes) >= ProcessManager.__MaxProcess):
-            ProcessManager.LockAcquire()
             ProcessManager.CleanUp()
-            ProcessManager.LockRelease()
 
         LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
         ProcessManager.__Processes.append(p)
+
         p.start()
 
     @staticmethod
