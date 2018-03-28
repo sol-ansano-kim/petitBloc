@@ -115,6 +115,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # menu
         menubar = self.menuBar()
+
+        ## file
         file_menu = QtWidgets.QMenu("&File", self)
         news_action = file_menu.addAction("&New Scene")
         news_action.setShortcut(QtGui.QKeySequence("Ctrl+N"))
@@ -141,6 +143,7 @@ class MainWindow(QtWidgets.QMainWindow):
         import_action.triggered.connect(self.__import)
         menubar.addMenu(file_menu)
 
+        ## Edit
         edit_menu = QtWidgets.QMenu("&Edit", self)
         copy_action = edit_menu.addAction("&Copy")
         copy_action.setShortcut(QtGui.QKeySequence("Ctrl+C"))
@@ -157,18 +160,22 @@ class MainWindow(QtWidgets.QMainWindow):
         cut_action.triggered.connect(self.__cut)
         paste_action.triggered.connect(self.__paste)
 
+        ## Blocks
         process_menu = QtWidgets.QMenu("&Blocks", self)
         run_action = process_menu.addAction("&Execute")
         run_action.setShortcut(QtGui.QKeySequence("F5"))
         menubar.addMenu(process_menu)
 
-        setting_menu = QtWidgets.QMenu("Log", self)
+        ## settings
+        setting_menu = QtWidgets.QMenu("Settings", self)
+
+        log_menu = setting_menu.addMenu("Log")
         log_group = QtWidgets.QActionGroup(self)
         log_group.setExclusive(True)
-        no_log = setting_menu.addAction("No Log")
-        error_log = setting_menu.addAction("Error")
-        warn_log = setting_menu.addAction("Warning")
-        debug_log = setting_menu.addAction("Debug")
+        no_log = log_menu.addAction("No Log")
+        error_log = log_menu.addAction("Error")
+        warn_log = log_menu.addAction("Warning")
+        debug_log = log_menu.addAction("Debug")
         no_log.setCheckable(True)
         error_log.setCheckable(True)
         warn_log.setCheckable(True)
@@ -182,6 +189,28 @@ class MainWindow(QtWidgets.QMainWindow):
         error_log.triggered.connect(self.__errorLogTriggered)
         warn_log.triggered.connect(self.__warnLogTriggered)
         debug_log.triggered.connect(self.__debugLogTriggered)
+
+        history_menu = setting_menu.addMenu("Packet History Size")
+        history_group = QtWidgets.QActionGroup(self)
+        history_group.setExclusive(True)
+        history_10 = history_menu.addAction("10")
+        history_50 = history_menu.addAction("50")
+        history_100 = history_menu.addAction("100")
+        history_infinite = history_menu.addAction("Infinite")
+        history_10.setCheckable(True)
+        history_50.setCheckable(True)
+        history_100.setCheckable(True)
+        history_infinite.setCheckable(True)
+        history_group.addAction(history_10)
+        history_group.addAction(history_50)
+        history_group.addAction(history_100)
+        history_group.addAction(history_infinite)
+        history_100.setChecked(True)
+        history_10.triggered.connect(self.__history10Triggered)
+        history_50.triggered.connect(self.__history50Triggered)
+        history_100.triggered.connect(self.__history100Triggered)
+        history_infinite.triggered.connect(self.__historyInfiniteTriggered)
+        self.__history100Triggered()
 
         menubar.addMenu(setting_menu)
 
@@ -221,6 +250,18 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __debugLogTriggered(self):
         self.__log_viewer.setLogLevel(3)
+
+    def __history10Triggered(self):
+        self.__packet_history.setMaxSize(10)
+
+    def __history50Triggered(self):
+        self.__packet_history.setMaxSize(50)
+
+    def __history100Triggered(self):
+        self.__packet_history.setMaxSize(100)
+
+    def __historyInfiniteTriggered(self):
+        self.__packet_history.setMaxSize(-1)
 
     def __currentGraphTabChanged(self, index):
         widget = None

@@ -11,6 +11,7 @@ class PacketModel(QtCore.QAbstractTableModel):
         self.__packets = {}
         self.__row = 0
         self.__col = 0
+        self.__max_size = -1
 
     def flags(self, index):
         return QtCore.Qt.ItemIsEnabled
@@ -26,6 +27,9 @@ class PacketModel(QtCore.QAbstractTableModel):
             return self.__ports[section]
 
         return None
+
+    def setMaxSize(self, v):
+        self.__max_size = v
 
     def rowCount(self, parent=None):
         return self.__row
@@ -96,7 +100,11 @@ class PacketModel(QtCore.QAbstractTableModel):
 
                 vals = p.packetHistory()
                 if len(vals) > self.__row:
-                    self.__row = len(vals)
+                    if self.__max_size >= 0 and self.__max_size < len(vals):
+                        self.__row = self.__max_size
+                    else:
+                        self.__row = len(vals)
+
                 self.__packets[name] = vals
 
         self.endResetModel()
@@ -111,6 +119,9 @@ class PacketView(QtWidgets.QTableView):
     def __initialize(self):
         self.__model = PacketModel()
         self.setModel(self.__model)
+
+    def setMaxSize(self, v):
+        self.__model.setMaxSize(v)
 
     def setBlock(self, bloc):
         self.__model.setBlock(bloc)
@@ -133,6 +144,10 @@ class PacketHistory(QtWidgets.QWidget):
     def setBlock(self, bloc):
         self.__block = bloc
         self.__packet_view.setBlock(bloc)
+
+    def setMaxSize(self, v):
+        self.__packet_view.setMaxSize(v)
+        self.__packet_view.refresh()
 
     def refresh(self):
         self.__packet_view.refresh()
