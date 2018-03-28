@@ -27,14 +27,14 @@ class SubprocessWorker(object):
 
 class SubprocessManager(object):
     __Processes = []
-    __MaxProcess = multiprocessing.cpu_count() - 1 or 1
+    __MaxProcess = multiprocessing.cpu_count()
     __WaitTime = 0.5
     __Lock = threading.Lock()
 
     @staticmethod
     def SetMaxProcess(num):
         if num <= 0:
-            SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+            SubprocessManager.__MaxProcess = multiprocessing.cpu_count()
         else:
             SubprocessManager.__MaxProcess = num
 
@@ -44,7 +44,7 @@ class SubprocessManager(object):
             del p
 
         SubprocessManager.__Processes = []
-        SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+        SubprocessManager.__MaxProcess = multiprocessing.cpu_count()
 
     @staticmethod
     def Count():
