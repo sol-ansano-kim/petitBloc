@@ -90,22 +90,26 @@ class Graph(nodz_main.Nodz):
 
     def wheelEvent(self, event):
         self.currentState = 'ZOOM_VIEW'
-        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorUnderMouse)
-
-        inFactor = self.__zoom_factor
-        outFactor = 1 / inFactor
+        self.setTransformationAnchor(QtWidgets.QGraphicsView.AnchorViewCenter)
 
         delta = 0
-        if hasattr(event, "delta"):
-            delta = event.delta()
-        else:
-            delta = event.angleDelta().y()
-        if delta > 0:
-            zoomFactor = inFactor
-        else:
-            zoomFactor = outFactor
+        if hasattr(event, "source"):
+            if event.source() == QtCore.Qt.MouseEventSynthesizedBySystem and hasattr(event, "pixelDelta"):
+                delta = event.pixelDelta().y()
 
-        self.scale(zoomFactor, zoomFactor)
+            elif hasattr(event, "angleDelta"):
+                delta = event.angleDelta().y()
+
+        elif hasattr(event, "delta"):
+            delta = event.delta()
+
+        if delta > 0:
+            self.scale(self.__zoom_factor, self.__zoom_factor)
+
+        elif delta < 0:
+            factor = 1 / self.__zoom_factor
+            self.scale(factor, factor)
+
         self.currentState = 'DEFAULT'
 
     def boxModel(self):
@@ -143,8 +147,15 @@ class Graph(nodz_main.Nodz):
                 self.ItemDobleClicked.emit(itm.block())
 
     def mousePressEvent(self, evnt):
-        if evnt.button() == QtCore.Qt.RightButton:
+        if evnt.button() == QtCore.Qt.RightButton and evnt.modifiers() == QtCore.Qt.NoModifier:
             self.__showMenu(evnt.pos())
+            return
+
+        if evnt.button() == QtCore.Qt.LeftButton and evnt.modifiers() == QtCore.Qt.AltModifier:
+            self.currentState = 'DRAG_VIEW'
+            self.prevPos = evnt.pos()
+            self.setCursor(QtCore.Qt.ClosedHandCursor)
+            self.setInteractive(False)
             return
 
         super(Graph, self).mousePressEvent(evnt)
