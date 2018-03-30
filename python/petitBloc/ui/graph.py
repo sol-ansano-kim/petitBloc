@@ -683,6 +683,10 @@ class ProxyItem(BlocItem):
     def _remove(self):
         pass
 
+    def _deleteAttribute(self, index):
+        self.prepareGeometryChange()
+        super(ProxyItem, self)._deleteAttribute(index)
+
     def paint(self, painter, option, widget):
         nodzInst = self.scene().views()[0]
         self.emphasize(False)
