@@ -296,8 +296,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__networks[boxBloc] = {"graph": grph, "init": init}
 
-        ## TODO : Is this really ok ? (999.0, 999.0)
-        self.__pasteToGraph(grph, boxBloc, data, centerPos=QtCore.QPointF(999.0, 999.0))
+        self.__pasteToGraph(grph, boxBloc, data, centerPos=QtCore.QPointF(int(grph.config["scene_width"] * 0.5), int(grph.config["scene_height"] * 0.5)))
 
     def __showGraphTab(self, bloc):
         widget_created = False

@@ -472,7 +472,7 @@ class SubNet(Graph):
 
     def initProxyNode(self):
         # TODO : do this more smarter
-        position = self.mapToScene(self.viewport().rect().center())
+        position = QtCore.QPointF(int(self.config["scene_width"] * 0.5), int(self.config["scene_height"] * 0.5))
 
         self.__proxy_in.setPos(position - self.__proxy_in.nodeCenter - QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
         self.__proxy_out.setPos(position - self.__proxy_in.nodeCenter + QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
