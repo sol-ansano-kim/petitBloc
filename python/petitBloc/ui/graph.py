@@ -43,6 +43,35 @@ class Graph(nodz_main.Nodz):
 
         self.__zoom_factor = self.config["zoom_factor"]
 
+    def _focus(self):
+        if self.scene().selectedItems():
+            itemsArea = self._getSelectionBoundingbox()
+
+        else:
+            itemsArea = self.scene().itemsBoundingRect()
+
+        offset_x = 0
+        offset_y = 0
+
+        if itemsArea.x() < 0:
+            offset_x = -itemsArea.x()
+        if itemsArea.y() < 0:
+            offset_y = -itemsArea.y()
+
+        if offset_x > 0 or offset_y > 0:
+            for itm in self.scene().items():
+                if isinstance(itm, nodz_main.NodeItem):
+                    itm.moveBy(offset_x, offset_y)
+
+            if offset_x > 0:
+                itemsArea.setX(0)
+            if offset_y > 0:
+                itemsArea.setY(0)
+
+            self.scene().updateScene()
+
+        self.fitInView(itemsArea, QtCore.Qt.KeepAspectRatio)
+
     def isTop(self):
         return True
 
