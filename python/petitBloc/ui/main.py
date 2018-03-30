@@ -86,7 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
            btn = self.__graph_tabs.tabBar().tabButton(0, QtWidgets.QTabBar.LeftSide)
         if btn:
            btn.hide()
-        self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
+        self.__networks[self.__graph.box()] = {"graph": self.__graph}
 
         # editor tabs
         self.__parm_editor = paramEditor.ParamEditor()
@@ -276,7 +276,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__currentBlockChanged(widget.currentBlock())
 
-    def __boxCreated(self, boxBloc, init):
+    def __boxCreated(self, boxBloc):
         if self.__networks.has_key(boxBloc):
             return
 
@@ -294,7 +294,7 @@ class MainWindow(QtWidgets.QMainWindow):
         grph.BoxCreated.connect(self.__boxCreated)
         grph.BoxDeleted.connect(self.__boxDeleted)
 
-        self.__networks[boxBloc] = {"graph": grph, "init": init}
+        self.__networks[boxBloc] = {"graph": grph}
 
         self.__pasteToGraph(grph, boxBloc, data, centerPos=QtCore.QPointF(int(grph.config["scene_width"] * 0.5), int(grph.config["scene_height"] * 0.5)))
 
@@ -309,10 +309,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.__networks[bloc]["index"] = index
 
         self.__graph_tabs.setCurrentIndex(self.__networks[bloc]["index"])
-
-        if self.__networks[bloc]["init"]:
-            self.__networks[bloc]["graph"].initProxyNode()
-            self.__networks[bloc]["init"] = False
 
     def __boxDeleted(self, bx):
         path = "{}/".format(bx.path())
@@ -454,7 +450,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if btn:
            btn.hide()
 
-        self.__networks[self.__graph.box()] = {"graph": self.__graph, "init": False}
+        self.__networks[self.__graph.box()] = {"graph": self.__graph}
 
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
         self.__graph.ItemDobleClicked.connect(self.__showGraphTab)
@@ -704,7 +700,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     posf = grph.mapToScene(grph.viewport().rect().center())
 
-                node = grph.addBlock(b["type"], blockName=short_name, position=posf, init=False)
+                node = grph.addBlock(b["type"], blockName=short_name, position=posf)
 
                 if node is None:
                     print("Warning : Unknown block type : {}".format(b["type"]))

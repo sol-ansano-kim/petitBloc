@@ -22,7 +22,7 @@ class Graph(nodz_main.Nodz):
     KeyPressed = QtCore.Signal(int)
     ItemDobleClicked = QtCore.Signal(object)
     BlockDeleted = QtCore.Signal(object)
-    BoxCreated = QtCore.Signal(object, bool)
+    BoxCreated = QtCore.Signal(object)
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
 
@@ -271,7 +271,7 @@ class Graph(nodz_main.Nodz):
     def portDisconnected(self, srcPort, dstPort):
         self.__model.disconnect(srcPort, dstPort)
 
-    def addBlock(self, blockType, blockName=None, position=None, init=True):
+    def addBlock(self, blockType, blockName=None, position=None):
         if not blockType:
             return None
 
@@ -289,7 +289,7 @@ class Graph(nodz_main.Nodz):
         node = self.createNode(bloc, position=position)
 
         if bloc.hasNetwork():
-            self.BoxCreated.emit(bloc, init)
+            self.BoxCreated.emit(bloc)
 
         for ip in bloc.inputs():
             self.createAttribute(node=node, port=ip, plug=False, socket=True, dataType=ip.typeClass())
@@ -385,9 +385,6 @@ class Graph(nodz_main.Nodz):
 
         return connection
 
-    def initProxyNode(self):
-        pass
-
     def copy(self):
         include = map(lambda x : x.block().path(), self.scene().selectedItems())
         if not include:
@@ -404,6 +401,9 @@ class SubNet(Graph):
         super(SubNet, self).__init__(name=name, boxObject=boxObject, parent=parent)
         self.__proxy_in = ProxyItem(self.boxModel().inProxyBlock(), ProxyItem.In, False, self.config)
         self.__proxy_out = ProxyItem(self.boxModel().outProxyBlock(), ProxyItem.Out, False, self.config)
+        center = QtCore.QPointF(int(self.config["scene_width"] * 0.5), int(self.config["scene_height"] * 0.5))
+        self.__proxy_in.setPos(center - self.__proxy_in.nodeCenter - QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
+        self.__proxy_out.setPos(center - self.__proxy_in.nodeCenter + QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
 
         self.scene().nodes[self.__proxy_in.block().name()] = self.__proxy_in
         self.scene().nodes[self.__proxy_out.block().name()] = self.__proxy_out
@@ -469,13 +469,6 @@ class SubNet(Graph):
 
     def outProxyDisConnected(self, proxyPort, port):
         self.boxModel().disconnectOutProxy(proxyPort, port)
-
-    def initProxyNode(self):
-        # TODO : do this more smarter
-        position = QtCore.QPointF(int(self.config["scene_width"] * 0.5), int(self.config["scene_height"] * 0.5))
-
-        self.__proxy_in.setPos(position - self.__proxy_in.nodeCenter - QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
-        self.__proxy_out.setPos(position - self.__proxy_in.nodeCenter + QtCore.QPoint(0, self.__proxy_in.height) * 1.5)
 
 
 class BlocItem(nodz_main.NodeItem):
