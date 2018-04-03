@@ -20,7 +20,7 @@ def getConfigFile():
 
 class Graph(nodz_main.Nodz):
     KeyPressed = QtCore.Signal(int)
-    ItemDobleClicked = QtCore.Signal(object)
+    ShowGraphRequest = QtCore.Signal(object)
     BlockDeleted = QtCore.Signal(object)
     BoxCreated = QtCore.Signal(object)
     BoxDeleted = QtCore.Signal(object)
@@ -142,9 +142,8 @@ class Graph(nodz_main.Nodz):
     def mouseDoubleClickEvent(self, evnt):
         itm = self.itemAt(evnt.pos())
 
-        if itm is not None and isinstance(itm, BlocItem):
-            if itm.block().hasNetwork():
-                self.ItemDobleClicked.emit(itm.block())
+        if itm is not None and isinstance(itm, BlocItem) and itm.block().hasNetwork():
+            self.ShowGraphRequest.emit(itm.block())
 
     def mousePressEvent(self, evnt):
         if evnt.button() == QtCore.Qt.RightButton and evnt.modifiers() == QtCore.Qt.NoModifier:
@@ -191,6 +190,22 @@ class Graph(nodz_main.Nodz):
             self.KeyPressed.emit(evnt.key())
             if key == QtCore.Qt.Key_Tab:
                 self.__creator.show(self.mapFromGlobal(QtGui.QCursor.pos()))
+
+                return True
+
+            if key == QtCore.Qt.Key_Up:
+                parent = self.box().parent()
+                if parent is not None:
+                    self.ShowGraphRequest.emit(parent)
+
+                return True
+
+            if key == QtCore.Qt.Key_Down or key == QtCore.Qt.Key_Return:
+                for b in self.scene().selectedItems():
+                    if isinstance(b, BlocItem) and b.block().hasNetwork():
+                        self.ShowGraphRequest.emit(b.block())
+                        break
+
                 return True
 
         return False
