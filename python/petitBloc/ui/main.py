@@ -814,7 +814,29 @@ class MainWindow(QtWidgets.QMainWindow):
                             print("Warning : Failed to connect - could not find the parent graph '{}', '{}'".format(con["src"], con["path"]))
                             continue
 
-            src_parent.createConnection(self.__shortName(src_node_path), src_port, self.__shortName(dst_node_path), dst_port)
+            src_node_shot = self.__shortName(src_node_path)
+            dst_node_shot = self.__shortName(dst_node_path)
+
+            # check existing
+            src_node = src_parent.scene().nodes.get(src_node_shot)
+            if src_node is None:
+                print("Warning : Failed to connect - could not find the node '{}'".format(src_node_path))
+                continue
+
+            if not src_node.plugs.has_key(src_port):
+                print("Warning : Failed to connect - '{}' has not the port '{}'".format(src_node_path, src_port))
+                continue
+
+            dst_node = dst_parent.scene().nodes.get(dst_node_shot)
+            if dst_node is None:
+                print("Warning : Failed to connect - could not find the node '{}'".format(dst_node_path))
+                continue
+
+            if not dst_node.sockets.has_key(dst_port):
+                print("Warning : Failed to connect - '{}' has not the port '{}'".format(dst_node_path, dst_port))
+                continue
+
+            src_parent.createConnection(src_node_shot, src_port, dst_node_shot, dst_port)
 
     def __read(self, filePath, rootPath):
         data = scene.Read(filePath)
