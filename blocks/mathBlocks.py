@@ -183,3 +183,60 @@ class Divide(block.Block):
         self.output("result").send(self.__v1 / self.__v2)
 
         return True
+
+
+class CastToInt(block.Block):
+    def __init__(self):
+        super(CastToInt, self).__init__()
+
+    def initialize(self):
+        self.addInput(float, "input")
+        self.addOutput(int, "output")
+
+    def process(self):
+        in_p = self.input("input").receive()
+        if in_p.isEOP():
+            return False
+
+        self.output("output").send(in_p.value())
+        in_p.drop()
+
+        return True
+
+
+class CastToFloat(block.Block):
+    def __init__(self):
+        super(CastToFloat, self).__init__()
+
+    def initialize(self):
+        self.addInput(float, "input")
+        self.addOutput(float, "output")
+
+    def process(self):
+        in_p = self.input("input").receive()
+        if in_p.isEOP():
+            return False
+
+        self.output("output").send(in_p.value())
+        in_p.drop()
+
+        return True
+
+
+class CastToBool(block.Block):
+    def __init__(self):
+        super(CastToBool, self).__init__()
+
+    def initialize(self):
+        self.addInput(float, "input")
+        self.addOutput(bool, "output")
+
+    def process(self):
+        in_p = self.input("input").receive()
+        if in_p.isEOP():
+            return False
+
+        self.output("output").send(in_p.value())
+        in_p.drop()
+
+        return True
