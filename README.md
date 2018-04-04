@@ -1,7 +1,11 @@
+
 # PetitBloc
 
 PetitBloc is a process chain framework, implemented in python.
 This concept is derived from Flow Based Programming by [J. Paul Rodker-Morrison](http://www.jpaulmorrison.com/fbp/), and since it is implemented in Python, it can be used on almost all of the platforms and softwares that Python can be run.</p>
+
+<img src="https://github.com/sol-ansano-kim/petitBloc/wiki/images/petit_title.jpeg" width="640">
+
 [Nodz](https://github.com/LeGoffLoic/Nodz) and [Qt.py](https://github.com/mottosso/Qt.py) are used for its GUI. </p>Qt python module is required (PySide1 or 2, PyQt4 or 5).
 
 ## How to use it
