@@ -931,7 +931,7 @@ class BackdropItem(BlocItem):
         self._textPen.setStyle(QtCore.Qt.SolidLine)
         self._textPen.setColor(QtGui.QColor(255, 255, 255))
 
-        self._nodeTextFont = QtGui.QFont(config['node_font'], config['node_font_size'], QtGui.QFont.Bold)
+        self._nodeTextFont = QtGui.QFont(config['node_font'], config['node_font_size'] + 20, QtGui.QFont.Bold)
         self._attrTextFont = QtGui.QFont(config['attr_font'], config['attr_font_size'], QtGui.QFont.Normal)
 
         self._attrBrush.setStyle(QtCore.Qt.SolidPattern)
