@@ -301,7 +301,7 @@ class Graph(nodz_main.Nodz):
         if not blockType:
             return None
 
-        # TODO : SceneContext
+        # TODO : make this more smarter
         if blockType == "SceneContext":
             return self.addContextBlock(position=position)
 
@@ -331,7 +331,11 @@ class Graph(nodz_main.Nodz):
             print('Node creation aborted !')
             return
 
-        nodeItem = BlocItem(bloc, alternate, self.config)
+        # TODO : make this more smarter
+        if bloc.isBlank():
+            nodeItem = BackdropItem(bloc, self.config)
+        else:
+            nodeItem = BlocItem(bloc, alternate, self.config)
 
         # Store node in scene.
         self.scene().nodes[bloc.name()] = nodeItem
@@ -418,6 +422,7 @@ class Graph(nodz_main.Nodz):
 
         exclude = self.proxyPaths()
         return self.__model.serialize(include=include, exclude=exclude)
+
 
 class SubNet(Graph):
     ProxyPortAdded = QtCore.Signal(object, object, object)
@@ -707,6 +712,247 @@ class BlocItem(nodz_main.NodeItem):
             painter.setFont(font)
             textRect = QtCore.QRect(0, 0, self.baseWidth, self.height)
             painter.drawText(textRect, QtCore.Qt.AlignCenter, "ERROR")
+
+
+class BackdropItem(BlocItem):
+    ResizeOff = 0
+    ResizeLeftBorder = 1
+    ResizeRightBorder = 2
+    ResizeTopBorder = 3
+    ResizeBottomBorder = 4
+    ResizeTopLeftCorner = 5
+    ResizeTopRightCorner = 6
+    ResizeBottomLeftCorner = 7
+    ResizeBottomRightCorner = 8
+
+    def __init__(self, bloc, config):
+        self.__back = bloc
+        self.__config = config
+        self.__in_area = []
+        self._attrBrush = QtGui.QBrush()
+        self._attrBrushAlt = QtGui.QBrush()
+        self._attrPen = QtGui.QPen()
+        self.nodeCenter = QtCore.QPointF()
+        self._brush = QtGui.QBrush()
+        self._pen = QtGui.QPen()
+        self._penSel = QtGui.QPen()
+        self._textPen = QtGui.QPen()
+
+        super(BackdropItem, self).__init__(bloc, False, config)
+        self.setZValue(-10)
+        self.setZValue = lambda x: x
+        self.__resize_mode = BackdropItem.ResizeOff
+        self.__pre_event_pos = QtCore.QPointF()
+
+    def __leftBorderRect(self):
+        return QtCore.QRectF(0, 0, self.border, self.height)
+
+    def __rightBorderRect(self):
+        return QtCore.QRectF(self.baseWidth - self.border, 0, self.border, self.height)
+
+    def __topBorderRect(self):
+        return QtCore.QRectF(0, 0, self.baseWidth, self.border)
+
+    def __bottomBorderRect(self):
+        return QtCore.QRectF(0, self.height - self.border, self.baseWidth, self.border)
+
+    def __topLeftCornerRect(self):
+        return QtCore.QRectF(0, 0, self.border, self.border)
+
+    def __topRightCornerRect(self):
+        return QtCore.QRectF(self.baseWidth - self.border, 0, self.border, self.border)
+
+    def __bottomLeftCornerRect(self):
+        return QtCore.QRectF(0, self.height - self.border, self.border, self.border)
+
+    def __bottomRightCornerRect(self):
+        return QtCore.QRectF(self.baseWidth - self.border, self.height - self.border, self.border, self.border)
+
+    def __pointInRect(self, pos, rect):
+        px = pos.x()
+        py = pos.y()
+        left = rect.x()
+        top = rect.y()
+        right = left + rect.width()
+        bottom = top + rect.height()
+
+        if px >= left and px <= right and py >= top and py <= bottom:
+            return True
+
+        return False
+
+    def hoverMoveEvent(self, evnt):
+        pos = self.mapToItem(self, evnt.pos().x(), evnt.pos().y())
+        if self.__pointInRect(pos, self.__topLeftCornerRect()):
+            self.__resize_mode = BackdropItem.ResizeTopLeftCorner
+            self.setCursor(QtCore.Qt.SizeFDiagCursor)
+        elif self.__pointInRect(pos, self.__topRightCornerRect()):
+            self.__resize_mode = BackdropItem.ResizeTopRightCorner
+            self.setCursor(QtCore.Qt.SizeBDiagCursor)
+        elif self.__pointInRect(pos, self.__bottomLeftCornerRect()):
+            self.__resize_mode = BackdropItem.ResizeBottomLeftCorner
+            self.setCursor(QtCore.Qt.SizeBDiagCursor)
+        elif self.__pointInRect(pos, self.__bottomRightCornerRect()):
+            self.__resize_mode = BackdropItem.ResizeBottomRightCorner
+            self.setCursor(QtCore.Qt.SizeFDiagCursor)
+        elif self.__pointInRect(pos, self.__leftBorderRect()):
+            self.__resize_mode = BackdropItem.ResizeLeftBorder
+            self.setCursor(QtCore.Qt.SizeHorCursor)
+        elif self.__pointInRect(pos, self.__rightBorderRect()):
+            self.__resize_mode = BackdropItem.ResizeRightBorder
+            self.setCursor(QtCore.Qt.SizeHorCursor)
+        elif self.__pointInRect(pos, self.__topBorderRect()):
+            self.__resize_mode = BackdropItem.ResizeTopBorder
+            self.setCursor(QtCore.Qt.SizeVerCursor)
+        elif self.__pointInRect(pos, self.__bottomBorderRect()):
+            self.__resize_mode = BackdropItem.ResizeBottomBorder
+            self.setCursor(QtCore.Qt.SizeVerCursor)
+        else:
+            self.__resize_mode = BackdropItem.ResizeOff
+            self.setCursor(QtCore.Qt.ArrowCursor)
+
+        super(BackdropItem, self).hoverMoveEvent(evnt)
+
+    def hoverLeaveEvent(self, evnt):
+        self.__resize_mode = BackdropItem.ResizeOff
+        self.setCursor(QtCore.Qt.ArrowCursor)
+        super(BackdropItem, self).hoverLeaveEvent(evnt)
+
+    @property
+    def height(self):
+        return self.__back.param("height").get()
+
+    def resizeButtonRect(self):
+        x = self.baseWidth - 20
+        y = self.height - 20
+        return QtCore.QRectF(x, y, 20, 20)
+
+    def refresh(self):
+        self._createStyle(self.__config)
+
+    def mousePressEvent(self, event):
+        self.__pre_event_pos = event.pos()
+        super(BackdropItem, self).mousePressEvent(event)
+        self.__in_area = self.scene().items(QtCore.QRectF(self.pos(), self.boundingRect().size()), QtCore.Qt.ContainsItemShape)
+
+    def mouseMoveEvent(self, event):
+        pre_node_pos = self.pos()
+        cur_event_pos = event.pos()
+
+        delta = cur_event_pos - self.__pre_event_pos
+
+        if self.__resize_mode is BackdropItem.ResizeOff:
+            self.setPos(pre_node_pos + delta)
+
+            for itm in self.__in_area:
+                if isinstance(itm, BlocItem) and itm != self:
+                    itm.setPos(itm.pos() + delta)
+
+        else:
+            w_pam = self.__back.param("width")
+            h_pam = self.__back.param("height")
+
+            if self.__resize_mode is BackdropItem.ResizeTopLeftCorner:
+                w_pam.set(w_pam.get() - delta.x())
+                h_pam.set(h_pam.get() - delta.y())
+                self.setPos(pre_node_pos + delta)
+
+            elif self.__resize_mode is BackdropItem.ResizeTopRightCorner:
+                w_pam.set(w_pam.get() + delta.x())
+                h_pam.set(h_pam.get() - delta.y())
+                self.setPos(pre_node_pos.x(), (pre_node_pos + delta).y())
+                self.__pre_event_pos = QtCore.QPointF(cur_event_pos.x(), self.__pre_event_pos.y())
+
+            elif self.__resize_mode is BackdropItem.ResizeBottomLeftCorner:
+                w_pam.set(w_pam.get() - delta.x())
+                h_pam.set(h_pam.get() + delta.y())
+                self.setPos((pre_node_pos + delta).x(), pre_node_pos.y())
+                self.__pre_event_pos = QtCore.QPointF(self.__pre_event_pos.x(), cur_event_pos.y())
+
+            elif self.__resize_mode is BackdropItem.ResizeBottomRightCorner:
+                w_pam.set(w_pam.get() + delta.x())
+                h_pam.set(h_pam.get() + delta.y())
+                self.__pre_event_pos = cur_event_pos
+
+            elif self.__resize_mode is BackdropItem.ResizeLeftBorder:
+                w_pam.set(w_pam.get() - delta.x())
+                self.setPos((pre_node_pos + delta).x(), pre_node_pos.y())
+
+            elif self.__resize_mode is BackdropItem.ResizeRightBorder:
+                w_pam.set(w_pam.get() + delta.x())
+                self.__pre_event_pos = cur_event_pos
+
+            elif self.__resize_mode is BackdropItem.ResizeTopBorder:
+                h_pam.set(h_pam.get() - delta.y())
+                self.setPos(pre_node_pos.x(), (pre_node_pos + delta).y())
+
+            elif self.__resize_mode is BackdropItem.ResizeBottomBorder:
+                h_pam.set(h_pam.get() + delta.y())
+                self.__pre_event_pos = cur_event_pos
+
+            if w_pam.get() < 50:
+                w_pam.set(50)
+
+            if h_pam.get() < 50:
+                h_pam.set(50)
+
+            self.refresh()
+            self.update()
+
+        self.scene().updateScene()
+
+    def _createStyle(self, config):
+        self.setAcceptHoverEvents(True)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIsMovable)
+        self.setFlag(QtWidgets.QGraphicsItem.ItemIsSelectable)
+
+        self.baseWidth  = self.__back.param("width").get()
+        self.border = 4
+        self.radius = 5
+
+        self.nodeCenter.setX(self.baseWidth * 0.5)
+        self.nodeCenter.setY(self.height * 0.5)
+
+        self.__r = self.__back.param("r").get()
+        self.__g = self.__back.param("g").get()
+        self.__b = self.__back.param("b").get()
+
+        self._brush.setStyle(QtCore.Qt.SolidPattern)
+        self._brush.setColor(QtGui.QColor(self.__r, self.__g, self.__b))
+
+        self._pen.setStyle(QtCore.Qt.SolidLine)
+        self._pen.setWidth(self.border)
+        self._pen.setColor(QtGui.QColor(25, 25, 25))
+
+        self._penSel.setStyle(QtCore.Qt.SolidLine)
+        self._penSel.setWidth(self.border)
+        self._penSel.setColor(QtGui.QColor(98, 215, 234))
+
+        self._textPen.setStyle(QtCore.Qt.SolidLine)
+        self._textPen.setColor(QtGui.QColor(255, 255, 255))
+
+        self._nodeTextFont = QtGui.QFont(config['node_font'], config['node_font_size'], QtGui.QFont.Bold)
+        self._attrTextFont = QtGui.QFont(config['attr_font'], config['attr_font_size'], QtGui.QFont.Normal)
+
+        self._attrBrush.setStyle(QtCore.Qt.SolidPattern)
+        self._attrBrushAlt.setStyle(QtCore.Qt.SolidPattern)
+        self._attrPen.setStyle(QtCore.Qt.SolidLine)
+
+    def paint(self, painter, option, widget):
+        painter.setBrush(self._brush)
+        painter.setPen(self.pen)
+        painter.drawRoundedRect(0, 0, self.baseWidth, self.height, self.radius, self.radius)
+
+        painter.setPen(self._textPen)
+        painter.setFont(self._nodeTextFont)
+        metrics = QtGui.QFontMetrics(painter.font())
+        text_rect = metrics.boundingRect(self.name)
+        text_width = text_rect.width() + 14
+        text_height = text_rect.height() + 14
+        margin = (text_width - self.baseWidth) * 0.5
+        textRect = QtCore.QRect(-margin, 0, text_width, text_height)
+
+        painter.drawText(textRect, QtCore.Qt.AlignCenter, self.name)
 
 
 class ContextItem(BlocItem):

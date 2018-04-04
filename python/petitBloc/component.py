@@ -14,7 +14,7 @@ class Component(core.ComponentBase):
         self.__params = []
         self.__extraParams = []
         self.initialize()
-        if not self.hasNetwork() and not self.isProxy():
+        if not self.hasNetwork() and not self.isProxy() and not self.isBlank():
             self.__outputs.append(port.OutPort(bool, name=const.BlockResultPortName, parent=self))
 
     def debug(self, message):

@@ -73,6 +73,7 @@ class BlockManager(object):
         return None
 
     def __searchBlocks(self):
+        self.__blocks["Backdrop"] = {"class": box.Backdrop, "config": {"category": "Scene"}}
         self.__blocks["Box"] = {"class": box.Box, "config": {"category": "Scene"}}
         self.__blocks["ConditionalBox"] = {"class": conditionalBox.ConditionalBox, "config": {"category": "Scene"}}
         self.__blocks["SceneContext"] = {"class": box.SceneContext, "config": {"category": "Scene"}}

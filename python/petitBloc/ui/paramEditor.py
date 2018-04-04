@@ -6,7 +6,10 @@ from . import uiUtil
 from .. import util
 from .. import box
 from .. import core
+from functools import partial
 import re
+
+
 ReEqual = re.compile("^\s*[=]\s*")
 
 
@@ -214,6 +217,45 @@ class ParamLine(QtWidgets.QLineEdit):
         self.Changed.emit()
 
 
+class ColorPicker(QtWidgets.QHBoxLayout):
+    Changed = QtCore.Signal()
+
+    def __init__(self, r, g, b):
+        super(ColorPicker, self).__init__()
+        self.__r = r
+        self.__g = g
+        self.__b = b
+        self.__button = None
+        self.__style = "QPushButton{ background-color: rgb(%s, %s, %s); border: 1px solid #1D1D1D; }"
+        self.initialize()
+        self.refresh()
+
+    def initialize(self):
+        self.setAlignment(QtCore.Qt.AlignLeft)
+        __label = QtWidgets.QLabel("Color")
+        __label.setMinimumWidth(const.ParamLabelMinimumWidth)
+        __label.setMaximumWidth(const.ParamLabelMaximumWidth)
+        self.__button = QtWidgets.QPushButton()
+        self.addWidget(__label)
+        self.addWidget(self.__button)
+
+        self.__button.clicked.connect(self.__pickColor)
+
+    def refresh(self):
+        self.__button.setStyleSheet(self.__style % (self.__r.get(), self.__g.get(), self.__b.get()))
+        self.Changed.emit()
+
+    def __pickColor(self):
+        color = QtWidgets.QColorDialog.getColor(QtGui.QColor(self.__r.get(), self.__g.get(), self.__b.get()), self.__button)
+        if not color.isValid():
+            return
+
+        self.__r.set(color.red())
+        self.__g.set(color.green())
+        self.__b.set(color.blue())
+        self.refresh()
+
+
 class ParamLayout(QtWidgets.QHBoxLayout):
     RegexInt = re.compile("[^0-9-]")
     RegexFloat = re.compile("[^0-9-.]")
@@ -288,6 +330,7 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 class ParamEditor(QtWidgets.QWidget):
     BlockRenamed = QtCore.Signal(object, str)
     DeleteRequest = QtCore.Signal(object, object)
+    NodeRefreshRequest = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         super(ParamEditor, self).__init__()
@@ -298,7 +341,7 @@ class ParamEditor(QtWidgets.QWidget):
         self.__block_name = None
         self.__add_param_button = None
         self.__param_creator = None
-        self.__params = {}
+        self.__params = []
         self.__initialize()
         self.__refresh()
 
@@ -381,7 +424,7 @@ class ParamEditor(QtWidgets.QWidget):
         self.BlockRenamed.emit(self.__bloc, uniq_name)
 
     def __refresh(self):
-        self.__params = {}
+        self.__params = []
 
         self.__clearLayout(self.__param_layout)
         if self.__bloc is None:
@@ -414,20 +457,25 @@ class ParamEditor(QtWidgets.QWidget):
         if self.__bloc is None:
             return
 
-        box_bloc = self.__bloc.parent()
+        if self.__bloc.isBlank():
+            lay = ColorPicker(self.__bloc.param("r"), self.__bloc.param("g"), self.__bloc.param("b"))
+            lay.Changed.connect(partial(self.NodeRefreshRequest.emit, self.__bloc.path()))
+            self.__params.append(lay)
+            self.__param_layout.addLayout(lay)
+            return
 
         for p in self.__bloc.params(includeExtraParam=False):
             lay = ParamLayout(p)
             lay.ParameterEdited.connect(self.__update_all_params)
             lay.DeleteRequest.connect(self.__deleteParam)
-            self.__params[p] = lay
+            self.__params.append(lay)
             self.__param_layout.addLayout(lay)
 
         for p in self.__bloc.extraParams():
             lay = ParamLayout(p, deletable=True)
             lay.ParameterEdited.connect(self.__update_all_params)
             lay.DeleteRequest.connect(self.__deleteParam)
-            self.__params[p] = lay
+            self.__params.append(lay)
             self.__param_layout.addLayout(lay)
 
     def __addParam(self):
@@ -443,7 +491,7 @@ class ParamEditor(QtWidgets.QWidget):
         self.__refresh()
 
     def __update_all_params(self):
-        for p in self.__params.values():
+        for p in self.__params:
             p.refresh()
 
     def __clearLayout(self, layout):

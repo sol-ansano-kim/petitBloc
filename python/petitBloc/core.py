@@ -18,6 +18,10 @@ class NetworkBlock():
     pass
 
 
+class BlankBlock():
+    pass
+
+
 class PBEnum():
     pass
 
@@ -315,6 +319,9 @@ class ComponentBase(object):
 
     def hasNetwork(self):
         return isinstance(self, NetworkBlock)
+
+    def isBlank(self):
+        return isinstance(self, BlankBlock)
 
     def expandable(self):
         return False

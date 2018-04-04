@@ -11,6 +11,18 @@ import re
 ReSplitPath = re.compile("^[/](?P<name>[a-zA-Z0-9_]+)")
 
 
+class Backdrop(core.BlankBlock, component.Component):
+    def __init__(self):
+        super(Backdrop, self).__init__()
+
+    def initialize(self):
+        self.addParam(int, "r")
+        self.addParam(int, "g")
+        self.addParam(int, "b")
+        self.addParam(float, "width", 400)
+        self.addParam(float, "height", 200)
+
+
 class SceneContext(component.Component):
     def __init__(self, name="", parent=None):
         super(SceneContext, self).__init__(name=self.__class__.__name__, parent=parent)

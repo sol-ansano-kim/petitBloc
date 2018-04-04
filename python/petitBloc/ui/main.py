@@ -90,6 +90,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # editor tabs
         self.__parm_editor = paramEditor.ParamEditor()
+        self.__parm_editor.NodeRefreshRequest.connect(self.__nodeRefresh)
         self.__editor_tabs.addTab(self.__parm_editor, "Param Editor")
 
         ## info tabs
@@ -417,6 +418,18 @@ class MainWindow(QtWidgets.QMainWindow):
     def __getParentGraph(self, path):
         return self.__getGraph(self.__parentName(path))
 
+    def __nodeRefresh(self, path):
+        grph = self.__getParentGraph(path)
+        if grph is None:
+            return
+
+        node = grph.scene().nodes.get(self.__shortName(path))
+        if node is None:
+            return
+
+        node.refresh()
+        node.update()
+
     def __getGraph(self, path):
         for bloc, n_dict in self.__networks.iteritems():
             if bloc.path() == path:
@@ -677,6 +690,8 @@ class MainWindow(QtWidgets.QMainWindow):
             short_name = self.__shortName(full_path)
             grph = self.__getParentGraph(full_path)
             bloc = None
+            node = None
+
             if grph is None:
                 raise Exception, "Failed to load : could not find the parent graph - {}".format(full_path)
 
@@ -709,6 +724,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 bloc = node.block()
                 renamed_maps[b["path"]] = bloc.path()
 
+            if node is None:
+                continue
+
             if bloc is not None:
                 for k, vv in b.get("params", {}).iteritems():
                     parm = bloc.param(k)
@@ -739,6 +757,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     if not parm.setExpression(vv["expression"]):
                         print("Warning : Failed to set expression {}@{} - {}".format(bloc.path(), k, str(vv["expression"])))
+
+            if bloc.isBlank():
+                node.refresh()
+                if pos:
+                    posf = QtCore.QPointF(pos[0], pos[1])
+                else:
+                    posf = grph.mapToScene(grph.viewport().rect().center())
+
+                node.setPos(posf - node.nodeCenter)
 
         ## proxy ports
         for proxy in data.get("proxyPorts", []):
