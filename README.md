@@ -149,10 +149,12 @@ In some cases, we want to determine how the loop works. We can describe it with 
 By default, run() method will work like this.
 
 ```python
+...
     def run(self):
         while (True):
             if not self.process():
                 break
+...
 
 ```
 
@@ -168,7 +170,14 @@ You can specify the styles of blocks in the "block file name".config.
 
 ### Logging
 
-You can print logs with self.debug(), self.warn(), self.error() methods.
+If you want logging of some information, you can output it with debug, warn or error method.
+```python
+...
+    self.debug("DEBUG TEST")
+    self.warn("WARNING TEST")
+    self.error("ERROR TEST")
+...
+```
 
 ## Block Packages
 
