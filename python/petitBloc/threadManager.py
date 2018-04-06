@@ -336,6 +336,28 @@ class ThreadManager(object):
         return len(ThreadManager.__Threads)
 
     @staticmethod
+    def Execute(obj, args=(), kwargs={}):
+        LogManager.IncreaseCount()
+        st = time.time()
+        success = True
+
+        obj.activate()
+
+        try:
+            obj.run()
+        except Exception as e:
+            success = False
+            LogManager.Error(obj.path(), e)
+
+        res = obj.output(const.BlockResultPortName)
+        if res:
+            res.send(success)
+
+        obj.terminate(success)
+
+        LogManager.TimeReport(obj.path(), time.time() - st)
+
+    @staticmethod
     def Submit(obj, args=(), kwargs={}):
         while (len(ThreadManager.__Threads) >= ThreadManager.__MaxThreads):
             ThreadManager.CleaunUp()
@@ -412,6 +434,19 @@ def __parentSuspended(bloc):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    if maxProcess != 1:
+        lock_func = ThreadManager.LockAcquire
+        release_func = ThreadManager.LockRelease
+        execute_func = ThreadManager.Submit
+        cleanup_func = ThreadManager.CleaunUp
+        join_func = ThreadManager.Join
+    else:
+        lock_func = lambda : 0
+        release_func = lambda : 0
+        execute_func = ThreadManager.Execute
+        cleanup_func = lambda : 0
+        join_func = lambda : 0
+
     LogManager.Reset()
 
     st = time.time()
@@ -432,7 +467,7 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         s.resetState()
 
     while (work_schedule):
-        ThreadManager.CleaunUp()
+        cleanup_func()
 
         bloc = work_schedule.pop(0)
         if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
@@ -447,18 +482,18 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
 
             continue
 
-        ThreadManager.LockAcquire()
+        lock_func()
 
         if __needToWait(bloc):
             LogManager.Debug("__main__", "  {0:>10}      {1}".format("Suspend -", bloc.path()))
             work_schedule.append(bloc)
-            ThreadManager.LockRelease()
+            release_func()
             continue
 
-        ThreadManager.LockRelease()
-        ThreadManager.Submit(bloc)
+        release_func()
+        execute_func(bloc)
 
-    ThreadManager.Join()
+    join_func()
     t2 = time.time()
 
     for s in schedule:
