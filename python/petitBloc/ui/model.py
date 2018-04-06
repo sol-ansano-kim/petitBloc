@@ -285,7 +285,7 @@ class BoxModel(QtCore.QObject):
 
         return data
 
-    def run(self, manager=None):
+    def run(self, manager=None, maxProcess=1):
         callback = None
         schedule = self.__box.getSchedule()
 
@@ -294,4 +294,4 @@ class BoxModel(QtCore.QObject):
             manager.setCount(len(schedule))
             callback = manager.increase
 
-        workerManager.WorkerManager.RunSchedule(schedule, perProcessCallback=callback)
+        workerManager.WorkerManager.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=callback)

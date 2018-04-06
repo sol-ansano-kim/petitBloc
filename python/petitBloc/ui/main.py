@@ -2,6 +2,7 @@ import operator
 import re
 import os
 import copy
+import sys
 from Qt import QtWidgets
 from Qt import QtCore
 from Qt import QtGui
@@ -42,6 +43,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__clipboard = {}
         self.__initialize()
         self.__setStyleSheet()
+        self.__max_thread = 1
+        self.__warned = False
 
     def __setStyleSheet(self):
         qss_path = os.path.abspath(os.path.join(__file__, "../style.qss"))
@@ -165,6 +168,7 @@ class MainWindow(QtWidgets.QMainWindow):
         process_menu = QtWidgets.QMenu("&Blocks", self)
         run_action = process_menu.addAction("&Execute")
         run_action.setShortcut(QtGui.QKeySequence("F5"))
+        run_action.triggered.connect(self.__runTriggered)
         menubar.addMenu(process_menu)
 
         ## settings
@@ -213,13 +217,25 @@ class MainWindow(QtWidgets.QMainWindow):
         history_infinite.triggered.connect(self.__historyInfiniteTriggered)
         self.__history100Triggered()
 
+        thread_menu = setting_menu.addMenu("Threads")
+        thread_group = QtWidgets.QActionGroup(self)
+        thread_group.setExclusive(True)
+        thread_single = thread_menu.addAction("Single")
+        thread_multi = thread_menu.addAction("Multi")
+        thread_single.setCheckable(True)
+        thread_multi.setCheckable(True)
+        thread_group.addAction(thread_single)
+        thread_group.addAction(thread_multi)
+        thread_single.setChecked(True)
+        thread_single.triggered.connect(self.__singleThread)
+        thread_multi.triggered.connect(self.__multiThread)
+        self.__singleThread()
+
         menubar.addMenu(setting_menu)
 
         ## progress
         self.__progress = progress.Progress(self)
         self.__progress.hide()
-
-        run_action.triggered.connect(self.__runTriggered)
 
         self.__graph_tabs.tabCloseRequested.connect(self.__closeGraphRequest)
         self.__graph_tabs.currentChanged.connect(self.__currentGraphTabChanged)
@@ -263,6 +279,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __historyInfiniteTriggered(self):
         self.__packet_history.setMaxSize(-1)
+
+    def __singleThread(self):
+        self.__max_thread = 1
+
+    def __multiThread(self):
+        host = os.path.basename(sys.argv[0])
+        host_lower = host.lower()
+        if not host_lower.startswith("petitblocui") and not host_lower.startswith("python"):
+            if not self.__warned:
+                self.__warned = True
+                QtWidgets.QMessageBox.warning(self, "Warning", "Currently petitBloc does not fully support multi thread on '{}'.\nOperation may stop due to some block calculation".format(host))
+
+        self.__max_thread = 0
 
     def __currentGraphTabChanged(self, index):
         widget = None
@@ -394,7 +423,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__progress.show()
 
-        self.__graph.boxModel().run(manager=self.__progress.manager())
+        self.__graph.boxModel().run(manager=self.__progress.manager(), maxProcess=self.__max_thread)
 
         graph = None
         index = self.__graph_tabs.currentIndex()
