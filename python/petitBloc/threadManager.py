@@ -355,6 +355,8 @@ class ThreadManager(object):
 
         obj.terminate(success)
 
+        ThreadManager.RunPerProcessCallback()
+
         LogManager.TimeReport(obj.path(), time.time() - st)
 
     @staticmethod
