@@ -1,0 +1,116 @@
+{
+    "connections": [
+        {
+            "path": "GoogleMapFind.address", 
+            "src": "Address.value"
+        }, 
+        {
+            "path": "GoogleMapFind.client", 
+            "src": "GoogleMapClient.client"
+        }, 
+        {
+            "path": "GoogleMapURL.center", 
+            "src": "GoogleMapFind.geocode"
+        }, 
+        {
+            "path": "GoogleMapURL.client", 
+            "src": "GoogleMapClient.client"
+        }, 
+        {
+            "path": "WebOpen.url", 
+            "src": "GoogleMapURL.url"
+        }
+    ], 
+    "proxyPorts": [], 
+    "blocks": [
+        {
+            "path": "Address", 
+            "type": "String", 
+            "pos": [
+                4368.819298045815, 
+                4893.0656905689475
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "GoogleMapClient", 
+            "type": "GoogleMapClient", 
+            "pos": [
+                4352.802644745818, 
+                4703.871776556573
+            ], 
+            "params": {
+                "key": {
+                    "expression": "= \"$google_api\"", 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "GoogleMapFind", 
+            "type": "GoogleMapFind", 
+            "pos": [
+                4630.126644745818, 
+                4794.616546556571
+            ]
+        }, 
+        {
+            "path": "GoogleMapURL", 
+            "type": "GoogleMapURL", 
+            "pos": [
+                4907.847018276887, 
+                4696.036391920449
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 1024
+                }, 
+                "format": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "mapType": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "zoom": {
+                    "expression": null, 
+                    "value": 15
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 768
+                }
+            }
+        }, 
+        {
+            "path": "SceneContext", 
+            "type": "SceneContext", 
+            "pos": [
+                4380.092868045816, 
+                4561.417081056573
+            ], 
+            "extraParams": {
+                "google_api": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "WebOpen", 
+            "type": "WebOpen", 
+            "pos": [
+                5181.185886821513, 
+                4790.868907402365
+            ]
+        }
+    ]
+}

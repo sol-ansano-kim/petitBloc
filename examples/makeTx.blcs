@@ -1,0 +1,177 @@
+{
+    "connections": [
+        {
+            "path": "MakeTXBox/MakeTx.inColorspace", 
+            "src": "MakeTXBox/inColorSpace.value"
+        }, 
+        {
+            "path": "MakeTXBox/MakeTx.inImage", 
+            "src": "MakeTXBox/in.image_path"
+        }, 
+        {
+            "path": "MakeTXBox/MakeTx.outColorspace", 
+            "src": "MakeTXBox/ourColorSpace.value"
+        }, 
+        {
+            "path": "MakeTXBox/MakeTx.outImage", 
+            "src": "MakeTXBox/StringAdd.result"
+        }, 
+        {
+            "path": "MakeTXBox/SplitExt.path", 
+            "src": "MakeTXBox/in.image_path"
+        }, 
+        {
+            "path": "MakeTXBox/StringAdd.string1", 
+            "src": "MakeTXBox/SplitExt.base"
+        }, 
+        {
+            "path": "MakeTXBox/StringAdd.string2", 
+            "src": "MakeTXBox/ext.value"
+        }, 
+        {
+            "path": "MakeTXBox/out.MakeTx_result", 
+            "src": "MakeTXBox/MakeTx.result"
+        }
+    ], 
+    "proxyPorts": [
+        {
+            "path": "MakeTXBox", 
+            "out": [
+                {
+                    "type": "bool", 
+                    "name": "MakeTx_result"
+                }
+            ], 
+            "in": [
+                {
+                    "type": "str", 
+                    "name": "image_path"
+                }
+            ]
+        }
+    ], 
+    "blocks": [
+        {
+            "path": "MakeTXBox", 
+            "type": "Box", 
+            "pos": [
+                4890.0, 
+                4906.0
+            ]
+        }, 
+        {
+            "path": "MakeTXBox/MakeTx", 
+            "type": "MakeTx", 
+            "pos": [
+                5353.453633575013, 
+                4834.433270211552
+            ]
+        }, 
+        {
+            "path": "MakeTXBox/MakeTxPath", 
+            "type": "Backdrop", 
+            "pos": [
+                4776.7178630113385, 
+                5058.2879880911005
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 565.9153204948725
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 396.8186147391798
+                }
+            }
+        }, 
+        {
+            "path": "MakeTXBox/SplitExt", 
+            "type": "SplitExt", 
+            "pos": [
+                4661.628519626282, 
+                4928.37619642499
+            ]
+        }, 
+        {
+            "path": "MakeTXBox/StringAdd", 
+            "type": "StringAdd", 
+            "pos": [
+                4913.134396626279, 
+                4988.9194844249905
+            ]
+        }, 
+        {
+            "path": "MakeTXBox/ext", 
+            "type": "String", 
+            "pos": [
+                4673.973661626281, 
+                5118.24343742499
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": ".tx"
+                }
+            }
+        }, 
+        {
+            "path": "MakeTXBox/in", 
+            "type": "ProxyBlock", 
+            "pos": [
+                4642.558294344847, 
+                4669.254884889101
+            ], 
+            "preservered": true
+        }, 
+        {
+            "path": "MakeTXBox/inColorSpace", 
+            "type": "String", 
+            "pos": [
+                5025.777528090394, 
+                4506.632382156496
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": "sRGB"
+                }
+            }
+        }, 
+        {
+            "path": "MakeTXBox/ourColorSpace", 
+            "type": "String", 
+            "pos": [
+                5028.144832716677, 
+                4643.042579156495
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": "linear"
+                }
+            }
+        }, 
+        {
+            "path": "MakeTXBox/out", 
+            "type": "ProxyBlock", 
+            "pos": [
+                5707.394396505126, 
+                4831.745324653257
+            ], 
+            "preservered": true
+        }
+    ]
+}

@@ -1,0 +1,752 @@
+{
+    "connections": [
+        {
+            "path": "B.input1", 
+            "src": "QImagePixelColor.b"
+        }, 
+        {
+            "path": "B.input2", 
+            "src": "Float4.value"
+        }, 
+        {
+            "path": "BaseName.path", 
+            "src": "imageURL.value"
+        }, 
+        {
+            "path": "Choice.condition", 
+            "src": "Compare.result"
+        }, 
+        {
+            "path": "Choice.false", 
+            "src": "QImageSize.height"
+        }, 
+        {
+            "path": "Choice.true", 
+            "src": "QImageSize.width"
+        }, 
+        {
+            "path": "Compare.input1", 
+            "src": "QImageSize.width"
+        }, 
+        {
+            "path": "Compare.input2", 
+            "src": "QImageSize.height"
+        }, 
+        {
+            "path": "Divide.input1", 
+            "src": "Float.value"
+        }, 
+        {
+            "path": "Divide.input2", 
+            "src": "Choice.output"
+        }, 
+        {
+            "path": "G.input1", 
+            "src": "QImagePixelColor.g"
+        }, 
+        {
+            "path": "G.input2", 
+            "src": "Float4.value"
+        }, 
+        {
+            "path": "Join.input1", 
+            "src": "tempDirectory.value"
+        }, 
+        {
+            "path": "Join.input2", 
+            "src": "BaseName.basename"
+        }, 
+        {
+            "path": "MayaCreateParticle.b", 
+            "src": "B.result"
+        }, 
+        {
+            "path": "MayaCreateParticle.g", 
+            "src": "G.result"
+        }, 
+        {
+            "path": "MayaCreateParticle.r", 
+            "src": "R.result"
+        }, 
+        {
+            "path": "MayaCreateParticle.x", 
+            "src": "X.result"
+        }, 
+        {
+            "path": "MayaCreateParticle.y", 
+            "src": "Y.result"
+        }, 
+        {
+            "path": "MayaCreateParticle.z", 
+            "src": "Z.result"
+        }, 
+        {
+            "path": "Multiply.input1", 
+            "src": "QImageSize.width"
+        }, 
+        {
+            "path": "Multiply.input2", 
+            "src": "Divide.result"
+        }, 
+        {
+            "path": "Multiply1.input1", 
+            "src": "QImageSize.height"
+        }, 
+        {
+            "path": "Multiply1.input2", 
+            "src": "Divide.result"
+        }, 
+        {
+            "path": "Plus.input1", 
+            "src": "R.result"
+        }, 
+        {
+            "path": "Plus.input2", 
+            "src": "G.result"
+        }, 
+        {
+            "path": "Plus1.input1", 
+            "src": "Plus.result"
+        }, 
+        {
+            "path": "Plus1.input2", 
+            "src": "B.result"
+        }, 
+        {
+            "path": "QImageIndices.qimage", 
+            "src": "QimageResized.scaled"
+        }, 
+        {
+            "path": "QImagePixelColor.index", 
+            "src": "QImageIndices.index"
+        }, 
+        {
+            "path": "QImagePixelColor.qimage", 
+            "src": "QimageResized.scaled"
+        }, 
+        {
+            "path": "QImageRead.filepath", 
+            "src": "WebDownload.file"
+        }, 
+        {
+            "path": "QImageSize.qimage", 
+            "src": "QImageRead.qimage"
+        }, 
+        {
+            "path": "QimageResized.height", 
+            "src": "Multiply1.result"
+        }, 
+        {
+            "path": "QimageResized.qimage", 
+            "src": "QImageRead.qimage"
+        }, 
+        {
+            "path": "QimageResized.width", 
+            "src": "Multiply.result"
+        }, 
+        {
+            "path": "R.input1", 
+            "src": "QImagePixelColor.r"
+        }, 
+        {
+            "path": "R.input2", 
+            "src": "Float4.value"
+        }, 
+        {
+            "path": "WebDownload.filePath", 
+            "src": "Join.path"
+        }, 
+        {
+            "path": "WebDownload.url", 
+            "src": "imageURL.value"
+        }, 
+        {
+            "path": "X.input1", 
+            "src": "Float2.value"
+        }, 
+        {
+            "path": "X.input2", 
+            "src": "index0.value"
+        }, 
+        {
+            "path": "Y.input1", 
+            "src": "Plus1.result"
+        }, 
+        {
+            "path": "Y.input2", 
+            "src": "Float3.value"
+        }, 
+        {
+            "path": "Z.input1", 
+            "src": "Float2.value"
+        }, 
+        {
+            "path": "Z.input2", 
+            "src": "index1.value"
+        }, 
+        {
+            "path": "index0.array", 
+            "src": "QImageIndices.index"
+        }, 
+        {
+            "path": "index0.index", 
+            "src": "Int.value"
+        }, 
+        {
+            "path": "index1.array", 
+            "src": "QImageIndices.index"
+        }, 
+        {
+            "path": "index1.index", 
+            "src": "Int1.value"
+        }
+    ], 
+    "proxyPorts": [], 
+    "blocks": [
+        {
+            "path": "B", 
+            "type": "Multiply", 
+            "pos": [
+                6275.339994840476, 
+                5284.697372704147
+            ]
+        }, 
+        {
+            "path": "BaseName", 
+            "type": "BaseName", 
+            "pos": [
+                4263.134293526764, 
+                4765.534735090548
+            ]
+        }, 
+        {
+            "path": "CalcNewSize", 
+            "type": "Backdrop", 
+            "pos": [
+                5206.678006385173, 
+                5397.87163689137
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 1191.9493444781974
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 101
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 9
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 90
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 670.9385708867985
+                }
+            }
+        }, 
+        {
+            "path": "Choice", 
+            "type": "Choice", 
+            "pos": [
+                5142.26667843748, 
+                5427.205494179429
+            ]
+        }, 
+        {
+            "path": "Compare", 
+            "type": "Compare", 
+            "pos": [
+                4877.060018143266, 
+                5431.867360770215
+            ], 
+            "params": {
+                "operator": {
+                    "expression": null, 
+                    "value": 1
+                }
+            }
+        }, 
+        {
+            "path": "Context", 
+            "type": "Backdrop", 
+            "pos": [
+                4310.318702534324, 
+                5190.803182097734
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 400.0
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 114
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 116
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 34
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 200.0
+                }
+            }
+        }, 
+        {
+            "path": "Divide", 
+            "type": "Divide", 
+            "pos": [
+                5402.15799198841, 
+                5330.054293849442
+            ]
+        }, 
+        {
+            "path": "DownloadImage", 
+            "type": "Backdrop", 
+            "pos": [
+                4464.2808311546, 
+                4725.539241451206
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 808.514095298327
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 68
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 93
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 150
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 412.9691608480889
+                }
+            }
+        }, 
+        {
+            "path": "Float", 
+            "type": "Float", 
+            "pos": [
+                5140.701899273094, 
+                5230.3135049955545
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= $maxSize", 
+                    "value": 100.0
+                }
+            }
+        }, 
+        {
+            "path": "Float2", 
+            "type": "Float", 
+            "pos": [
+                6965.752519884724, 
+                4678.355701715201
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= 10.0 / $maxSize", 
+                    "value": 0.1
+                }
+            }
+        }, 
+        {
+            "path": "Float3", 
+            "type": "Float", 
+            "pos": [
+                6999.061575663196, 
+                5613.570497954353
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= (1 / 3.0) * 2", 
+                    "value": 0.6666666666666666
+                }
+            }
+        }, 
+        {
+            "path": "Float4", 
+            "type": "Float", 
+            "pos": [
+                6001.008191787338, 
+                5132.290815452408
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= 1 / 255.0", 
+                    "value": 0.00392156862745098
+                }
+            }
+        }, 
+        {
+            "path": "G", 
+            "type": "Multiply", 
+            "pos": [
+                6275.339994840471, 
+                5105.619667933355
+            ]
+        }, 
+        {
+            "path": "INTtoFLT", 
+            "type": "Backdrop", 
+            "pos": [
+                6162.940158867312, 
+                5168.4873727996965
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 548.5963933204484
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 113
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 71
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 24
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 622.9281963735839
+                }
+            }
+        }, 
+        {
+            "path": "Int", 
+            "type": "Int", 
+            "pos": [
+                6711.7624374156685, 
+                4840.244910862868
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": 0
+                }
+            }
+        }, 
+        {
+            "path": "Int1", 
+            "type": "Int", 
+            "pos": [
+                6714.743971564674, 
+                5018.784112343825
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": 1
+                }
+            }
+        }, 
+        {
+            "path": "Join", 
+            "type": "Join", 
+            "pos": [
+                4521.603974074044, 
+                4754.226686566604
+            ]
+        }, 
+        {
+            "path": "MayaCreateParticle", 
+            "type": "MayaCreateParticle", 
+            "pos": [
+                7591.119747173239, 
+                5063.094737916541
+            ]
+        }, 
+        {
+            "path": "Multiply", 
+            "type": "Multiply", 
+            "pos": [
+                5657.26998724184, 
+                5269.518643705758
+            ]
+        }, 
+        {
+            "path": "Multiply1", 
+            "type": "Multiply", 
+            "pos": [
+                5654.046779029899, 
+                5491.629293867385
+            ]
+        }, 
+        {
+            "path": "Plus", 
+            "type": "Plus", 
+            "pos": [
+                6728.237612905785, 
+                5535.392305456054
+            ]
+        }, 
+        {
+            "path": "Plus1", 
+            "type": "Plus", 
+            "pos": [
+                6986.306809284884, 
+                5425.733846566969
+            ]
+        }, 
+        {
+            "path": "QImageIndices", 
+            "type": "QImageIndices", 
+            "pos": [
+                5660.925764018131, 
+                4579.937552307842
+            ]
+        }, 
+        {
+            "path": "QImagePixelColor", 
+            "type": "QImagePixelColor", 
+            "pos": [
+                5660.151601530608, 
+                4765.388800653587
+            ]
+        }, 
+        {
+            "path": "QImageRead", 
+            "type": "QImageRead", 
+            "pos": [
+                5102.970992104295, 
+                4686.411078892697
+            ]
+        }, 
+        {
+            "path": "QImageSize", 
+            "type": "QImageSize", 
+            "pos": [
+                4743.323079277905, 
+                5252.830687064925
+            ]
+        }, 
+        {
+            "path": "QimageResized", 
+            "type": "QimageResized", 
+            "pos": [
+                5379.472008667108, 
+                4647.965649301056
+            ]
+        }, 
+        {
+            "path": "R", 
+            "type": "Multiply", 
+            "pos": [
+                6282.960322703058, 
+                4930.352127093848
+            ]
+        }, 
+        {
+            "path": "ResizeImage", 
+            "type": "Backdrop", 
+            "pos": [
+                5389.55738694629, 
+                4759.1888626071
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 849.5087483255793
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 134
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 134
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 135
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 490.0170134086511
+                }
+            }
+        }, 
+        {
+            "path": "SceneContext", 
+            "type": "SceneContext", 
+            "pos": [
+                4312.423967066074, 
+                5207.619889691822
+            ], 
+            "extraParams": {
+                "tempDir": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }, 
+                "maxSize": {
+                    "type": "int", 
+                    "expression": null, 
+                    "value": 100
+                }, 
+                "imgUrl": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "WebDownload", 
+            "type": "WebDownload", 
+            "pos": [
+                4737.216663121482, 
+                4683.91206043201
+            ]
+        }, 
+        {
+            "path": "X", 
+            "type": "Multiply", 
+            "pos": [
+                7192.079000687434, 
+                4808.754776414986
+            ]
+        }, 
+        {
+            "path": "Y", 
+            "type": "Multiply", 
+            "pos": [
+                7236.7556778014, 
+                5494.309131994111
+            ]
+        }, 
+        {
+            "path": "Z", 
+            "type": "Multiply", 
+            "pos": [
+                7196.854082688609, 
+                4989.235322367439
+            ]
+        }, 
+        {
+            "path": "colorToY", 
+            "type": "Backdrop", 
+            "pos": [
+                6975.042809981075, 
+                5559.244578648102
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 790.5809735198
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 15
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 121
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 123
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 617.414780860855
+                }
+            }
+        }, 
+        {
+            "path": "imageURL", 
+            "type": "String", 
+            "pos": [
+                4523.684256733215, 
+                4619.608926049646
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= \"$imgUrl\"", 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "index0", 
+            "type": "IntArrayGet", 
+            "pos": [
+                6955.17449094872, 
+                4811.5185203654655
+            ]
+        }, 
+        {
+            "path": "index1", 
+            "type": "IntArrayGet", 
+            "pos": [
+                6957.938234899194, 
+                4990.1666169456885
+            ]
+        }, 
+        {
+            "path": "indexToXZ", 
+            "type": "Backdrop", 
+            "pos": [
+                6965.785186140634, 
+                4893.826229599239
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 772.691768625763
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 58
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 139
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 138
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 605.4886442648303
+                }
+            }
+        }, 
+        {
+            "path": "tempDirectory", 
+            "type": "String", 
+            "pos": [
+                4259.702291705815, 
+                4622.367573980508
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= \"$tempDir\"", 
+                    "value": ""
+                }
+            }
+        }
+    ]
+}
