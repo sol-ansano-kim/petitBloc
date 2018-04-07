@@ -447,12 +447,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def __getParentGraph(self, path):
         return self.__getGraph(self.__parentName(path))
 
-    def __nodeRefresh(self, path):
-        grph = self.__getParentGraph(path)
+    def __nodeRefresh(self, bloc):
+        p = bloc.parent()
+        if not p:
+            return
+
+        grph = self.__networks.get(p, {}).get("graph")
         if grph is None:
             return
 
-        node = grph.scene().nodes.get(self.__shortName(path))
+        node = grph.findNode(bloc)
         if node is None:
             return
 

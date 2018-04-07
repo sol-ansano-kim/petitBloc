@@ -330,7 +330,7 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 class ParamEditor(QtWidgets.QWidget):
     BlockRenamed = QtCore.Signal(object, str)
     DeleteRequest = QtCore.Signal(object, object)
-    NodeRefreshRequest = QtCore.Signal(str)
+    NodeRefreshRequest = QtCore.Signal(object)
 
     def __init__(self, parent=None):
         super(ParamEditor, self).__init__()
@@ -459,7 +459,7 @@ class ParamEditor(QtWidgets.QWidget):
 
         if self.__bloc.isBlank():
             lay = ColorPicker(self.__bloc.param("r"), self.__bloc.param("g"), self.__bloc.param("b"))
-            lay.Changed.connect(partial(self.NodeRefreshRequest.emit, self.__bloc.path()))
+            lay.Changed.connect(partial(self.NodeRefreshRequest.emit, self.__bloc))
             self.__params.append(lay)
             self.__param_layout.addLayout(lay)
             return
