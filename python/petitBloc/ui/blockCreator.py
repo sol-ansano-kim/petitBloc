@@ -14,9 +14,6 @@ class BlockCreator(QtWidgets.QLineEdit):
         self.hide()
         self.blockSignals(True)
 
-    def leaveEvent(self, evnt):
-        self.hide()
-
     def setBlockList(self, blockList):
         comp = QtWidgets.QCompleter(filter(lambda x: x not in self.__exclude, blockList))
         comp.popup().setStyleSheet("QListView { font-size : 13px; border: 1px solid #8B8B8B; color: #EDEDED; background-color: #222222; }")
