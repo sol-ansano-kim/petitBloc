@@ -1,6 +1,8 @@
 
 # PetitBloc
 
+<img src="https://github.com/sol-ansano-kim/petitBloc/wiki/images/logo.jpg" width="640">
+
 PetitBloc is a process chain framework, implemented in python.
 This concept is derived from Flow Based Programming by [J. Paul Rodker-Morrison](http://www.jpaulmorrison.com/fbp/), and since it is implemented in Python, it can be used on almost all of the platforms and softwares that Python can be run.</p>
 
