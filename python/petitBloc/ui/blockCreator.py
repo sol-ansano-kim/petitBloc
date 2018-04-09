@@ -18,6 +18,7 @@ class BlockCreator(QtWidgets.QLineEdit):
         comp = QtWidgets.QCompleter(filter(lambda x: x not in self.__exclude, blockList))
         comp.popup().setStyleSheet("QListView { font-size : 13px; border: 1px solid #8B8B8B; color: #EDEDED; background-color: #222222; }")
         comp.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        comp.setFilterMode(QtCore.Qt.MatchContains)
         comp.setModelSorting(QtWidgets.QCompleter.CaseInsensitivelySortedModel)
         self.setCompleter(comp)
 
