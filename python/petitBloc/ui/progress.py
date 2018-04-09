@@ -7,9 +7,11 @@ class ProgressManager(object):
         self.__parent = parent
         self.__progress = 0
         self.__increase = 0
+        self.__accumulation = 0
 
     def reset(self):
         self.setProgress(0)
+        self.__accumulation = 0
 
     def setCount(self, count):
         if count == 0:
@@ -18,12 +20,18 @@ class ProgressManager(object):
         else:
             self.__increase = 100 / float(count)
 
-    def setProgress(self, v):
+    def setProgress(self, v, update=False):
         self.__progress = v
-        self.__parent.setValue(int(self.__progress))
+        self.__parent.setValue(int(self.__progress), update)
 
     def increase(self):
-        self.setProgress(self.__progress + self.__increase)
+        self.__accumulation += self.__increase
+        update = False
+        if self.__accumulation >= 10:
+            update = True
+            self.__accumulation = 0
+
+        self.setProgress(self.__progress + self.__increase, update)
 
 
 class Progress(QtWidgets.QFrame):
@@ -53,6 +61,8 @@ class Progress(QtWidgets.QFrame):
     def manager(self):
         return self.__manager
 
-    def setValue(self, v):
+    def setValue(self, v, update=False):
         self.progress.setValue(v)
-        QtCore.QCoreApplication.processEvents()
+
+        if update:
+            QtCore.QCoreApplication.processEvents()

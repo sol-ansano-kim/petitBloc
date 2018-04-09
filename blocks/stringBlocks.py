@@ -360,3 +360,23 @@ class StringToFloat(block.Block):
         self.output("float").send(float(v))
 
         return True
+
+
+class StringLength(block.Block):
+    def __init__(self):
+        super(StringLength, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addOutput(int, "length")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        self.output("length").send(len(in_p.value()))
+        in_p.drop()
+
+        return True

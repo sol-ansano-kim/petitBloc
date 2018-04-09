@@ -11,6 +11,7 @@ class PacketModel(QtCore.QAbstractTableModel):
         self.__packets = {}
         self.__row = 0
         self.__col = 0
+        self.__max_size = -1
 
     def flags(self, index):
         return QtCore.Qt.ItemIsEnabled
@@ -19,13 +20,16 @@ class PacketModel(QtCore.QAbstractTableModel):
         if role != QtCore.Qt.DisplayRole:
             return None
 
-        if orient is QtCore.Qt.Vertical:
+        if orient == QtCore.Qt.Vertical:
             return str(section)
 
-        if orient is QtCore.Qt.Horizontal and (section >= 0 and section <= self.__col):
+        if orient == QtCore.Qt.Horizontal and (section >= 0 and section <= self.__col):
             return self.__ports[section]
 
         return None
+
+    def setMaxSize(self, v):
+        self.__max_size = v
 
     def rowCount(self, parent=None):
         return self.__row
@@ -70,19 +74,38 @@ class PacketModel(QtCore.QAbstractTableModel):
         if self.__bloc is not None:
             ports = []
 
-            for p in self.__bloc.inputs():
-                ports.append(p)
-            for p in self.__bloc.outputs():
-                ports.append(p)
+            if self.__bloc.hasNetwork():
+                for ip in self.__bloc.inputProxies():
+                    ports.append((ip.name(), ip.proxySource()))
 
-            for p in ports:
-                self.__ports.append(p.name())
+                for op in self.__bloc.outputProxies():
+                    ports.append((op.name(), op.proxySource()))
+
+            for p in self.__bloc.inputs():
+                ports.append((p.name(), p))
+
+            for p in self.__bloc.outputs():
+                ports.append((p.name(), p))
+
+            for name, p in ports:
+                if name == "success":
+                    continue
+
+                self.__ports.append(name)
                 self.__col += 1
+
+                if p is None:
+                    self.__packets[name] = []
+                    continue
 
                 vals = p.packetHistory()
                 if len(vals) > self.__row:
-                    self.__row = len(vals)
-                self.__packets[p.name()] = vals
+                    if self.__max_size >= 0 and self.__max_size < len(vals):
+                        self.__row = self.__max_size
+                    else:
+                        self.__row = len(vals)
+
+                self.__packets[name] = vals
 
         self.endResetModel()
 
@@ -96,6 +119,9 @@ class PacketView(QtWidgets.QTableView):
     def __initialize(self):
         self.__model = PacketModel()
         self.setModel(self.__model)
+
+    def setMaxSize(self, v):
+        self.__model.setMaxSize(v)
 
     def setBlock(self, bloc):
         self.__model.setBlock(bloc)
@@ -118,6 +144,10 @@ class PacketHistory(QtWidgets.QWidget):
     def setBlock(self, bloc):
         self.__block = bloc
         self.__packet_view.setBlock(bloc)
+
+    def setMaxSize(self, v):
+        self.__packet_view.setMaxSize(v)
+        self.__packet_view.refresh()
 
     def refresh(self):
         self.__packet_view.refresh()

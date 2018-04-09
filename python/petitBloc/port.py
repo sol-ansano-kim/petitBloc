@@ -140,7 +140,11 @@ class OutPort(core.PortOut, core.PortBase):
         if not self.__out_chains:
             return False
 
-        pack.setRefCount(len(self.__out_chains))
+        ref_count = 0
+        for oc in self.__out_chains:
+            ref_count += oc.requiredNumber()
+
+        pack.setRefCount(ref_count)
 
         for chain in self.__out_chains:
             chain.send(pack)

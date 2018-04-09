@@ -1,5 +1,5 @@
 [submodule "Qt.py"]
-	path = Qt.py
+	path = Qt_dot_py
 	url = https://github.com/mottosso/Qt.py.git
 [submodule "Nodz"]
 	path = Nodz

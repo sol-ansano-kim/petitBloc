@@ -368,7 +368,7 @@ def Query(filePath):
     return True
 
 
-def Run(filePath, contexts=[], parameters=[], multiProcessing=False, attrbutes=[], verbose=1):
+def Run(filePath, contexts=[], parameters=[], maxProcess=1, multiProcessing=False, attrbutes=[], verbose=1):
     try:
         __setVerboseLevel(verbose)
 
@@ -380,7 +380,7 @@ def Run(filePath, contexts=[], parameters=[], multiProcessing=False, attrbutes=[
         __overrideContext(root, contexts)
 
         schedule = root.getSchedule()
-        workerManager.WorkerManager.RunSchedule(schedule)
+        workerManager.WorkerManager.RunSchedule(schedule, maxProcess=maxProcess)
 
         return True
     except Exception as e:

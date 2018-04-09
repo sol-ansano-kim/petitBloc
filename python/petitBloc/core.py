@@ -18,6 +18,10 @@ class NetworkBlock():
     pass
 
 
+class BlankBlock():
+    pass
+
+
 class PBEnum():
     pass
 
@@ -96,7 +100,10 @@ class PacketBase(object):
         return self.__type_class
 
     def value(self):
-        return copy.deepcopy(self.__value)
+        if isinstance(self.__value, (dict, list)):
+            return copy.deepcopy(self.__value)
+
+        return self.__value
 
     def _del(self):
         self.__value = None
@@ -236,6 +243,12 @@ class ChainBase(object):
     def isConnected(self):
         return (self.__src is not None) and (self.__dst is not None)
 
+    def requiredNumber(self):
+        if self.__dst is None:
+            return 0
+
+        return 1
+
     def empty(self):
         return True
 
@@ -306,6 +319,9 @@ class ComponentBase(object):
 
     def hasNetwork(self):
         return isinstance(self, NetworkBlock)
+
+    def isBlank(self):
+        return isinstance(self, BlankBlock)
 
     def expandable(self):
         return False

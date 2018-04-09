@@ -44,10 +44,6 @@ class WorkerManager(object):
 
     @staticmethod
     def SetLogLevel(l):
-        if not isinstance(l, const.LogLevel):
-            print("Warning : Invalid Log level")
-            return False
-
         processManager.LogManager.SetLogLevel(l)
         threadManager.LogManager.SetLogLevel(l)
 

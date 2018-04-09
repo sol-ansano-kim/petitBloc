@@ -1,7 +1,7 @@
 import os
 
 
-def Run(path=None, multiProcessing=False, contexts=[], parameters=[], blocks=False, query=False, info=None, verbose=1):
+def Run(path=None, contexts=[], parameters=[], blocks=False, query=False, info=None, maxProcess=1, verbose=1):
     from . import scene
 
     if blocks:
@@ -17,4 +17,4 @@ def Run(path=None, multiProcessing=False, contexts=[], parameters=[], blocks=Fal
     if query:
         return scene.Query(path)
 
-    return scene.Run(path, contexts=contexts, parameters=parameters, verbose=verbose)
+    return scene.Run(path, contexts=contexts, parameters=parameters, maxProcess=maxProcess, verbose=verbose)

@@ -185,62 +185,58 @@ class Divide(block.Block):
         return True
 
 
-class Compare(block.Block):
+class CastToInt(block.Block):
     def __init__(self):
-        super(Compare, self).__init__()
+        super(CastToInt, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(bool, "result")
-        self.addEnumParam("operator", [">", ">=", "==", "<=", "<"], value=2)
-
-    def run(self):
-        self.__i1_eop = False
-        self.__i2_eop = False
-        self.__v1 = None
-        self.__v2 = None
-        super(Compare, self).run()
+        self.addInput(float, "input")
+        self.addOutput(int, "output")
 
     def process(self):
-        if not self.__i1_eop:
-            in1 = self.input("input1").receive()
-            if in1.isEOP():
-                self.__i1_eop = True
-            else:
-                self.__v1 = in1.value()
-
-        if self.__v1 is None:
+        in_p = self.input("input").receive()
+        if in_p.isEOP():
             return False
 
-        if not self.__i2_eop:
-            in2 = self.input("input2").receive()
-            if in2.isEOP():
-                self.__i2_eop = True
-            else:
-                self.__v2 = in2.value()
+        self.output("output").send(in_p.value())
+        in_p.drop()
 
-        if self.__v2 is None:
+        return True
+
+
+class CastToFloat(block.Block):
+    def __init__(self):
+        super(CastToFloat, self).__init__()
+
+    def initialize(self):
+        self.addInput(float, "input")
+        self.addOutput(float, "output")
+
+    def process(self):
+        in_p = self.input("input").receive()
+        if in_p.isEOP():
             return False
 
-        if self.__i1_eop and self.__i2_eop:
+        self.output("output").send(in_p.value())
+        in_p.drop()
+
+        return True
+
+
+class CastToBool(block.Block):
+    def __init__(self):
+        super(CastToBool, self).__init__()
+
+    def initialize(self):
+        self.addInput(float, "input")
+        self.addOutput(bool, "output")
+
+    def process(self):
+        in_p = self.input("input").receive()
+        if in_p.isEOP():
             return False
 
-        oper = self.param("operator").get()
-
-        if oper is 0:
-            self.output("result").send(self.__v1 > self.__v2)
-
-        elif oper is 1:
-            self.output("result").send(self.__v1 >= self.__v2)
-
-        elif oper is 2:
-            self.output("result").send(self.__v1 == self.__v2)
-
-        elif oper is 3:
-            self.output("result").send(self.__v1 <= self.__v2)
-
-        else:
-            self.output("result").send(self.__v1 < self.__v2)
+        self.output("output").send(in_p.value())
+        in_p.drop()
 
         return True

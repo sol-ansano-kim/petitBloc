@@ -23,7 +23,7 @@ class BlockManager(object):
         self.__blocks = {}
         self.__modules = []
         self.__loaded = []
-        self.__finded_class = {"bool": bool, "int": int, "float": float, "str": str}
+        self.__finded_class = {"bool": bool, "int": int, "float": float, "str": str, "list": list, "dict": dict, "tuple": tuple}
         self.__searchBlocks()
 
     def blockNames(self):
@@ -73,6 +73,7 @@ class BlockManager(object):
         return None
 
     def __searchBlocks(self):
+        self.__blocks["Backdrop"] = {"class": box.Backdrop, "config": {"category": "Scene"}}
         self.__blocks["Box"] = {"class": box.Box, "config": {"category": "Scene"}}
         self.__blocks["ConditionalBox"] = {"class": conditionalBox.ConditionalBox, "config": {"category": "Scene"}}
         self.__blocks["SceneContext"] = {"class": box.SceneContext, "config": {"category": "Scene"}}

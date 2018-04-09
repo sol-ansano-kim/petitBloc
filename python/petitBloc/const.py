@@ -4,6 +4,7 @@ import enum
 RootBoxName = "scene"
 InProxyBlock = "in"
 OutProxyBlock = "out"
+BlockResultPortName = "success"
 
 
 class LogLevel(enum.Enum):

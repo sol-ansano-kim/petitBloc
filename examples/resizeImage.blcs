@@ -1,0 +1,808 @@
+{
+    "connections": [
+        {
+            "path": "Compare.input1", 
+            "src": "StringLength.length"
+        }, 
+        {
+            "path": "Compare.input2", 
+            "src": "Int.value"
+        }, 
+        {
+            "path": "ListDir.dirPath", 
+            "src": "dirPath.value"
+        }, 
+        {
+            "path": "RegexSearch.pattern", 
+            "src": "imageExtPattern.value"
+        }, 
+        {
+            "path": "RegexSearch.string", 
+            "src": "ListDir.file"
+        }, 
+        {
+            "path": "StringLength.string", 
+            "src": "RegexSearch.result"
+        }, 
+        {
+            "path": "StringSelector.condition", 
+            "src": "Compare.result"
+        }, 
+        {
+            "path": "StringSelector.value", 
+            "src": "ListDir.file"
+        }, 
+        {
+            "path": "GetNewPath/BaseName.path", 
+            "src": "GetNewPath/in.imagePath_string"
+        }, 
+        {
+            "path": "GetNewPath/DirName.path", 
+            "src": "GetNewPath/in.imagePath_string"
+        }, 
+        {
+            "path": "GetNewPath/FloatToString.float", 
+            "src": "GetNewPath/in.width_value"
+        }, 
+        {
+            "path": "GetNewPath/FloatToString1.float", 
+            "src": "GetNewPath/in.height_value"
+        }, 
+        {
+            "path": "GetNewPath/Join.input1", 
+            "src": "GetNewPath/DirName.dirname"
+        }, 
+        {
+            "path": "GetNewPath/Join.input2", 
+            "src": "GetNewPath/String1.value"
+        }, 
+        {
+            "path": "GetNewPath/Join1.input1", 
+            "src": "GetNewPath/Join.path"
+        }, 
+        {
+            "path": "GetNewPath/Join1.input2", 
+            "src": "GetNewPath/StringAdd4.result"
+        }, 
+        {
+            "path": "GetNewPath/MakeDirs.path", 
+            "src": "GetNewPath/Join.path"
+        }, 
+        {
+            "path": "GetNewPath/SplitExt.path", 
+            "src": "GetNewPath/BaseName.basename"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd.string1", 
+            "src": "GetNewPath/FloatToString.string"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd.string2", 
+            "src": "GetNewPath/String.value"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd1.string1", 
+            "src": "GetNewPath/StringAdd.result"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd1.string2", 
+            "src": "GetNewPath/FloatToString1.string"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd2.string1", 
+            "src": "GetNewPath/SplitExt.base"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd2.string2", 
+            "src": "GetNewPath/String2.value"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd3.string1", 
+            "src": "GetNewPath/StringAdd2.result"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd3.string2", 
+            "src": "GetNewPath/StringAdd1.result"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd4.string1", 
+            "src": "GetNewPath/StringAdd3.result"
+        }, 
+        {
+            "path": "GetNewPath/StringAdd4.string2", 
+            "src": "GetNewPath/SplitExt.ext"
+        }, 
+        {
+            "path": "GetNewPath/in.height_value", 
+            "src": "Resize/out.height_output"
+        }, 
+        {
+            "path": "GetNewPath/in.width_value", 
+            "src": "Resize/out.width_output"
+        }, 
+        {
+            "path": "GetNewPath/out.Join1_path", 
+            "src": "GetNewPath/Join1.path"
+        }, 
+        {
+            "path": "Resize/OIIOImageResize.height", 
+            "src": "Resize/heightMultiply.result"
+        }, 
+        {
+            "path": "Resize/OIIOImageResize.image", 
+            "src": "Resize/in.OIIOImageResize_image"
+        }, 
+        {
+            "path": "Resize/OIIOImageResize.width", 
+            "src": "Resize/widthMultiply.result"
+        }, 
+        {
+            "path": "Resize/OIIOImageSize.image", 
+            "src": "Resize/in.OIIOImageResize_image"
+        }, 
+        {
+            "path": "Resize/height.input", 
+            "src": "Resize/heightMultiply.result"
+        }, 
+        {
+            "path": "Resize/heightMultiply.input1", 
+            "src": "Resize/OIIOImageSize.width"
+        }, 
+        {
+            "path": "Resize/heightMultiply.input2", 
+            "src": "Resize/Scale.value"
+        }, 
+        {
+            "path": "Resize/out.OIIOImageResize_resized", 
+            "src": "Resize/OIIOImageResize.resized"
+        }, 
+        {
+            "path": "Resize/out.height_output", 
+            "src": "Resize/height.output"
+        }, 
+        {
+            "path": "Resize/out.width_output", 
+            "src": "Resize/width.output"
+        }, 
+        {
+            "path": "Resize/width.input", 
+            "src": "Resize/widthMultiply.result"
+        }, 
+        {
+            "path": "Resize/widthMultiply.input1", 
+            "src": "Resize/OIIOImageSize.height"
+        }, 
+        {
+            "path": "Resize/widthMultiply.input2", 
+            "src": "Resize/Scale.value"
+        }
+    ], 
+    "proxyPorts": [
+        {
+            "path": "GetNewPath", 
+            "out": [
+                {
+                    "type": "str", 
+                    "name": "Join1_path"
+                }
+            ], 
+            "in": [
+                {
+                    "type": "int", 
+                    "name": "width_value"
+                }, 
+                {
+                    "type": "int", 
+                    "name": "height_value"
+                }, 
+                {
+                    "type": "str", 
+                    "name": "imagePath_string"
+                }
+            ]
+        }, 
+        {
+            "path": "Resize", 
+            "out": [
+                {
+                    "type": "int", 
+                    "name": "width_output"
+                }, 
+                {
+                    "type": "int", 
+                    "name": "height_output"
+                }, 
+                {
+                    "type": "ImageBuf", 
+                    "name": "OIIOImageResize_resized"
+                }
+            ], 
+            "in": [
+                {
+                    "type": "ImageBuf", 
+                    "name": "OIIOImageResize_image"
+                }
+            ]
+        }
+    ], 
+    "blocks": [
+        {
+            "path": "Compare", 
+            "type": "Compare", 
+            "pos": [
+                5259.746191825589, 
+                4769.01042207853
+            ], 
+            "params": {
+                "operator": {
+                    "expression": null, 
+                    "value": 0
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath", 
+            "type": "Box", 
+            "pos": [
+                5992.302085841569, 
+                4914.897934587054
+            ]
+        }, 
+        {
+            "path": "Int", 
+            "type": "Int", 
+            "pos": [
+                5000.149826609818, 
+                4958.223157892598
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": 0
+                }
+            }
+        }, 
+        {
+            "path": "ListDir", 
+            "type": "ListDir", 
+            "pos": [
+                4676.654724682167, 
+                4539.159007660942
+            ]
+        }, 
+        {
+            "path": "ListUpImages", 
+            "type": "Backdrop", 
+            "pos": [
+                4911.208252011331, 
+                4744.132472846211
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 1185.2008880886306
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 48
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 102
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 53
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 737.3628221170457
+                }
+            }
+        }, 
+        {
+            "path": "ReadImage", 
+            "type": "OIIOImageRead", 
+            "pos": [
+                5804.62623703729, 
+                4503.490126540469
+            ]
+        }, 
+        {
+            "path": "RegexSearch", 
+            "type": "RegexSearch", 
+            "pos": [
+                4788.848160020562, 
+                4749.139570690314
+            ]
+        }, 
+        {
+            "path": "Resize", 
+            "type": "Box", 
+            "pos": [
+                5686.336416115209, 
+                4905.501230979127
+            ], 
+            "extraParams": {
+                "scale": {
+                    "type": "float", 
+                    "expression": null, 
+                    "value": 0.1
+                }
+            }
+        }, 
+        {
+            "path": "ResizeImage", 
+            "type": "Backdrop", 
+            "pos": [
+                5854.65124732609, 
+                4898.337926004648
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 585.3325493174862
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 31
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 109
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 469.0311199769958
+                }
+            }
+        }, 
+        {
+            "path": "SceneContext", 
+            "type": "SceneContext", 
+            "pos": [
+                5755.9367592136905, 
+                4399.036131095823
+            ], 
+            "extraParams": {
+                "targetDir": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "StringLength", 
+            "type": "StringLength", 
+            "pos": [
+                5022.875646921659, 
+                4775.142453450688
+            ]
+        }, 
+        {
+            "path": "StringSelector", 
+            "type": "StringSelector", 
+            "pos": [
+                5367.068058156033, 
+                4526.032636050663
+            ]
+        }, 
+        {
+            "path": "Write", 
+            "type": "Backdrop", 
+            "pos": [
+                6418.4361395874885, 
+                4948.416525364197
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 400.0
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 141
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 66
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 292.30176449051396
+                }
+            }
+        }, 
+        {
+            "path": "WriteImage", 
+            "type": "OIIOImageWrite", 
+            "pos": [
+                6424.884147677847, 
+                4911.3646379740385
+            ]
+        }, 
+        {
+            "path": "dirPath", 
+            "type": "String", 
+            "pos": [
+                4448.933217337086, 
+                4535.409069218687
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= \"$targetDir\"", 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "imageExtPattern", 
+            "type": "String", 
+            "pos": [
+                4501.523704009121, 
+                4783.87939551116
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": "jpeg|jpg|png|exr|bmp|tif|tiff$"
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/BaseName", 
+            "type": "BaseName", 
+            "pos": [
+                4191.816335243083, 
+                4661.151396811258
+            ]
+        }, 
+        {
+            "path": "GetNewPath/DirName", 
+            "type": "DirName", 
+            "pos": [
+                4243.366961364747, 
+                5100.167282486157
+            ]
+        }, 
+        {
+            "path": "GetNewPath/FloatToString", 
+            "type": "FloatToString", 
+            "pos": [
+                4206.116833966187, 
+                4275.508606125675
+            ], 
+            "params": {
+                "demical": {
+                    "expression": null, 
+                    "value": 3
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/FloatToString1", 
+            "type": "FloatToString", 
+            "pos": [
+                4198.085488662307, 
+                4473.631122526305
+            ], 
+            "params": {
+                "demical": {
+                    "expression": null, 
+                    "value": 3
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/Join", 
+            "type": "Join", 
+            "pos": [
+                4602.324328768279, 
+                5217.230962805168
+            ]
+        }, 
+        {
+            "path": "GetNewPath/Join1", 
+            "type": "Join", 
+            "pos": [
+                5837.772562853728, 
+                5013.968248847327
+            ]
+        }, 
+        {
+            "path": "GetNewPath/MakeDirs", 
+            "type": "MakeDirs", 
+            "pos": [
+                5838.6984249060915, 
+                5365.900011955796
+            ]
+        }, 
+        {
+            "path": "GetNewPath/MakeNerFileName", 
+            "type": "Backdrop", 
+            "pos": [
+                4815.629190622868, 
+                4423.119534549597
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 1543.11977076131
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 91
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 23
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 82
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 867.630965992837
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/SplitExt", 
+            "type": "SplitExt", 
+            "pos": [
+                4690.138945301464, 
+                4641.709645915318
+            ]
+        }, 
+        {
+            "path": "GetNewPath/String", 
+            "type": "String", 
+            "pos": [
+                4206.618449659879, 
+                4108.144141924526
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": "x"
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/String1", 
+            "type": "String", 
+            "pos": [
+                4262.870431018776, 
+                5301.501733847319
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": "resized"
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/String2", 
+            "type": "String", 
+            "pos": [
+                4689.90719165699, 
+                4155.186750743214
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": "_"
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/StringAdd", 
+            "type": "StringAdd", 
+            "pos": [
+                4466.374745965033, 
+                4270.238429223869
+            ]
+        }, 
+        {
+            "path": "GetNewPath/StringAdd1", 
+            "type": "StringAdd", 
+            "pos": [
+                4693.119710559238, 
+                4404.209034425401
+            ]
+        }, 
+        {
+            "path": "GetNewPath/StringAdd2", 
+            "type": "StringAdd", 
+            "pos": [
+                4963.694247873638, 
+                4298.230330776749
+            ]
+        }, 
+        {
+            "path": "GetNewPath/StringAdd3", 
+            "type": "StringAdd", 
+            "pos": [
+                5184.000754151094, 
+                4460.390264765205
+            ]
+        }, 
+        {
+            "path": "GetNewPath/StringAdd4", 
+            "type": "StringAdd", 
+            "pos": [
+                5429.740529680412, 
+                4569.8590444491765
+            ]
+        }, 
+        {
+            "path": "GetNewPath/in", 
+            "type": "ProxyBlock", 
+            "pos": [
+                3690.516064183613, 
+                4819.036523075952
+            ], 
+            "preservered": true
+        }, 
+        {
+            "path": "GetNewPath/makeSubDir", 
+            "type": "Backdrop", 
+            "pos": [
+                4421.094313312568, 
+                5224.479605593384
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 756.4815196887866
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 18
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 105
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 108
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 458.8010885528538
+                }
+            }
+        }, 
+        {
+            "path": "GetNewPath/out", 
+            "type": "ProxyBlock", 
+            "pos": [
+                6167.483322255134, 
+                5138.325750169261
+            ], 
+            "preservered": true
+        }, 
+        {
+            "path": "Resize/OIIOImageResize", 
+            "type": "OIIOImageResize", 
+            "pos": [
+                5382.2950422942595, 
+                4618.849456568736
+            ]
+        }, 
+        {
+            "path": "Resize/OIIOImageSize", 
+            "type": "OIIOImageSize", 
+            "pos": [
+                4139.587028895, 
+                4867.702412294275
+            ]
+        }, 
+        {
+            "path": "Resize/Scale", 
+            "type": "Float", 
+            "pos": [
+                4145.863885648442, 
+                5112.499825678512
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= ../@scale", 
+                    "value": 0.1
+                }
+            }
+        }, 
+        {
+            "path": "Resize/height", 
+            "type": "CastToInt", 
+            "pos": [
+                5391.81995120668, 
+                5090.530827041465
+            ]
+        }, 
+        {
+            "path": "Resize/heightMultiply", 
+            "type": "Multiply", 
+            "pos": [
+                4494.229435464475, 
+                5096.807683794907
+            ]
+        }, 
+        {
+            "path": "Resize/in", 
+            "type": "ProxyBlock", 
+            "pos": [
+                3936.2234760800766, 
+                4551.679874471831
+            ], 
+            "preservered": true
+        }, 
+        {
+            "path": "Resize/newSize", 
+            "type": "Backdrop", 
+            "pos": [
+                4374.969157149077, 
+                5059.146543274253
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 826.8262592340561
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 110
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 6
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 116
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 545.2271214393104
+                }
+            }
+        }, 
+        {
+            "path": "Resize/out", 
+            "type": "ProxyBlock", 
+            "pos": [
+                5871.91710780978, 
+                4695.636605697104
+            ], 
+            "preservered": true
+        }, 
+        {
+            "path": "Resize/width", 
+            "type": "CastToInt", 
+            "pos": [
+                5388.681522829961, 
+                4902.225124438203
+            ]
+        }, 
+        {
+            "path": "Resize/widthMultiply", 
+            "type": "Multiply", 
+            "pos": [
+                4491.0910070877535, 
+                4873.979269047715
+            ]
+        }
+    ]
+}

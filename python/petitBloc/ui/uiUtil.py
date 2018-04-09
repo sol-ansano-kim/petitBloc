@@ -1,11 +1,9 @@
 import os
 import re
-from . import const
 from Nodz import nodz_utils
 from Qt import QtGui
 
 
-RootBlockPath = re.compile("^[/]{}[/]".format(const.RootBoxName))
 LastPath = re.compile("[/][^/]+$")
 
 
@@ -15,15 +13,15 @@ def GetIcon(name):
     return path if os.path.isfile(path) else ""
 
 
-def PopRootPath(path):
-    return RootBlockPath.sub("", path)
+def PopRootPath(path, rootPath):
+    return re.sub("^{}[/]".format(rootPath), "", path)
 
 
-def AddRootPath(path):
-    if RootBlockPath.search(path):
+def AddRootPath(path, rootPath):
+    if re.search("^{}[/]".format(rootPath), path):
         return path
 
-    return "/{}/{}".format(const.RootBoxName, path)
+    return "{}/{}".format(rootPath, path)
 
 
 def ParentPath(path):

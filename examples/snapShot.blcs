@@ -1,0 +1,289 @@
+{
+    "connections": [
+        {
+            "path": "Join.input1", 
+            "src": "tempDir.value"
+        }, 
+        {
+            "path": "Join.input2", 
+            "src": "CurrentTime.time"
+        }, 
+        {
+            "path": "MayaSnapShot.filePath", 
+            "src": "path.result"
+        }, 
+        {
+            "path": "SlackMessage.channel", 
+            "src": "String.value"
+        }, 
+        {
+            "path": "SlackMessage.client", 
+            "src": "SlackClient.client"
+        }, 
+        {
+            "path": "SlackMessage.message", 
+            "src": "comment.value"
+        }, 
+        {
+            "path": "SlackUploadFile.channel", 
+            "src": "String.value"
+        }, 
+        {
+            "path": "SlackUploadFile.client", 
+            "src": "SlackClient.client"
+        }, 
+        {
+            "path": "SlackUploadFile.filePath", 
+            "src": "MayaSnapShot.outImage"
+        }, 
+        {
+            "path": "path.string1", 
+            "src": "Join.path"
+        }, 
+        {
+            "path": "path.string2", 
+            "src": "ext.value"
+        }
+    ], 
+    "proxyPorts": [], 
+    "blocks": [
+        {
+            "path": "Context", 
+            "type": "Backdrop", 
+            "pos": [
+                4541.760345081409, 
+                4475.016617423138
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 400.0
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 108
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 116
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 38
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 200.0
+                }
+            }
+        }, 
+        {
+            "path": "CurrentTime", 
+            "type": "CurrentTime", 
+            "pos": [
+                4460.737376462115, 
+                4794.065410994295
+            ]
+        }, 
+        {
+            "path": "Join", 
+            "type": "Join", 
+            "pos": [
+                4688.47358637707, 
+                4711.959765646368
+            ]
+        }, 
+        {
+            "path": "MakePath", 
+            "type": "Backdrop", 
+            "pos": [
+                4697.218106187637, 
+                4798.91530612255
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 707.1917641306372
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 52
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 46
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 130
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 385.998270662888
+                }
+            }
+        }, 
+        {
+            "path": "MayaSnapShot", 
+            "type": "MayaSnapShot", 
+            "pos": [
+                5016.7993026965, 
+                4412.350987662618
+            ]
+        }, 
+        {
+            "path": "SceneContext", 
+            "type": "SceneContext", 
+            "pos": [
+                4530.598866378656, 
+                4490.984493774153
+            ], 
+            "extraParams": {
+                "tempDir": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }, 
+                "slack_channel": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }, 
+                "ext": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }, 
+                "slack_key": {
+                    "type": "str", 
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "SlackClient", 
+            "type": "SlackClient", 
+            "pos": [
+                5185.61950856241, 
+                4672.121302109881
+            ], 
+            "params": {
+                "token": {
+                    "expression": "= \"$slack_key\"", 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "SlackMessage", 
+            "type": "SlackMessage", 
+            "pos": [
+                5569.435674842156, 
+                4683.814324531311
+            ]
+        }, 
+        {
+            "path": "SlackUpload", 
+            "type": "Backdrop", 
+            "pos": [
+                5381.285953608476, 
+                4791.179702847924
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 620.6086989708501
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 104
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 103
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 100
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 389.17581852744115
+                }
+            }
+        }, 
+        {
+            "path": "SlackUploadFile", 
+            "type": "SlackUploadFile", 
+            "pos": [
+                5420.254350937119, 
+                4826.501260588908
+            ]
+        }, 
+        {
+            "path": "String", 
+            "type": "String", 
+            "pos": [
+                5189.283800308343, 
+                4789.448644504749
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= \"$slack_channel\"", 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "comment", 
+            "type": "String", 
+            "pos": [
+                5328.099280911909, 
+                4411.475364693935
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "ext", 
+            "type": "String", 
+            "pos": [
+                4691.28036663727, 
+                4885.79332756082
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= \".$ext\"", 
+                    "value": "."
+                }
+            }
+        }, 
+        {
+            "path": "path", 
+            "type": "StringAdd", 
+            "pos": [
+                4921.468650288915, 
+                4808.787318385153
+            ]
+        }, 
+        {
+            "path": "tempDir", 
+            "type": "String", 
+            "pos": [
+                4457.953296593154, 
+                4672.718783079909
+            ], 
+            "params": {
+                "value": {
+                    "expression": "= \"$tempDir\"", 
+                    "value": ""
+                }
+            }
+        }
+    ]
+}

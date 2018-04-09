@@ -27,14 +27,14 @@ class SubprocessWorker(object):
 
 class SubprocessManager(object):
     __Processes = []
-    __MaxProcess = multiprocessing.cpu_count() - 1 or 1
+    __MaxProcess = multiprocessing.cpu_count()
     __WaitTime = 0.5
     __Lock = threading.Lock()
 
     @staticmethod
     def SetMaxProcess(num):
         if num <= 0:
-            SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+            SubprocessManager.__MaxProcess = multiprocessing.cpu_count()
         else:
             SubprocessManager.__MaxProcess = num
 
@@ -44,7 +44,7 @@ class SubprocessManager(object):
             del p
 
         SubprocessManager.__Processes = []
-        SubprocessManager.__MaxProcess = multiprocessing.cpu_count() - 1 or 1
+        SubprocessManager.__MaxProcess = multiprocessing.cpu_count()
 
     @staticmethod
     def Count():
@@ -281,12 +281,19 @@ class ProcessWorker(threading.Thread):
             self.__success = False
             LogManager.Error(self.__obj.path(), e)
 
+        res = self.__obj.output(const.BlockResultPortName)
+        if res:
+            res.send(self.__success)
+
         LogManager.TimeReport(self.__obj.path(), time.time() - st)
 
     def start(self):
         self.__obj.activate()
 
         super(ProcessWorker, self).start()
+
+    def obj(self):
+        return self.__obj
 
     def terminate(self):
         if not self.__obj.isOver():
@@ -329,14 +336,38 @@ class ThreadManager(object):
         return len(ThreadManager.__Threads)
 
     @staticmethod
+    def Execute(obj, args=(), kwargs={}):
+        LogManager.IncreaseCount()
+        st = time.time()
+        success = True
+
+        obj.activate()
+
+        try:
+            obj.run()
+        except Exception as e:
+            success = False
+            LogManager.Error(obj.path(), e)
+
+        res = obj.output(const.BlockResultPortName)
+        if res:
+            res.send(success)
+
+        obj.terminate(success)
+
+        ThreadManager.RunPerProcessCallback()
+
+        LogManager.TimeReport(obj.path(), time.time() - st)
+
+    @staticmethod
     def Submit(obj, args=(), kwargs={}):
         while (len(ThreadManager.__Threads) >= ThreadManager.__MaxThreads):
-            ThreadManager.LockAcquire()
             ThreadManager.CleaunUp()
-            ThreadManager.LockRelease()
 
+        LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
         ThreadManager.__Threads.append(p)
+
         p.start()
 
     @staticmethod
@@ -364,12 +395,14 @@ class ThreadManager(object):
         ThreadManager.__Lock.acquire()
 
     @staticmethod
-    def LockRelase():
+    def LockRelease():
         ThreadManager.__Lock.release()
 
     @staticmethod
     def DeleteProcess(p):
         p.terminate()
+        LogManager.Debug("__main__", "  {0:>10}      {1}".format("End -", p.obj().path()))
+
         if p in ThreadManager.__Threads:
             ThreadManager.__Threads.remove(p)
 
@@ -403,37 +436,67 @@ def __parentSuspended(bloc):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
-    ThreadManager.Reset()
+    if maxProcess != 1:
+        lock_func = ThreadManager.LockAcquire
+        release_func = ThreadManager.LockRelease
+        execute_func = ThreadManager.Submit
+        cleanup_func = ThreadManager.CleaunUp
+        join_func = ThreadManager.Join
+    else:
+        lock_func = lambda : 0
+        release_func = lambda : 0
+        execute_func = ThreadManager.Execute
+        cleanup_func = lambda : 0
+        join_func = lambda : 0
+
     LogManager.Reset()
+
+    st = time.time()
+    LogManager.Debug("__main__", "## PetitBloc Start")
+
+    ThreadManager.Reset()
     QueueManager.Reset()
     ValueManager.Reset()
     SubprocessManager.Reset()
     ThreadManager.SetMaxProcess(maxProcess)
     ThreadManager.SetPerProcessCallback(perProcessCallback)
 
+    need_to_terminate = []
     work_schedule = copy.copy(schedule)
 
+    t1 = time.time()
     for s in work_schedule:
         s.resetState()
 
     while (work_schedule):
-        ThreadManager.CleaunUp()
+        cleanup_func()
 
         bloc = work_schedule.pop(0)
-        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed() or bloc.isByPassing():
+        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
             continue
 
-        ThreadManager.LockAcquire()
+        if bloc.isByPassing():
+            res = bloc.output(const.BlockResultPortName)
+            if res:
+                res.activate()
+                res.send(False)
+                need_to_terminate.append(res)
+
+            continue
+
+        lock_func()
 
         if __needToWait(bloc):
+            LogManager.Debug("__main__", "  {0:>10}      {1}".format("Suspend -", bloc.path()))
             work_schedule.append(bloc)
-            ThreadManager.LockRelase()
+            release_func()
             continue
 
-        ThreadManager.LockRelase()
-        ThreadManager.Submit(bloc)
+        release_func()
+        execute_func(bloc)
 
-    ThreadManager.Join()
+    join_func()
+    t2 = time.time()
 
     for s in schedule:
         if not s.hasNetwork():
@@ -447,6 +510,9 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
 
         s.terminate(success)
 
+    for p in need_to_terminate:
+        p.terminate()
+
     if perProcessCallback is not None:
         perProcessCallback()
 
@@ -454,3 +520,10 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     ValueManager.Reset()
     ThreadManager.Reset()
     SubprocessManager.Reset()
+    t3 = time.time()
+
+    LogManager.Debug("__main__", "## PetitBloc End")
+    LogManager.Debug("__main__", "Time log")
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Initializing", round(t1 - st, 5)))
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Computing", round(t2 - t1, 5)))
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Finalizing", round(t3 - t2, 5)))

@@ -287,11 +287,18 @@ class ProcessWorker(multiprocessing.Process):
             self.__has_error.value = 1
             LogManager.Error(self.__obj.path(), e)
 
+        res = self.__obj.output(const.BlockResultPortName)
+        if res:
+            res.send(self.__has_error.value == 0)
+
         LogManager.TimeReport(self.__obj.path(), time.time() - st)
 
     def start(self):
         self.__obj.activate()
         super(ProcessWorker, self).start()
+
+    def obj(self):
+        return self.__obj
 
     def terminate(self):
         if not self.__obj.isOver():
@@ -341,12 +348,12 @@ class ProcessManager(object):
     @staticmethod
     def Submit(obj, args=(), kwargs={}):
         while (len(ProcessManager.__Processes) >= ProcessManager.__MaxProcess):
-            ProcessManager.LockAcquire()
             ProcessManager.CleanUp()
-            ProcessManager.LockRelease()
 
+        LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
         p = ProcessWorker(obj, args=args, kwargs=kwargs)
         ProcessManager.__Processes.append(p)
+
         p.start()
 
     @staticmethod
@@ -379,6 +386,8 @@ class ProcessManager(object):
     @staticmethod
     def DeleteProcess(p):
         p.terminate()
+        LogManager.Debug("__main__", "  {0:>10}      {1}".format("End -", p.obj().path()))
+
         if p in ProcessManager.__Processes:
             ProcessManager.__Processes.remove(p)
 
@@ -412,18 +421,24 @@ def __parentSuspended(bloc):
 
 
 def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
+    LogManager.Initialize()
+    LogManager.Reset()
+    st = time.time()
+
+    LogManager.Debug("__main__", "## PetitBloc Start")
+
     SubprocessManager.Initialize()
     SubprocessManager.Reset()
     ProcessManager.Reset()
-    LogManager.Initialize()
-    LogManager.Reset()
     ValueManager.Reset()
     QueueManager.Reset()
     ProcessManager.SetMaxProcess(maxProcess)
     ProcessManager.SetPerProcessCallback(perProcessCallback)
 
+    need_to_terminate = []
     work_schedule = copy.copy(schedule)
 
+    t1 = time.time()
     for s in work_schedule:
         s.resetState()
 
@@ -431,12 +446,22 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         ProcessManager.CleanUp()
 
         bloc = work_schedule.pop(0)
-        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed() or bloc.isByPassing():
+        if bloc.isTerminated() or bloc.isWorking() or bloc.isFailed():
+            continue
+
+        if bloc.isByPassing():
+            res = bloc.output(const.BlockResultPortName)
+            if res:
+                res.activate()
+                res.send(False)
+                need_to_terminate.append(res)
+
             continue
 
         ProcessManager.LockAcquire()
 
         if __needToWait(bloc):
+            LogManager.Debug("__main__", "  {0:>10}      {1}".format("Suspend -", bloc.path()))
             work_schedule.append(bloc)
             ProcessManager.LockRelease()
             continue
@@ -445,6 +470,8 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
         ProcessManager.Submit(bloc)
 
     ProcessManager.Join()
+    t2 = time.time()
+
     # TODO : sometime pipe would be broken
     # do it more smarter..
     time.sleep(0.01)
@@ -461,6 +488,9 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
 
         s.terminate(success)
 
+    for p in need_to_terminate:
+        p.terminate()
+
     if perProcessCallback is not None:
         perProcessCallback()
 
@@ -468,3 +498,10 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     QueueManager.Reset()
     ProcessManager.Reset()
     SubprocessManager.Reset()
+    t3 = time.time()
+
+    LogManager.Debug("__main__", "## PetitBloc End")
+    LogManager.Debug("__main__", "Time log")
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Initializing", round(t1 - st, 5)))
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Computing", round(t2 - t1, 5)))
+    LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Finalizing", round(t3 - t2, 5)))

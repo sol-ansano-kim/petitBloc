@@ -159,17 +159,46 @@ class BoxModel(QtCore.QObject):
 
         return None
 
-    def serialize(self):
+    def serialize(self, include=[], exclude=[]):
         data = {"blocks": [], "connections": [], "proxyPorts": []}
 
-        blocks = self.__box.getSchedule()
+        blocks = []
         boxies = []
+        box_path = self.__box.path()
 
-        ## block data
-        for b in blocks:
+        for b in self.__box.getSchedule():
             if b == self.__box:
                 continue
 
+            if include and b.path() not in include:
+                continue
+
+            if b.path() in exclude:
+                continue
+
+            blocks.append(b)
+
+        if include:
+            additional_blocks = []
+
+            for b in blocks:
+                if b == self.__box:
+                    continue
+
+                if not b.hasNetwork():
+                    continue
+
+                box_children = b.getSchedule()
+                include += map(lambda x: x.path(), box_children)
+                additional_blocks += box_children
+
+            blocks += additional_blocks
+
+        blocks = list(set(blocks))
+        include = list(set(include))
+
+        ## block data
+        for b in blocks:
             if isinstance(b, box.Box):
                 boxies.append(b)
 
@@ -180,7 +209,7 @@ class BoxModel(QtCore.QObject):
 
                 block_data["preservered"] = True
 
-            block_data["path"] = uiUtil.PopRootPath(b.path())
+            block_data["path"] = uiUtil.PopRootPath(b.path(), box_path)
             block_data["type"] = b.type()
 
             params = {}
@@ -208,7 +237,7 @@ class BoxModel(QtCore.QObject):
         for b in boxies:
             in_data = []
             out_data = []
-            box_data = {"path": uiUtil.PopRootPath(b.path()), "in": in_data, "out": out_data}
+            box_data = {"path": uiUtil.PopRootPath(b.path(), box_path), "in": in_data, "out": out_data}
             data["proxyPorts"].append(box_data)
 
             for pn in sorted(b.inputProxies()):
@@ -232,6 +261,16 @@ class BoxModel(QtCore.QObject):
                 dst_path = None
                 src_port = map(lambda x: x.src(), p.chains())[0]
 
+                src_parent = src_port.parent()
+                if src_parent.isProxy():
+                    src_parent = src_parent.parent()
+
+                if include and src_parent.path() not in include:
+                    continue
+
+                if src_port.parent().path() in exclude:
+                    continue
+
                 if src_port.isProxy():
                     src_path = src_port.parent().path()
                 else:
@@ -242,11 +281,11 @@ class BoxModel(QtCore.QObject):
                 else:
                     dst_path = p.path()
 
-                data["connections"].append({"path": uiUtil.PopRootPath(dst_path), "src": uiUtil.PopRootPath(src_path)})
+                data["connections"].append({"path": uiUtil.PopRootPath(dst_path, box_path), "src": uiUtil.PopRootPath(src_path, box_path)})
 
         return data
 
-    def run(self, manager=None):
+    def run(self, manager=None, maxProcess=1):
         callback = None
         schedule = self.__box.getSchedule()
 
@@ -255,4 +294,4 @@ class BoxModel(QtCore.QObject):
             manager.setCount(len(schedule))
             callback = manager.increase
 
-        workerManager.WorkerManager.RunSchedule(schedule, perProcessCallback=callback)
+        workerManager.WorkerManager.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=callback)
