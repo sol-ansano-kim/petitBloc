@@ -12,6 +12,10 @@ This concept is derived from Flow Based Programming by [J. Paul Rodker-Morrison]
 
 ## How to use it
 
+
+[![Alt text](https://github.com/sol-ansano-kim/petitBloc/wiki/images/play_image.jpg)](https://youtu.be/FjWmc0GHiL8)
+
+
 ### GUI
 
 You can make and run the process graph on PatitBloc GUI, or it can be run with python IDLE or standalone.
