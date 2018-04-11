@@ -1,4 +1,5 @@
 
+
 # PetitBloc
 
 <img src="https://github.com/sol-ansano-kim/petitBloc/wiki/images/logo.jpg" width="640">
@@ -19,6 +20,8 @@ This concept is derived from Flow Based Programming by [J. Paul Rodker-Morrison]
 ### GUI
 
 You can make and run the process graph on PatitBloc GUI, or it can be run with python IDLE or standalone.
+
+[GUI Tutorial](https://youtu.be/U8yAEK6vDQc)
 
 - python
 ```python
