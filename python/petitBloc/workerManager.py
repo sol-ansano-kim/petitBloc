@@ -123,7 +123,7 @@ class WorkerManager(object):
 
     @staticmethod
     def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
-        WorkerManager.__Module.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
+        return WorkerManager.__Module.RunSchedule(schedule, maxProcess=maxProcess, perProcessCallback=perProcessCallback)
 
     @staticmethod
     def ValueCount():

@@ -380,9 +380,7 @@ def Run(filePath, contexts=[], parameters=[], maxProcess=1, multiProcessing=Fals
         __overrideContext(root, contexts)
 
         schedule = root.getSchedule()
-        workerManager.WorkerManager.RunSchedule(schedule, maxProcess=maxProcess)
-
-        return True
+        return workerManager.WorkerManager.RunSchedule(schedule, maxProcess=maxProcess)
     except Exception as e:
         print("ERROR : {}".format(str(e)))
 

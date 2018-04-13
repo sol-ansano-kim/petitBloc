@@ -505,3 +505,11 @@ def RunSchedule(schedule, maxProcess=0, perProcessCallback=None):
     LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Initializing", round(t1 - st, 5)))
     LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Computing", round(t2 - t1, 5)))
     LogManager.Debug("__main__", '  {0:<12} {1:>10}'.format("Finalizing", round(t3 - t2, 5)))
+    LogManager.Debug("__main__", "Execution")
+    LogManager.Debug("__main__", "  Run : {}".format(LogManager.ExecutionCount()))
+    LogManager.Debug("__main__", "  Warning : {}".format(len(LogManager.WarnLogs().keys())))
+
+    err_cnt = len(LogManager.ErrorLogs().keys())
+    LogManager.Debug("__main__", "  Error : {}".format(err_cnt))
+
+    return err_cnt == 0
