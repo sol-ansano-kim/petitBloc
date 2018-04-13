@@ -17,9 +17,9 @@ class SubprocessWorker(object):
         return self.__p.poll() is None
 
     def result(self):
-        res = self.__p.wait() == 0
+        self.__p.communicate()
 
-        return res
+        return self.__p.returncode == 0
 
 
 class SubprocessManager(object):
