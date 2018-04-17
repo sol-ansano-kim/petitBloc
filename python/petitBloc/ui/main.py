@@ -286,7 +286,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __multiThread(self):
         host = os.path.basename(sys.argv[0])
         host_lower = host.lower()
-        if not host_lower.startswith("petitblocui") and not host_lower.startswith("python"):
+        if "petitblocui" not in host_lower and not host_lower.startswith("python"):
             if not self.__warned:
                 self.__warned = True
                 QtWidgets.QMessageBox.warning(self, "Warning", "Currently petitBloc does not fully support multi thread on '{}'.\nOperation may stop due to some block calculation".format(host))
