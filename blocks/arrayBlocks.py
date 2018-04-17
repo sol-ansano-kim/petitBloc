@@ -1,13 +1,14 @@
 from petitBloc import block
+from petitBloc import anytype
 
 
-class IntArray(block.Block):
+class List(block.Block):
     def __init__(self):
-        super(IntArray, self).__init__()
+        super(List, self).__init__()
 
     def initialize(self):
-        self.addInput(int, "value")
-        self.addOutput(list, "array")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "list")
 
     def run(self):
         array = []
@@ -20,22 +21,22 @@ class IntArray(block.Block):
 
             array.append(p.value())
 
-        self.output("array").send(array)
+        self.output("list").send(array)
 
 
-class IntArrayGet(block.Block):
+class ListGet(block.Block):
     def __init__(self):
-        super(IntArrayGet, self).__init__()
+        super(ListGet, self).__init__()
 
     def initialize(self):
-        self.addInput(list, "array")
+        self.addInput(list, "list")
         self.addInput(int, "index")
-        self.addOutput(int, "value")
+        self.addOutput(anytype.AnyType, "value")
 
     def run(self):
         self.__index_eop = False
         self.__index_dump = None
-        super(IntArrayGet, self).run()
+        super(ListGet, self).run()
 
     def process(self):
         if not self.__index_eop:
@@ -49,7 +50,7 @@ class IntArrayGet(block.Block):
         if self.__index_dump is None:
             return False
 
-        arr_p = self.input("array").receive()
+        arr_p = self.input("list").receive()
         if arr_p.isEOP():
             return False
 
@@ -60,255 +61,101 @@ class IntArrayGet(block.Block):
         return True
 
 
-class IntArrayIter(block.Block):
+class ListIter(block.Block):
     def __init__(self):
-        super(IntArrayIter, self).__init__()
+        super(ListIter, self).__init__()
 
     def initialize(self):
-        self.addOutput(int, "value")
-        self.addInput(list, "array")
+        self.addOutput(anytype.AnyType, "value")
+        self.addInput(list, "list")
 
     def process(self):
-        arr = self.input("array").receive()
+        arr = self.input("list").receive()
         if arr.isEOP():
             return False
 
         for i in arr.value():
-            self.output("value").send(int(i))
+            self.output("value").send(i)
 
         return True
 
 
-class FloatArray(block.Block):
+class ListLength(block.Block):
     def __init__(self):
-        super(FloatArray, self).__init__()
+        super(ListLength, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "value")
-        self.addOutput(list, "array")
-
-    def run(self):
-        array = []
-
-        inp = self.input("value")
-        while (True):
-            p = inp.receive()
-            if p.isEOP():
-                break
-
-            array.append(p.value())
-
-        self.output("array").send(array)
-
-
-class FloatArrayGet(block.Block):
-    def __init__(self):
-        super(FloatArrayGet, self).__init__()
-
-    def initialize(self):
-        self.addInput(list, "array")
-        self.addInput(int, "index")
-        self.addOutput(float, "value")
-
-    def run(self):
-        self.__index_eop = False
-        self.__index_dump = None
-        super(FloatArrayGet, self).run()
+        self.addInput(list, "list")
+        self.addOutput(int, "len")
 
     def process(self):
-        if not self.__index_eop:
-            index_p = self.input("index").receive()
-            if index_p.isEOP():
-                self.__index_eop = True
-            else:
-                self.__index_dump = index_p.value()
-                index_p.drop()
-
-        if self.__index_dump is None:
+        arr = self.input("list").receive()
+        if arr.isEOP():
             return False
 
-        arr_p = self.input("array").receive()
+        self.output("len").send(len(arr.value()))
+
+        return True
+
+
+class ListAppend(block.Block):
+    def __init__(self):
+        super(ListAppend, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "list")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "outList")
+
+    def process(self):
+        arr_p = self.input("list").receive()
         if arr_p.isEOP():
             return False
 
         arr = arr_p.value()
         arr_p.drop()
 
-        self.output("value").send(arr[self.__index_dump])
-        return True
-
-
-class FloatArrayIter(block.Block):
-    def __init__(self):
-        super(FloatArrayIter, self).__init__()
-
-    def initialize(self):
-        self.addOutput(float, "value")
-        self.addInput(list, "array")
-
-    def process(self):
-        arr = self.input("array").receive()
-        if arr.isEOP():
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
             return False
 
-        for i in arr.value():
-            self.output("value").send(float(i))
+        value = value_p.value()
+        value_p.drop()
+
+        arr.append(value)
+
+        self.output("outList").send(arr)
 
         return True
 
 
-class BoolArray(block.Block):
+class ListExtend(block.Block):
     def __init__(self):
-        super(BoolArray, self).__init__()
+        super(ListExtend, self).__init__()
 
     def initialize(self):
-        self.addInput(bool, "value")
-        self.addOutput(list, "array")
-
-    def run(self):
-        array = []
-
-        inp = self.input("value")
-        while (True):
-            p = inp.receive()
-            if p.isEOP():
-                break
-
-            array.append(p.value())
-
-        self.output("array").send(array)
-
-
-class BoolArrayGet(block.Block):
-    def __init__(self):
-        super(BoolArrayGet, self).__init__()
-
-    def initialize(self):
-        self.addInput(list, "array")
-        self.addInput(int, "index")
-        self.addOutput(bool, "value")
-
-    def run(self):
-        self.__index_eop = False
-        self.__index_dump = None
-        super(BoolArrayGet, self).run()
+        self.addInput(list, "listA")
+        self.addInput(list, "listB")
+        self.addOutput(list, "extended")
 
     def process(self):
-        if not self.__index_eop:
-            index_p = self.input("index").receive()
-            if index_p.isEOP():
-                self.__index_eop = True
-            else:
-                self.__index_dump = index_p.value()
-                index_p.drop()
-
-        if self.__index_dump is None:
+        arra_p = self.input("listA").receive()
+        if arra_p.isEOP():
             return False
 
-        arr_p = self.input("array").receive()
-        if arr_p.isEOP():
+        arra = arra_p.value()
+        arra_p.drop()
+
+        arrb_p = self.input("listB").receive()
+        if arrb_p.isEOP():
             return False
 
-        arr = arr_p.value()
-        arr_p.drop()
+        arrb = arrb_p.value()
+        arrb_p.drop()
 
-        self.output("value").send(arr[self.__index_dump])
-        return True
+        arra.extend(arrb)
 
-
-class BoolArrayIter(block.Block):
-    def __init__(self):
-        super(BoolArrayIter, self).__init__()
-
-    def initialize(self):
-        self.addOutput(bool, "value")
-        self.addInput(list, "array")
-
-    def process(self):
-        arr = self.input("array").receive()
-        if arr.isEOP():
-            return False
-
-        for i in arr.value():
-            self.output("value").send(bool(i))
-
-        return True
-
-
-class StringArray(block.Block):
-    def __init__(self):
-        super(StringArray, self).__init__()
-
-    def initialize(self):
-        self.addInput(str, "value")
-        self.addOutput(list, "array")
-
-    def run(self):
-        array = []
-
-        inp = self.input("value")
-        while (True):
-            p = inp.receive()
-            if p.isEOP():
-                break
-
-            array.append(p.value())
-
-        self.output("array").send(array)
-
-
-class StringArrayGet(block.Block):
-    def __init__(self):
-        super(StringArrayGet, self).__init__()
-
-    def initialize(self):
-        self.addInput(list, "array")
-        self.addInput(int, "index")
-        self.addOutput(str, "value")
-
-    def run(self):
-        self.__index_eop = False
-        self.__index_dump = None
-        super(StringArrayGet, self).run()
-
-    def process(self):
-        if not self.__index_eop:
-            index_p = self.input("index").receive()
-            if index_p.isEOP():
-                self.__index_eop = True
-            else:
-                self.__index_dump = index_p.value()
-                index_p.drop()
-
-        if self.__index_dump is None:
-            return False
-
-        arr_p = self.input("array").receive()
-        if arr_p.isEOP():
-            return False
-
-        arr = arr_p.value()
-        arr_p.drop()
-
-        self.output("value").send(arr[self.__index_dump])
-        return True
-
-
-class StringArrayIter(block.Block):
-    def __init__(self):
-        super(StringArrayIter, self).__init__()
-
-    def initialize(self):
-        self.addOutput(str, "value")
-        self.addInput(list, "array")
-
-    def process(self):
-        arr = self.input("array").receive()
-        if arr.isEOP():
-            return False
-
-        for i in arr.value():
-            self.output("value").send(str(i))
+        self.output("extended").send(arra)
 
         return True
 
@@ -330,52 +177,3 @@ class Range(block.Block):
 
         for n in range(self.param("start").get(), self.param("stop").get(), step):
             self.output(0).send(n)
-
-
-class ArrayLen(block.Block):
-    def __init__(self):
-        super(ArrayLen, self).__init__()
-
-    def initialize(self):
-        self.addInput(list, "array")
-        self.addOutput(int, "len")
-
-    def process(self):
-        arr = self.input("array").receive()
-        if arr.isEOP():
-            return False
-
-        self.output("len").send(len(arr.value()))
-
-        return True
-
-
-class ArrayExtend(block.Block):
-    def __init__(self):
-        super(ArrayExtend, self).__init__()
-
-    def initialize(self):
-        self.addInput(list, "arrayA")
-        self.addInput(list, "arrayB")
-        self.addOutput(list, "extended")
-
-    def process(self):
-        arra_p = self.input("arrayA").receive()
-        if arra_p.isEOP():
-            return False
-
-        arra = arra_p.value()
-        arra_p.drop()
-
-        arrb_p = self.input("arrayB").receive()
-        if arrb_p.isEOP():
-            return False
-
-        arrb = arrb_p.value()
-        arrb_p.drop()
-
-        arra.extend(arrb)
-
-        self.output("extended").send(arra)
-
-        return True

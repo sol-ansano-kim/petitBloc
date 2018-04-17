@@ -1,4 +1,5 @@
 from petitBloc import block
+from petitBloc import anytype
 import re
 
 
@@ -312,6 +313,25 @@ class RegexSearch(block.Block):
             return True
 
         self.output("result").send(v1[res.start():res.end()])
+        return True
+
+
+class ToString(block.Block):
+    def __init__(self):
+        super(ToString, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(str, "string")
+
+    def process(self):
+        val_p = self.input("value").receive()
+        if val_p.isEOP():
+            return False
+
+        self.output("string").send(str(val_p.value()))
+        val_p.drop()
+
         return True
 
 

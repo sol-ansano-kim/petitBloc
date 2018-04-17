@@ -1,4 +1,5 @@
 from petitBloc import block
+from petitBloc import anytype
 
 
 class Compare(block.Block):
@@ -67,10 +68,10 @@ class Choice(block.Block):
         super(Choice, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "true")
-        self.addInput(float, "false")
+        self.addInput(anytype.AnyType, "trueValue")
+        self.addInput(anytype.AnyType, "falseValue")
         self.addInput(bool, "condition")
-        self.addOutput(float, "output")
+        self.addOutput(anytype.AnyType, "output")
 
     def run(self):
         self.__i1_eop = False
@@ -81,7 +82,7 @@ class Choice(block.Block):
 
     def process(self):
         if not self.__i1_eop:
-            in1 = self.input("true").receive()
+            in1 = self.input("trueValue").receive()
             if in1.isEOP():
                 self.__i1_eop = True
             else:
@@ -91,7 +92,7 @@ class Choice(block.Block):
             return False
 
         if not self.__i2_eop:
-            in2 = self.input("false").receive()
+            in2 = self.input("falseValue").receive()
             if in2.isEOP():
                 self.__i2_eop = True
             else:
@@ -115,117 +116,15 @@ class Choice(block.Block):
         return True
 
 
-class BoolSelector(block.Block):
+class Selector(block.Block):
     def __init__(self):
-        super(BoolSelector, self).__init__()
+        super(Selector, self).__init__()
 
     def initialize(self):
-        self.addInput(bool, "value")
+        self.addInput(anytype.AnyType, "value")
         self.addInput(bool, "condition")
-        self.addOutput(bool, "matched")
-        self.addOutput(bool, "unmatched")
-
-    def process(self):
-        val_p = self.input("value").receive()
-        if val_p.isEOP():
-            return False
-
-        val = val_p.value()
-        val_p.drop()
-
-        con_p = self.input("condition").receive()
-        if con_p.isEOP():
-            return False
-
-        con = con_p.value()
-        con_p.drop()
-
-        if con:
-            self.output("matched").send(val)
-
-        else:
-            self.output("unmatched").send(val)
-
-        return True
-
-
-class IntSelector(block.Block):
-    def __init__(self):
-        super(IntSelector, self).__init__()
-
-    def initialize(self):
-        self.addInput(int, "value")
-        self.addInput(bool, "condition")
-        self.addOutput(int, "matched")
-        self.addOutput(int, "unmatched")
-
-    def process(self):
-        val_p = self.input("value").receive()
-        if val_p.isEOP():
-            return False
-
-        val = val_p.value()
-        val_p.drop()
-
-        con_p = self.input("condition").receive()
-        if con_p.isEOP():
-            return False
-
-        con = con_p.value()
-        con_p.drop()
-
-        if con:
-            self.output("matched").send(val)
-
-        else:
-            self.output("unmatched").send(val)
-
-        return True
-
-
-class FloatSelector(block.Block):
-    def __init__(self):
-        super(FloatSelector, self).__init__()
-
-    def initialize(self):
-        self.addInput(float, "value")
-        self.addInput(bool, "condition")
-        self.addOutput(float, "matched")
-        self.addOutput(float, "unmatched")
-
-    def process(self):
-        val_p = self.input("value").receive()
-        if val_p.isEOP():
-            return False
-
-        val = val_p.value()
-        val_p.drop()
-
-        con_p = self.input("condition").receive()
-        if con_p.isEOP():
-            return False
-
-        con = con_p.value()
-        con_p.drop()
-
-        if con:
-            self.output("matched").send(val)
-
-        else:
-            self.output("unmatched").send(val)
-
-        return True
-
-
-class StringSelector(block.Block):
-    def __init__(self):
-        super(StringSelector, self).__init__()
-
-    def initialize(self):
-        self.addInput(str, "value")
-        self.addInput(bool, "condition")
-        self.addOutput(str, "matched")
-        self.addOutput(str, "unmatched")
+        self.addOutput(anytype.AnyType, "matched")
+        self.addOutput(anytype.AnyType, "unmatched")
 
     def process(self):
         val_p = self.input("value").receive()

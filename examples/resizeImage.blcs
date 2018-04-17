@@ -25,11 +25,11 @@
             "src": "RegexSearch.result"
         }, 
         {
-            "path": "StringSelector.condition", 
+            "path": "Selector.condition", 
             "src": "Compare.result"
         }, 
         {
-            "path": "StringSelector.value", 
+            "path": "Selector.value", 
             "src": "ListDir.file"
         }, 
         {
@@ -385,8 +385,8 @@
             ]
         }, 
         {
-            "path": "StringSelector", 
-            "type": "StringSelector", 
+            "path": "Selector", 
+            "type": "Selector", 
             "pos": [
                 5367.068058156033, 
                 4526.032636050663

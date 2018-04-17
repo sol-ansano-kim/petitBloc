@@ -17,11 +17,11 @@
             "src": "Compare.result"
         }, 
         {
-            "path": "Choice.false", 
+            "path": "Choice.falseValue", 
             "src": "QImageSize.height"
         }, 
         {
-            "path": "Choice.true", 
+            "path": "Choice.trueValue", 
             "src": "QImageSize.width"
         }, 
         {
@@ -185,7 +185,7 @@
             "src": "index1.value"
         }, 
         {
-            "path": "index0.array", 
+            "path": "index0.list", 
             "src": "QImageIndices.index"
         }, 
         {
@@ -193,7 +193,7 @@
             "src": "Int.value"
         }, 
         {
-            "path": "index1.array", 
+            "path": "index1.list", 
             "src": "QImageIndices.index"
         }, 
         {
@@ -690,7 +690,7 @@
         }, 
         {
             "path": "index0", 
-            "type": "IntArrayGet", 
+            "type": "ListGet", 
             "pos": [
                 6955.17449094872, 
                 4811.5185203654655
@@ -698,7 +698,7 @@
         }, 
         {
             "path": "index1", 
-            "type": "IntArrayGet", 
+            "type": "ListGet", 
             "pos": [
                 6957.938234899194, 
                 4990.1666169456885
