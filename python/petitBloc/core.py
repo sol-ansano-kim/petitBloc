@@ -26,6 +26,14 @@ class PBEnum():
     pass
 
 
+class Any(object):
+    def __init__(self, value):
+        self.__v = value
+
+    def value(self):
+        return self.__v
+
+
 class ParameterBase(object):
     def __init__(self, name, typeClass=None, value=None, parent=None):
         super(ParameterBase, self).__init__()
@@ -103,6 +111,13 @@ class PacketBase(object):
         if isinstance(self.__value, (dict, list)):
             return copy.deepcopy(self.__value)
 
+        if isinstance(self.__value, Any):
+            v = self.__value.value()
+            if isinstance(v, (dict, list)):
+                return copy.deepcopy(v)
+
+            return v
+
         return self.__value
 
     def _del(self):
@@ -155,6 +170,9 @@ class PortBase(object):
             return True
 
         if issubclass(self.__type_class, Number) and issubclass(port.typeClass(), Number):
+            return True
+
+        if issubclass(self.__type_class, Any) or issubclass(port.typeClass(), Any):
             return True
 
         return False

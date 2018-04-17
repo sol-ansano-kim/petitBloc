@@ -7,6 +7,7 @@ from Qt import QtWidgets
 from . import model
 from . import blockCreator
 from . import uiUtil
+from .. import anytype
 import copy
 from functools import partial
 
@@ -377,6 +378,9 @@ class Graph(nodz_main.Nodz):
             elif issubclass(port.typeClass(), basestring):
                 preset = "box_str_port"
 
+            elif issubclass(port.typeClass(), anytype.AnyType):
+                preset = "box_any_port"
+
         else:
             if port.typeClass() == bool:
                 preset = "bool_port"
@@ -389,6 +393,9 @@ class Graph(nodz_main.Nodz):
 
             elif issubclass(port.typeClass(), basestring):
                 preset = "str_port"
+
+            elif issubclass(port.typeClass(), anytype.AnyType):
+                preset = "any_port"
 
         node._createAttribute(port, index=index, preset=preset, plug=plug, socket=socket, dataType=dataType, proxyNode=proxyNode)
 
