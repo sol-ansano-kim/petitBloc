@@ -348,3 +348,34 @@ class ArrayLen(block.Block):
         self.output("len").send(len(arr.value()))
 
         return True
+
+
+class ArrayExtend(block.Block):
+    def __init__(self):
+        super(ArrayExtend, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "arrayA")
+        self.addInput(list, "arrayB")
+        self.addOutput(list, "extended")
+
+    def process(self):
+        arra_p = self.input("arrayA").receive()
+        if arra_p.isEOP():
+            return False
+
+        arra = arra_p.value()
+        arra_p.drop()
+
+        arrb_p = self.input("arrayB").receive()
+        if arrb_p.isEOP():
+            return False
+
+        arrb = arrb_p.value()
+        arrb_p.drop()
+
+        arra.extend(arrb)
+
+        self.output("extended").send(arra)
+
+        return True
