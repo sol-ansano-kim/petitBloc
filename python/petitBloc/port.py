@@ -131,6 +131,9 @@ class OutPort(core.PortOut, core.PortBase):
         elif issubclass(self.typeClass(), basestring) and isinstance(value, basestring):
             pack = packet.Packet(self.typeClass()(value))
 
+        elif issubclass(self.typeClass(), core.Any):
+            pack = packet.Packet(core.Any(value))
+
         if pack is None:
             return False
 
