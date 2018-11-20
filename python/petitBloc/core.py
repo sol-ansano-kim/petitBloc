@@ -300,7 +300,7 @@ class ChainBase(object):
         srcPort.connect(self)
         dstPort.connect(self)
 
-        if not issubclass(srcPort.typeClass(), Any) and not issubclass(dstPort.typeClass(), Any) and srcPort.typeClass() != dstPort.typeClass():
+        if not issubclass(dstPort.typeClass(), Any) and srcPort.typeClass() != dstPort.typeClass():
             self.__need_to_cast = True
 
     def src(self):
