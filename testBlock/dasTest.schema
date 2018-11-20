@@ -1,0 +1,9 @@
+# encoding: utf-8
+# name: dasTest
+# das_minimum_version: 0.6.0
+{
+   "intType": Integer(),
+   "floatType": Real(),
+   "stringType": String(),
+   "struct": Struct(i=Integer(), f=Real(), s=String())
+}

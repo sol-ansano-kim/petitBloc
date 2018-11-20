@@ -1,6 +1,12 @@
 from numbers import Number
 import copy
 
+UseDas = True
+try:
+    import das
+except:
+    UseDas = False
+
 
 class Proxy():
     pass
@@ -32,6 +38,45 @@ class Any(object):
 
     def value(self):
         return self.__v
+
+
+if UseDas:
+    class Das(object):
+        Schema = ""
+
+        def __init__(self, value):
+            super(Das, self).__init__()
+            self.__v = das.validate(value, self.Schema)
+
+        @classmethod
+        def schema(cls):
+            return cls.Schema
+
+        def value(self):
+            return das.copy(self.__v)
+
+        @classmethod
+        def check(cls, v):
+            return das.check(v, cls.Schema)
+
+else:
+    class Das(Any):
+        Schema = ""
+
+        def __init__(self, value):
+            super(Das, self).__init__(value)
+            self.__v = value
+
+        @classmethod
+        def schema(cls):
+            return cls.Schema
+
+        def value(self):
+            return self.__v
+
+        @classmethod
+        def check(cls, v):
+            return True
 
 
 class ParameterBase(object):
@@ -118,6 +163,9 @@ class PacketBase(object):
 
             return v
 
+        if isinstance(self.__value, Das):
+            return self.__value.value()
+
         return self.__value
 
     def _del(self):
@@ -166,6 +214,9 @@ class PortBase(object):
         return "{}.{}".format(self.__parent.path(), self.__name)
 
     def match(self, port):
+        if issubclass(self.__type_class, Das) and issubclass(port.typeClass(), Das):
+            return self.__type_class.Schema == port.typeClass().Schema
+
         if self.__type_class == port.typeClass():
             return True
 

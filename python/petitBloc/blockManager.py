@@ -5,6 +5,7 @@ from . import box
 from . import conditionalBox
 from . import util
 from . import anytype
+from . import dastype
 
 
 class BlockManager(object):
@@ -24,7 +25,7 @@ class BlockManager(object):
         self.__blocks = {}
         self.__modules = []
         self.__loaded = []
-        self.__finded_class = {"bool": bool, "int": int, "float": float, "str": str, "list": list, "dict": dict, "tuple": tuple, "AnyType": anytype.AnyType}
+        self.__finded_class = {"bool": bool, "int": int, "float": float, "str": str, "list": list, "dict": dict, "tuple": tuple, "AnyType": anytype.AnyType, "DasType": dastype.DasType}
         self.__searchBlocks()
 
     def blockNames(self):

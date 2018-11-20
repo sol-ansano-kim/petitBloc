@@ -1,5 +1,15 @@
 from petitBloc import block
+from petitBloc import dastype
 import sys
+import os
+os.environ["DAS_SCHEMA_PATH"] = os.path.dirname(__file__)
+
+
+UseDas = True
+try:
+    import das
+except:
+    UseDas = False
 
 
 class TestObject(object):
@@ -173,5 +183,123 @@ class RaiseError(block.Block):
 
         self.debug("debug test : {}".format(in_i.value()))
         in_i.drop()
+
+        return True
+
+
+class MakeDasInt(block.Block):
+    def __init__(self):
+        super(MakeDasInt, self).__init__()
+
+    def initialize(self):
+        self.addParam(int, "int")
+        self.addOutput(dastype.DasType("dasTest.intType"), "dasInt")
+
+    def run(self):
+        self.output("dasInt").send(self.param("int").get())
+
+
+class MakeDasFloat(block.Block):
+    def __init__(self):
+        super(MakeDasFloat, self).__init__()
+
+    def initialize(self):
+        self.addParam(float, "flt")
+        self.addOutput(dastype.DasType("dasTest.floatType"), "dasFlt")
+
+    def run(self):
+        self.output("dasFlt").send(self.param("flt").get())
+
+
+class MakeDasString(block.Block):
+    def __init__(self):
+        super(MakeDasString, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "str")
+        self.addOutput(dastype.DasType("dasTest.stringType"), "dasStr")
+
+    def run(self):
+        self.output("dasStr").send(self.param("str").get())
+
+
+class MakeDasStruct(block.Block):
+    def __init__(self):
+        super(MakeDasStruct, self).__init__()
+
+    def initialize(self):
+        self.addParam(int, "int")
+        self.addParam(float, "flt")
+        self.addParam(str, "str")
+        self.addOutput(dastype.DasType("dasTest.struct"), "dasStruct")
+
+    def run(self):
+        if UseDas:
+            st = das.make_default("dasTest.struct")
+            st["i"] = self.param("int").get()
+            st["f"] = self.param("flt").get()
+            st["s"] = self.param("str").get()
+        else:
+            st = {"i": self.param("int").get(), "f": self.param("flt").get(), "s": self.param("str").get()}
+        self.output("dasStruct").send(st)
+
+
+class DasBlock(block.Block):
+    def __init__(self):
+        super(DasBlock, self).__init__()
+
+    def initialize(self):
+        self.addInput(dastype.DasType("dasTest.intType"), "inInt")
+        self.addInput(dastype.DasType("dasTest.floatType"), "inFloat")
+        self.addInput(dastype.DasType("dasTest.stringType"), "inString")
+        self.addInput(dastype.DasType("dasTest.struct"), "inStruct")
+
+    def run(self):
+        self.__int_eop = False
+        self.__flt_eop = False
+        self.__str_eop = False
+        self.__struct_eop = False
+        super(DasBlock, self).run()
+
+    def process(self):
+        ip = self.input("inInt")
+        fp = self.input("inFloat")
+        sp = self.input("inString")
+        stp = self.input("inStruct")
+
+        if not self.__int_eop:
+            ipp = ip.receive()
+            if ipp.isEOP():
+                self.__int_eop = True
+            else:
+                v = ipp.value()
+                ipp.drop()
+
+        if not self.__flt_eop:
+            fpp = fp.receive()
+            if fpp.isEOP():
+                self.__flt_eop = True
+            else:
+                v = fpp.value()
+                fpp.drop()
+
+        if not self.__str_eop:
+            spp = sp.receive()
+            if spp.isEOP():
+                self.__str_eop = True
+            else:
+                v = spp.value()
+                spp.drop()
+
+        if not self.__struct_eop:
+            stpp = stp.receive()
+            if stpp.isEOP():
+                self.__struct_eop = True
+            else:
+                v = stpp.value()
+                stpp.drop()
+
+        if self.__int_eop and self.__flt_eop and self.__str_eop and self.__struct_eop:
+            return False
 
         return True
