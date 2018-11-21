@@ -1,5 +1,6 @@
 from petitBloc import block
 from petitBloc import anytype
+from petitBloc import dastype
 import das
 import das.cli
 
@@ -10,7 +11,7 @@ class DasRead(block.Block):
 
     def initialize(self):
         self.addInput(str, "filepath")
-        self.addOutput(das.types.TypeBase, "dasObj")
+        self.addOutput(dastype.DasTypeBase, "dasObj")
 
     def process(self):
         fp = self.input("filepath").receive()
@@ -31,7 +32,7 @@ class DasWrite(block.Block):
         super(DasWrite, self).__init__()
 
     def initialize(self):
-        self.addInput(das.types.TypeBase, "dasObj")
+        self.addInput(dastype.DasTypeBase, "dasObj")
         self.addInput(str, "filepath")
 
     def process(self):
@@ -59,7 +60,7 @@ class DasGet(block.Block):
         super(DasGet, self).__init__()
 
     def initialize(self):
-        self.addInput(das.types.TypeBase, "dasObj")
+        self.addInput(dastype.DasTypeBase, "dasObj")
         self.addInput(str, "key")
         self.addOutput(anytype.AnyType, "result")
 
@@ -88,10 +89,10 @@ class DasSet(block.Block):
         super(DasSet, self).__init__()
 
     def initialize(self):
-        self.addInput(das.types.TypeBase, "inDasObj")
+        self.addInput(dastype.DasTypeBase, "inDasObj")
         self.addInput(str, "key")
         self.addInput(anytype.AnyType, "value")
-        self.addOutput(das.types.TypeBase, "outDasObj")
+        self.addOutput(dastype.DasTypeBase, "outDasObj")
 
     def process(self):
         dp = self.input("inDasObj").receive()
@@ -127,7 +128,7 @@ class DasEval(block.Block):
         super(DasEval, self).__init__()
 
     def initialize(self):
-        self.addInput(das.types.TypeBase, "dasObj")
+        self.addInput(dastype.DasTypeBase, "dasObj")
         self.addInput(str, "expression")
         self.addOutput(anytype.AnyType, "result")
 
@@ -156,10 +157,10 @@ class DasAdd(block.Block):
         super(DasAdd, self).__init__()
 
     def initialize(self):
-        self.addInput(das.types.TypeBase, "inDasObj")
+        self.addInput(dastype.DasTypeBase, "inDasObj")
         self.addInput(str, "key")
         self.addInput(anytype.AnyType, "value")
-        self.addOutput(das.types.TypeBase, "outDasObj")
+        self.addOutput(dastype.DasTypeBase, "outDasObj")
 
     def process(self):
         dp = self.input("inDasObj").receive()
@@ -185,5 +186,35 @@ class DasAdd(block.Block):
 
         das.cli.add(dv, kv, str(vv))
         self.output("outDasObj").send(dv)
+
+        return True
+
+
+
+class DasValidate(block.Block):
+    def __init__(self):
+        super(DasValidate, self).__init__()
+
+    def initialize(self):
+        self.addInput(dastype.DasTypeBase, "dasObj")
+        self.addInput(str, "schema")
+        self.addOutput(anytype.AnyType, "schemed")
+
+    def process(self):
+        dp = self.input("dasObj").receive()
+        if dp.isEOP():
+            return False
+
+        dv = dp.value()
+        dp.drop()
+
+        sp = self.input("schema").receive()
+        if sp.isEOP():
+            return False
+
+        sv = sp.value()
+        sp.drop()
+
+        self.output("schemed").send(das.validate(dv, sv))
 
         return True

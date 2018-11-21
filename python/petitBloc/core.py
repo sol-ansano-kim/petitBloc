@@ -1,12 +1,6 @@
 from numbers import Number
 import copy
 
-UseDas = True
-try:
-    import das
-except:
-    UseDas = False
-
 
 class Proxy():
     pass
@@ -38,6 +32,15 @@ class Any(object):
 
     def value(self):
         return self.__v
+
+
+DasTypeBase = Any
+UseDas = True
+try:
+    import das
+    DasTypeBase = das.types.TypeBase
+except:
+    UseDas = False
 
 
 if UseDas:
@@ -225,6 +228,10 @@ class PortBase(object):
 
         if issubclass(self.__type_class, Any) or issubclass(port.typeClass(), Any):
             return True
+
+        if (self.isInPort() and issubclass(self.__type_class, DasTypeBase) and issubclass(port.typeClass(), Das)) or\
+           (self.isOutPort() and issubclass(self.__type_class, Das) and issubclass(port.typeClass(), DasTypeBase)):
+           return True
 
         return False
 

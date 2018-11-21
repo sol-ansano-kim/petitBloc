@@ -70,6 +70,10 @@ class Chain(core.ChainBase):
 
         p = self.__packets.get(timeout=timeout)
         if self.needToCast() and not p.isEOP():
-            p = packet.CastedPacket(p, self.dst().typeClass())
+            tc = self.dst().typeClass()
+            if issubclass(tc, (core.Any, core.DasTypeBase)):
+                tc = None
+
+            p = packet.CastedPacket(p, typeClass=tc)
 
         return p

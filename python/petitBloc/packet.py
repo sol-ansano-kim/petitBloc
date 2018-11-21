@@ -67,7 +67,11 @@ class Packet(core.PacketBase):
 
 
 class CastedPacket(core.PacketBase):
-    def __init__(self, packet, typeClass):
-        super(CastedPacket, self).__init__(value=typeClass(packet.value()))
+    def __init__(self, packet, typeClass=None):
+        if typeClass is not None:
+            super(CastedPacket, self).__init__(value=typeClass(packet.value()))
+        else:
+            super(CastedPacket, self).__init__(value=packet.value())
+
         self.pickUp = packet.pickUp
         self.drop = packet.drop

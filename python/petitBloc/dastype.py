@@ -1,4 +1,5 @@
 from .core import Das
+from .core import DasTypeBase
 
 
 def DasType(schema):
