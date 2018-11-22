@@ -92,7 +92,7 @@ class DasSet(block.Block):
         self.addInput(dastype.DasTypeBase, "inDasObj")
         self.addInput(str, "key")
         self.addInput(anytype.AnyType, "value")
-        self.addOutput(dastype.DasTypeBase, "outDasObj")
+        self.addOutput(anytype.AnyType, "outDasObj")
 
     def process(self):
         dp = self.input("inDasObj").receive()
@@ -128,16 +128,17 @@ class DasEval(block.Block):
         super(DasEval, self).__init__()
 
     def initialize(self):
-        self.addInput(dastype.DasTypeBase, "dasObj")
+        self.addInput(dastype.DasTypeBase, "inDasObj")
         self.addInput(str, "expression")
         self.addOutput(anytype.AnyType, "result")
+        self.addOutput(anytype.AnyType, "outDasObj")
 
     def process(self):
-        dp = self.input("dasObj").receive()
+        dp = self.input("inDasObj").receive()
         if dp.isEOP():
             return False
 
-        dv = dp.value()
+        dv = das.copy(dp.value())
         dp.drop()
 
         ep = self.input("expression").receive()
@@ -147,7 +148,9 @@ class DasEval(block.Block):
         ev = ep.value()
         ep.drop()
 
-        self.output("result").send(das.cli.eval(dv, ev))
+        res = das.cli.eval(dv, ev)
+        self.output("result").send(res)
+        self.output("outDasObj").send(dv)
 
         return True
 
@@ -160,7 +163,7 @@ class DasAdd(block.Block):
         self.addInput(dastype.DasTypeBase, "inDasObj")
         self.addInput(str, "key")
         self.addInput(anytype.AnyType, "value")
-        self.addOutput(dastype.DasTypeBase, "outDasObj")
+        self.addOutput(anytype.AnyType, "outDasObj")
 
     def process(self):
         dp = self.input("inDasObj").receive()
@@ -190,18 +193,17 @@ class DasAdd(block.Block):
         return True
 
 
-
 class DasValidate(block.Block):
     def __init__(self):
         super(DasValidate, self).__init__()
 
     def initialize(self):
-        self.addInput(dastype.DasTypeBase, "dasObj")
+        self.addInput(anytype.AnyType, "value")
         self.addInput(str, "schema")
         self.addOutput(anytype.AnyType, "schemed")
 
     def process(self):
-        dp = self.input("dasObj").receive()
+        dp = self.input("value").receive()
         if dp.isEOP():
             return False
 
