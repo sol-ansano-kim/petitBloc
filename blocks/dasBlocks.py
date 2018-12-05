@@ -155,6 +155,62 @@ class DasEval(block.Block):
         return True
 
 
+class DasNew(block.Block):
+    def __init__(self):
+        super(DasNew, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "schemaType")
+        self.addOutput(anytype.AnyType, "outDasObj")
+
+    def process(self):
+        st = self.input("schemaType").receive()
+        if st.isEOP():
+            return False
+
+        rv = das.make_default(st.value())
+
+        st.drop()
+
+        self.output("outDasObj").send(rv)
+
+        return True
+
+
+
+class DasNew(block.Block):
+    def __init__(self):
+        super(DasNew, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "schemaType")
+        self.addInput(dict, "fields")
+        self.addOutput(anytype.AnyType, "outDasObj")
+
+    def process(self):
+        st = self.input("schemaType").receive()
+        if st.isEOP():
+            return False
+
+        if not self.input("fields").isConnected():
+            fd = {}
+        else:
+            _fd = self.input("fields").receive()
+            if _fd.isEOP():
+                return False
+            fd = _fd.value()
+            _fd.drop()
+
+        rv = das.make(st.value(), **fd)
+
+        st.drop()
+
+        self.output("outDasObj").send(rv)
+
+        return True
+
+
+
 class DasAdd(block.Block):
     def __init__(self):
         super(DasAdd, self).__init__()
