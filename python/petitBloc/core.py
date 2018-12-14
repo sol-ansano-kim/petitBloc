@@ -34,6 +34,54 @@ class Any(object):
         return self.__v
 
 
+DasTypeBase = Any
+UseDas = True
+try:
+    import das
+    DasTypeBase = das.types.TypeBase
+except:
+    UseDas = False
+
+
+if UseDas:
+    class Das(object):
+        Schema = ""
+
+        def __init__(self, value):
+            super(Das, self).__init__()
+            self.__v = das.validate(value, self.Schema)
+
+        @classmethod
+        def schema(cls):
+            return cls.Schema
+
+        def value(self):
+            return das.copy(self.__v)
+
+        @classmethod
+        def check(cls, v):
+            return das.check(v, cls.Schema)
+
+else:
+    class Das(Any):
+        Schema = ""
+
+        def __init__(self, value):
+            super(Das, self).__init__(value)
+            self.__v = value
+
+        @classmethod
+        def schema(cls):
+            return cls.Schema
+
+        def value(self):
+            return self.__v
+
+        @classmethod
+        def check(cls, v):
+            return True
+
+
 class ParameterBase(object):
     def __init__(self, name, typeClass=None, value=None, parent=None):
         super(ParameterBase, self).__init__()
@@ -118,6 +166,9 @@ class PacketBase(object):
 
             return v
 
+        if isinstance(self.__value, Das):
+            return self.__value.value()
+
         return self.__value
 
     def _del(self):
@@ -166,6 +217,9 @@ class PortBase(object):
         return "{}.{}".format(self.__parent.path(), self.__name)
 
     def match(self, port):
+        if issubclass(self.__type_class, Das) and issubclass(port.typeClass(), Das):
+            return self.__type_class.Schema == port.typeClass().Schema
+
         if self.__type_class == port.typeClass():
             return True
 
@@ -174,6 +228,10 @@ class PortBase(object):
 
         if issubclass(self.__type_class, Any) or issubclass(port.typeClass(), Any):
             return True
+
+        if (self.isInPort() and issubclass(self.__type_class, DasTypeBase) and issubclass(port.typeClass(), Das)) or\
+           (self.isOutPort() and issubclass(self.__type_class, Das) and issubclass(port.typeClass(), DasTypeBase)):
+           return True
 
         return False
 
@@ -249,7 +307,7 @@ class ChainBase(object):
         srcPort.connect(self)
         dstPort.connect(self)
 
-        if not issubclass(srcPort.typeClass(), Any) and not issubclass(dstPort.typeClass(), Any) and srcPort.typeClass() != dstPort.typeClass():
+        if not issubclass(dstPort.typeClass(), Any) and srcPort.typeClass() != dstPort.typeClass():
             self.__need_to_cast = True
 
     def src(self):

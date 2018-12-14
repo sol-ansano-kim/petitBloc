@@ -6,6 +6,7 @@ install_nodz = True
 install_qtpy = True
 install_enum = True
 install_exts = True
+install_das = True
 dist_path = os.path.abspath(ARGUMENTS.get("dist", "release"))
 
 
@@ -33,6 +34,12 @@ except:
     install_exts = True
 
 
+try:
+    install_das = int(ARGUMENTS.get("install-das", "1")) != 0
+except:
+    install_das = True
+
+
 env.Install(os.path.join(dist_path, "python/petitBloc"), Glob("python/petitBloc/*.py"))
 env.Install(os.path.join(dist_path, "bin"), Glob("bin/*"))
 env.Install(os.path.join(dist_path, "python/petitBloc/ui"), Glob("python/petitBloc/ui/*.py"))
@@ -57,3 +64,6 @@ if install_enum:
 
 if install_exts:
     env.Install(os.path.join(dist_path, "python/petitBloc/exts"), Glob("python/petitBloc/exts/*.py"))
+
+if install_das:
+    env.Install(os.path.join(dist_path, "python"), Glob("das/python/das"))

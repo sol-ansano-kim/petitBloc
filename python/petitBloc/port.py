@@ -122,7 +122,14 @@ class OutPort(core.PortOut, core.PortBase):
 
     def send(self, value):
         pack = None
-        if isinstance(value, self.typeClass()):
+
+        if issubclass(self.typeClass(), core.Das):
+            if not self.typeClass().check(value):
+                return False
+
+            pack = packet.Packet(self.typeClass()(value))
+
+        elif isinstance(value, self.typeClass()):
             pack = packet.Packet(value)
 
         elif issubclass(self.typeClass(), Number) and isinstance(value, Number):

@@ -400,3 +400,24 @@ class StringLength(block.Block):
         in_p.drop()
 
         return True
+
+
+class StringEval(block.Block):
+    def __init__(self):
+        super(StringEval, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addOutput(anytype.AnyType, "output")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        self.output("output").send(eval(in_p.value()))
+
+        in_p.drop()
+
+        return True

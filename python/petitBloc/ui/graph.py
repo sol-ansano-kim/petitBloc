@@ -8,6 +8,7 @@ from . import model
 from . import blockCreator
 from . import uiUtil
 from .. import anytype
+from .. import dastype
 import copy
 from functools import partial
 
@@ -378,8 +379,11 @@ class Graph(nodz_main.Nodz):
             elif issubclass(port.typeClass(), basestring):
                 preset = "box_str_port"
 
-            elif issubclass(port.typeClass(), anytype.AnyType):
+            elif issubclass(port.typeClass(), anytype.Any):
                 preset = "box_any_port"
+
+            elif issubclass(port.typeClass(), dastype.Das):
+                preset = "box_das_port"
 
         else:
             if port.typeClass() == bool:
@@ -394,8 +398,11 @@ class Graph(nodz_main.Nodz):
             elif issubclass(port.typeClass(), basestring):
                 preset = "str_port"
 
-            elif issubclass(port.typeClass(), anytype.AnyType):
+            elif issubclass(port.typeClass(), anytype.Any):
                 preset = "any_port"
+
+            elif issubclass(port.typeClass(), dastype.Das):
+                preset = "das_port"
 
         node._createAttribute(port, index=index, preset=preset, plug=plug, socket=socket, dataType=dataType, proxyNode=proxyNode)
 
