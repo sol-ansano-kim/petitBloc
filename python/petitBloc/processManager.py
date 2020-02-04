@@ -271,7 +271,7 @@ class QueueManager(object):
 
 
 class ProcessWorker(multiprocessing.Process):
-    def __init__(self, obj, args=(), kwargs={}):
+    def __init__(self, obj, *args, **kwargs):
         super(ProcessWorker, self).__init__()
         self.daemon = True
         self.__obj = obj
@@ -346,12 +346,12 @@ class ProcessManager(object):
         return len(ProcessManager.__Processes)
 
     @staticmethod
-    def Submit(obj, args=(), kwargs={}):
+    def Submit(obj, *args, **kwargs):
         while (len(ProcessManager.__Processes) >= ProcessManager.__MaxProcess):
             ProcessManager.CleanUp()
 
         LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
-        p = ProcessWorker(obj, args=args, kwargs=kwargs)
+        p = ProcessWorker(obj, *args, **kwargs)
         ProcessManager.__Processes.append(p)
 
         p.start()

@@ -159,7 +159,12 @@ class BoxModel(QtCore.QObject):
 
         return None
 
-    def serialize(self, include=[], exclude=[]):
+    def serialize(self, include=None, exclude=None):
+        if include is None:
+            include = []
+        if exclude is None:
+            exclude = []
+
         data = {"blocks": [], "connections": [], "proxyPorts": []}
 
         blocks = []

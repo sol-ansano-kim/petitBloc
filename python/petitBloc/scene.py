@@ -368,8 +368,13 @@ def Query(filePath):
     return True
 
 
-def Run(filePath, contexts=[], parameters=[], maxProcess=1, multiProcessing=False, attrbutes=[], verbose=1):
+def Run(filePath, contexts=None, parameters=None, maxProcess=1, multiProcessing=False, attrbutes=None, verbose=1):
     try:
+        if contexts is None:
+            contexts = []
+        if parameters is None:
+            parameters = []
+
         __setVerboseLevel(verbose)
 
         workerManager.WorkerManager.SetUseProcess(multiProcessing)

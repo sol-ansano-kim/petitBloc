@@ -262,7 +262,7 @@ class QueueManager(object):
 
 
 class ProcessWorker(threading.Thread):
-    def __init__(self, obj, args=(), kwargs={}):
+    def __init__(self, obj, *args, **kwargs):
         super(ProcessWorker, self).__init__()
         self.daemon = True
         self.__obj = obj
@@ -335,7 +335,7 @@ class ThreadManager(object):
         return len(ThreadManager.__Threads)
 
     @staticmethod
-    def Execute(obj, args=(), kwargs={}):
+    def Execute(obj, *args, **kwargs):
         LogManager.IncreaseCount()
         st = time.time()
         success = True
@@ -359,12 +359,12 @@ class ThreadManager(object):
         LogManager.TimeReport(obj.path(), time.time() - st)
 
     @staticmethod
-    def Submit(obj, args=(), kwargs={}):
+    def Submit(obj, *args, **kwargs):
         while (len(ThreadManager.__Threads) >= ThreadManager.__MaxThreads):
             ThreadManager.CleaunUp()
 
         LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
-        p = ProcessWorker(obj, args=args, kwargs=kwargs)
+        p = ProcessWorker(obj, *args, **kwargs)
         ThreadManager.__Threads.append(p)
 
         p.start()

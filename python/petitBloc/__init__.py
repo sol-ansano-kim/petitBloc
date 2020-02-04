@@ -1,7 +1,7 @@
 import os
 
 
-def Run(path=None, contexts=[], parameters=[], blocks=False, query=False, info=None, maxProcess=1, verbose=1):
+def Run(path=None, contexts=None, parameters=None, blocks=False, query=False, info=None, maxProcess=1, verbose=1):
     from . import scene
 
     if blocks:
