@@ -49,7 +49,7 @@ if UseDas:
 
         def __init__(self, value):
             super(Das, self).__init__()
-            self.__v = das.validate(value, self.Schema)
+            self.__v = das.conform(value, self.Schema, fill=False)
 
         @classmethod
         def schema(cls):
@@ -60,7 +60,11 @@ if UseDas:
 
         @classmethod
         def check(cls, v):
-            return das.check(v, cls.Schema)
+            try:
+                das.conform(v, cls.Schema, fill=False)
+                return True
+            except:
+                return False
 
 else:
     class Das(Any):
