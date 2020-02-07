@@ -62,7 +62,7 @@ class DasGet(block.Block):
     def initialize(self):
         self.addInput(dastype.DasTypeBase, "dasObj")
         self.addInput(str, "key")
-        self.addOutput(anytype.AnyType, "result")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
         dp = self.input("dasObj").receive()
@@ -79,7 +79,7 @@ class DasGet(block.Block):
         kv = kp.value()
         kp.drop()
 
-        self.output("result").send(das.cli.get(dv, kv))
+        self.output("output").send(das.cli.get(dv, kv))
 
         return True
 
@@ -130,7 +130,7 @@ class DasEval(block.Block):
     def initialize(self):
         self.addInput(dastype.DasTypeBase, "inDasObj")
         self.addInput(str, "expression")
-        self.addOutput(anytype.AnyType, "result")
+        self.addOutput(anytype.AnyType, "output")
         self.addOutput(anytype.AnyType, "outDasObj")
 
     def process(self):
@@ -149,7 +149,7 @@ class DasEval(block.Block):
         ep.drop()
 
         res = das.cli.eval(dv, ev)
-        self.output("result").send(res)
+        self.output("output").send(res)
         self.output("outDasObj").send(dv)
 
         return True

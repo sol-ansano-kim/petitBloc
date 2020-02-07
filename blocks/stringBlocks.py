@@ -10,7 +10,7 @@ class StringAdd(block.Block):
     def initialize(self):
         self.addInput(str, "string1")
         self.addInput(str, "string2")
-        self.addOutput(str, "result")
+        self.addOutput(str, "output")
 
     def process(self):
         s1_p = self.input("string1").receive()
@@ -27,7 +27,7 @@ class StringAdd(block.Block):
         s2 = s2_p.value()
         s2_p.drop()
 
-        self.output("result").send(s1 + s2)
+        self.output("output").send(s1 + s2)
 
         return True
 
@@ -40,7 +40,7 @@ class StringReplace(block.Block):
         self.addInput(str, "string")
         self.addInput(str, "old")
         self.addInput(str, "new")
-        self.addOutput(str, "result")
+        self.addOutput(str, "output")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -64,7 +64,7 @@ class StringReplace(block.Block):
         new = new_p.value()
         new_p.drop()
 
-        self.output("result").send(string.replace(old, new))
+        self.output("output").send(string.replace(old, new))
 
         return True
 
@@ -76,7 +76,7 @@ class StringCount(block.Block):
     def initialize(self):
         self.addInput(str, "string")
         self.addInput(str, "substring")
-        self.addOutput(int, "result")
+        self.addOutput(int, "output")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -93,7 +93,7 @@ class StringCount(block.Block):
         sub = sub_p.value()
         sub_p.drop()
 
-        self.output("result").send(string.count(sub))
+        self.output("output").send(string.count(sub))
 
         return True
 
@@ -134,7 +134,7 @@ class RegexFindAll(block.Block):
     def initialize(self):
         self.addInput(str, "string")
         self.addInput(str, "pattern")
-        self.addOutput(str, "result")
+        self.addOutput(str, "output")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -152,7 +152,7 @@ class RegexFindAll(block.Block):
         pat_p.drop()
 
         for r in re.findall(pat, string):
-            self.output("result").send(r)
+            self.output("output").send(r)
 
         return True
 
@@ -165,7 +165,7 @@ class RegexSub(block.Block):
         self.addInput(str, "string")
         self.addInput(str, "pattern")
         self.addInput(str, "replace")
-        self.addOutput(str, "result")
+        self.addOutput(str, "output")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -189,7 +189,7 @@ class RegexSub(block.Block):
         rep = rep_p.value()
         rep_p.drop()
 
-        self.output("result").send(re.sub(pat, rep, string))
+        self.output("output").send(re.sub(pat, rep, string))
 
         return True
 
@@ -243,7 +243,7 @@ class RegexSearch(block.Block):
     def initialize(self):
         self.addInput(str, "string")
         self.addInput(str, "pattern")
-        self.addOutput(str, "result")
+        self.addOutput(str, "output")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -262,11 +262,11 @@ class RegexSearch(block.Block):
 
         res = re.search(pat, string)
         if not res:
-            self.output("result").send("")
+            self.output("output").send("")
 
             return True
 
-        self.output("result").send(string[res.start():res.end()])
+        self.output("output").send(string[res.start():res.end()])
 
         return True
 
