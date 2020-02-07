@@ -51,23 +51,7 @@ class ListGet(block.Block):
         self.addInput(int, "index")
         self.addOutput(anytype.AnyType, "value")
 
-    def run(self):
-        self.__index_eop = False
-        self.__index_dump = None
-        super(ListGet, self).run()
-
     def process(self):
-        if not self.__index_eop:
-            index_p = self.input("index").receive()
-            if index_p.isEOP():
-                self.__index_eop = True
-            else:
-                self.__index_dump = index_p.value()
-                index_p.drop()
-
-        if self.__index_dump is None:
-            return False
-
         arr_p = self.input("list").receive()
         if arr_p.isEOP():
             return False
@@ -75,7 +59,15 @@ class ListGet(block.Block):
         arr = arr_p.value()
         arr_p.drop()
 
-        self.output("value").send(arr[self.__index_dump])
+        index_p = self.input("index").receive()
+        if index_p.isEOP():
+            return False
+
+        index = index_p.value()
+        index_p.drop()
+
+        self.output("value").send(arr[index])
+
         return True
 
 
@@ -114,6 +106,7 @@ class ListSet(block.Block):
         in_list[index] = value
 
         self.output("outList").send(in_list)
+
         return True
 
 

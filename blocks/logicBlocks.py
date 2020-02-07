@@ -12,53 +12,37 @@ class Compare(block.Block):
         self.addOutput(bool, "result")
         self.addEnumParam("operator", [">", ">=", "==", "<=", "<"], value=2)
 
-    def run(self):
-        self.__i1_eop = False
-        self.__i2_eop = False
-        self.__v1 = None
-        self.__v2 = None
-        super(Compare, self).run()
-
     def process(self):
-        if not self.__i1_eop:
-            in1 = self.input("input1").receive()
-            if in1.isEOP():
-                self.__i1_eop = True
-            else:
-                self.__v1 = in1.value()
-
-        if self.__v1 is None:
+        v1_p = self.input("input1").receive()
+        if v1_p.isEOP():
             return False
 
-        if not self.__i2_eop:
-            in2 = self.input("input2").receive()
-            if in2.isEOP():
-                self.__i2_eop = True
-            else:
-                self.__v2 = in2.value()
+        v1 = v1_p.value()
+        v1_p.drop()
 
-        if self.__v2 is None:
+        v2_p = self.input("input2").receive()
+        if v2_p.isEOP():
             return False
 
-        if self.__i1_eop and self.__i2_eop:
-            return False
+        v2 = v2_p.value()
+        v2_p.drop()
 
         oper = self.param("operator").get()
 
         if oper is 0:
-            self.output("result").send(self.__v1 > self.__v2)
+            self.output("result").send(v1 > v2)
 
         elif oper is 1:
-            self.output("result").send(self.__v1 >= self.__v2)
+            self.output("result").send(v1 >= v2)
 
         elif oper is 2:
-            self.output("result").send(self.__v1 == self.__v2)
+            self.output("result").send(v1 == v2)
 
         elif oper is 3:
-            self.output("result").send(self.__v1 <= self.__v2)
+            self.output("result").send(v1 <= v2)
 
         else:
-            self.output("result").send(self.__v1 < self.__v2)
+            self.output("result").send(v1 < v2)
 
         return True
 
@@ -73,36 +57,20 @@ class Choice(block.Block):
         self.addInput(bool, "condition")
         self.addOutput(anytype.AnyType, "output")
 
-    def run(self):
-        self.__i1_eop = False
-        self.__i2_eop = False
-        self.__v1 = None
-        self.__v2 = None
-        super(Choice, self).run()
-
     def process(self):
-        if not self.__i1_eop:
-            in1 = self.input("trueValue").receive()
-            if in1.isEOP():
-                self.__i1_eop = True
-            else:
-                self.__v1 = in1.value()
+        tv_p = self.input("trueValue").receive()
+        if tv_p.isEOP():
+            return
 
-        if self.__v1 is None:
-            return False
+        tv = tv_p.value()
+        tv_p.drop()
 
-        if not self.__i2_eop:
-            in2 = self.input("falseValue").receive()
-            if in2.isEOP():
-                self.__i2_eop = True
-            else:
-                self.__v2 = in2.value()
+        fv_p = self.input("falseValue").receive()
+        if fv_p.isEOP():
+            return
 
-        if self.__v2 is None:
-            return False
-
-        if self.__i1_eop and self.__i2_eop:
-            return False
+        fv = fv_p.value()
+        fv_p.drop()
 
         con_p = self.input("condition").receive()
         if con_p.isEOP():
@@ -111,7 +79,7 @@ class Choice(block.Block):
         con = con_p.value()
         con_p.drop()
 
-        self.output("output").send(self.__v1 if con else self.__v2)
+        self.output("output").send(tv if con else fv)
 
         return True
 
@@ -186,5 +154,43 @@ class Repeat(block.Block):
         op = self.output("outValue")
         for i in range(time):
             op.send(value)
+
+        return True
+
+
+class DuplicateFlow(block.Block):
+    def __init__(self):
+        super(DuplicateFlow, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "flow")
+        self.addInput(anytype.AnyType, "by")
+        self.addOutput(anytype.AnyType, "output")
+
+    def run(self):
+        self.__flow_eop = False
+        self.__flow_dumped = False
+        self.__flow_value = None
+        super(DuplicateFlow, self).run()
+
+    def process(self):
+        if not self.__flow_eop:
+            flow_p = self.input("flow").receive()
+            if flow_p.isEOP():
+                self.__flow_eop = True
+            else:
+                self.__flow_dumped = True
+                self.__flow_value = flow_p.value()
+
+        if not self.__flow_dumped:
+            return False
+
+        by_p = self.input("by").receive()
+        if by_p.isEOP():
+            return False
+
+        by_p.drop()
+
+        self.output("output").send(self.__flow_value)
 
         return True
