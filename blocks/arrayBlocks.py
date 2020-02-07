@@ -13,6 +13,35 @@ class List(block.Block):
         self.output("list").send([])
 
 
+class ListHas(block.Block):
+    def __init__(self):
+        super(ListHas, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "list")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(bool, "result")
+
+    def process(self):
+        list_p = self.input("list").receive()
+        if list_p.isEOP():
+            return False
+
+        lst = list_p.value()
+        list_p.drop()
+
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        self.output("result").send(value in lst)
+
+        return True
+
+
 class ListGet(block.Block):
     def __init__(self):
         super(ListGet, self).__init__()
