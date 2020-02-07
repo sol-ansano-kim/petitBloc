@@ -116,9 +116,9 @@ class Choice(block.Block):
         return True
 
 
-class Selector(block.Block):
+class Select(block.Block):
     def __init__(self):
-        super(Selector, self).__init__()
+        super(Select, self).__init__()
 
     def initialize(self):
         self.addInput(anytype.AnyType, "value")
@@ -148,6 +148,15 @@ class Selector(block.Block):
             self.output("unmatched").send(val)
 
         return True
+
+
+class Selector(Select):
+    def __init__(self):
+        super(Selector, self).__init__()
+
+    def run(self):
+        self.warn("'Selector' block is deprecated. Please use 'Select' block instead")
+        super(Selector, self).run()
 
 
 class Repeat(block.Block):
