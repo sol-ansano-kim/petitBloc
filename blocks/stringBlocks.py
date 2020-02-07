@@ -98,6 +98,35 @@ class StringCount(block.Block):
         return True
 
 
+class StringSplit(block.Block):
+    def __init__(self):
+        super(StringSplit, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addInput(str, "substring")
+        self.addOutput(list, "output")
+
+    def process(self):
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
+            return False
+
+        string = string_p.value()
+        string_p.drop()
+
+        sub_p = self.input("substring").receive()
+        if sub_p.isEOP():
+            return False
+
+        sub = sub_p.value()
+        sub_p.drop()
+
+        self.output("output").send(string.split(sub))
+
+        return True
+
+
 class RegexFindAll(block.Block):
     def __init__(self):
         super(RegexFindAll, self).__init__()
