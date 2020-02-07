@@ -7,21 +7,39 @@ class List(block.Block):
         super(List, self).__init__()
 
     def initialize(self):
-        self.addInput(anytype.AnyType, "value")
         self.addOutput(list, "list")
 
     def run(self):
-        array = []
+        self.output("list").send([])
 
-        inp = self.input("value")
-        while (True):
-            p = inp.receive()
-            if p.isEOP():
-                break
 
-            array.append(p.value())
+class ListHas(block.Block):
+    def __init__(self):
+        super(ListHas, self).__init__()
 
-        self.output("list").send(array)
+    def initialize(self):
+        self.addInput(list, "list")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(bool, "result")
+
+    def process(self):
+        list_p = self.input("list").receive()
+        if list_p.isEOP():
+            return False
+
+        lst = list_p.value()
+        list_p.drop()
+
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        self.output("result").send(value in lst)
+
+        return True
 
 
 class ListGet(block.Block):
@@ -33,23 +51,7 @@ class ListGet(block.Block):
         self.addInput(int, "index")
         self.addOutput(anytype.AnyType, "value")
 
-    def run(self):
-        self.__index_eop = False
-        self.__index_dump = None
-        super(ListGet, self).run()
-
     def process(self):
-        if not self.__index_eop:
-            index_p = self.input("index").receive()
-            if index_p.isEOP():
-                self.__index_eop = True
-            else:
-                self.__index_dump = index_p.value()
-                index_p.drop()
-
-        if self.__index_dump is None:
-            return False
-
         arr_p = self.input("list").receive()
         if arr_p.isEOP():
             return False
@@ -57,7 +59,54 @@ class ListGet(block.Block):
         arr = arr_p.value()
         arr_p.drop()
 
-        self.output("value").send(arr[self.__index_dump])
+        index_p = self.input("index").receive()
+        if index_p.isEOP():
+            return False
+
+        index = index_p.value()
+        index_p.drop()
+
+        self.output("value").send(arr[index])
+
+        return True
+
+
+class ListSet(block.Block):
+    def __init__(self):
+        super(ListSet, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "inList")
+        self.addInput(int, "index")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "outList")
+
+    def process(self):
+        in_list_p = self.input("inList").receive()
+        if in_list_p.isEOP():
+            return False
+
+        in_list = in_list_p.value()
+        in_list_p.drop()
+
+        index_p = self.input("index").receive()
+        if index_p.isEOP():
+            return False
+
+        index = index_p.value()
+        index_p.drop()
+
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        in_list[index] = value
+
+        self.output("outList").send(in_list)
+
         return True
 
 
@@ -123,6 +172,38 @@ class ListAppend(block.Block):
         value_p.drop()
 
         arr.append(value)
+
+        self.output("outList").send(arr)
+
+        return True
+
+
+class ListRemove(block.Block):
+    def __init__(self):
+        super(ListRemove, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "list")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "outList")
+
+    def process(self):
+        arr_p = self.input("list").receive()
+        if arr_p.isEOP():
+            return False
+
+        arr = arr_p.value()
+        arr_p.drop()
+
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        if value in arr:
+            arr.remove(value)
 
         self.output("outList").send(arr)
 

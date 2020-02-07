@@ -18,6 +18,10 @@ class Sub(block.Block):
     def run(self):
         res = workerManager.SubmitSubProcess(os.path.abspath(os.path.join(__file__, "../sub")))
         res.result()
+        for l in res.outputs():
+            print(l)
+        for l in res.errors():
+            print(l)
 
 
 class TestSubprocess(unittest.TestCase):
@@ -26,10 +30,10 @@ class TestSubprocess(unittest.TestCase):
         for i in range(multiprocessing.cpu_count() * 3):
             box1.addBlock(Sub())
 
-        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+        self.assertTrue(workerManager.WorkerManager.RunSchedule(box1.getSchedule()))
 
         workerManager.WorkerManager.SetUseProcess(True)
-        workerManager.WorkerManager.RunSchedule(box1.getSchedule())
+        self.assertTrue(workerManager.WorkerManager.RunSchedule(box1.getSchedule()))
 
 
 
