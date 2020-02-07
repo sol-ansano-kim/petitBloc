@@ -1,27 +1,10 @@
-import threading
-import Queue
-import copy
 import time
-from . import const
-import subprocess
+import copy
+import Queue
+import threading
 import multiprocessing
-
-
-class SubprocessWorker(object):
-    def __init__(self, cmd):
-        self.__command = cmd
-        self.__p = subprocess.Popen(cmd, shell=True)
-
-    def command(self):
-        return self.__command
-
-    def isRunning(self):
-        return self.__p.poll() is None
-
-    def result(self):
-        self.__p.communicate()
-
-        return self.__p.returncode == 0
+from . import const
+from . import subproc
 
 
 class SubprocessManager(object):
@@ -64,7 +47,7 @@ class SubprocessManager(object):
             SubprocessManager.__Lock.acquire()
 
             if SubprocessManager.Count() < SubprocessManager.__MaxProcess:
-                worker = SubprocessWorker(cmd)
+                worker = subproc.SubprocessWorker(cmd)
                 SubprocessManager.__Processes.append(worker)
                 SubprocessManager.__Lock.release()
 
