@@ -148,3 +148,34 @@ class Selector(block.Block):
             self.output("unmatched").send(val)
 
         return True
+
+
+class Repeat(block.Block):
+    def __init__(self):
+        super(Repeat, self).__init__()
+
+    def initialize(self):
+        self.addInput(int, "time")
+        self.addInput(anytype.AnyType, "inValue")
+        self.addOutput(anytype.AnyType, "outValue")
+
+    def process(self):
+        time_p = self.input("time").receive()
+        if time_p.isEOP():
+            return False
+
+        time = time_p.value()
+        time_p.drop()
+
+        value_p = self.input("inValue").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        op = self.output("outValue")
+        for i in range(time):
+            op.send(value)
+
+        return True
