@@ -8,7 +8,7 @@ class Plus(block.Block):
     def initialize(self):
         self.addInput(float, "input1")
         self.addInput(float, "input2")
-        self.addOutput(float, "result")
+        self.addOutput(float, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
@@ -25,7 +25,7 @@ class Plus(block.Block):
         in2 = in2_p.value()
         in2_p.drop()
 
-        self.output("result").send(in1 + in2)
+        self.output("output").send(in1 + in2)
 
         return True
 
@@ -37,7 +37,7 @@ class Minus(block.Block):
     def initialize(self):
         self.addInput(float, "input1")
         self.addInput(float, "input2")
-        self.addOutput(float, "result")
+        self.addOutput(float, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
@@ -54,7 +54,7 @@ class Minus(block.Block):
         in2 = in2_p.value()
         in2_p.drop()
 
-        self.output("result").send(in1 - in2)
+        self.output("output").send(in1 - in2)
 
         return True
 
@@ -66,7 +66,7 @@ class Multiply(block.Block):
     def initialize(self):
         self.addInput(float, "input1")
         self.addInput(float, "input2")
-        self.addOutput(float, "result")
+        self.addOutput(float, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
@@ -83,7 +83,7 @@ class Multiply(block.Block):
         in2 = in2_p.value()
         in2_p.drop()
 
-        self.output("result").send(in1 * in2)
+        self.output("output").send(in1 * in2)
 
         return True
 
@@ -95,7 +95,7 @@ class Divide(block.Block):
     def initialize(self):
         self.addInput(float, "input1")
         self.addInput(float, "input2")
-        self.addOutput(float, "result")
+        self.addOutput(float, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
@@ -113,11 +113,11 @@ class Divide(block.Block):
         in2_p.drop()
 
         if in2 == 0:
-            self.output("result").send(0)
+            self.output("output").send(0)
             self.warn("'{}' division by zero division. result will be 0".format(in1))
             return True
 
-        self.output("result").send(in1 / in2)
+        self.output("output").send(in1 / in2)
 
         return True
 

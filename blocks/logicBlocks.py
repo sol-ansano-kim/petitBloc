@@ -9,7 +9,7 @@ class Compare(block.Block):
     def initialize(self):
         self.addInput(float, "input1")
         self.addInput(float, "input2")
-        self.addOutput(bool, "result")
+        self.addOutput(bool, "output")
         self.addEnumParam("operator", [">", ">=", "==", "<=", "<"], value=2)
 
     def process(self):
@@ -30,19 +30,19 @@ class Compare(block.Block):
         oper = self.param("operator").get()
 
         if oper is 0:
-            self.output("result").send(v1 > v2)
+            self.output("output").send(v1 > v2)
 
         elif oper is 1:
-            self.output("result").send(v1 >= v2)
+            self.output("output").send(v1 >= v2)
 
         elif oper is 2:
-            self.output("result").send(v1 == v2)
+            self.output("output").send(v1 == v2)
 
         elif oper is 3:
-            self.output("result").send(v1 <= v2)
+            self.output("output").send(v1 <= v2)
 
         else:
-            self.output("result").send(v1 < v2)
+            self.output("output").send(v1 < v2)
 
         return True
 

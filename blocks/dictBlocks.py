@@ -20,7 +20,7 @@ class DictHas(block.Block):
     def initialize(self):
         self.addInput(dict, "dict")
         self.addInput(anytype.AnyType, "key")
-        self.addOutput(bool, "result")
+        self.addOutput(bool, "output")
 
     def process(self):
         dict_p = self.input("dict").receive()
@@ -37,7 +37,7 @@ class DictHas(block.Block):
         key = key_p.value()
         key_p.drop()
 
-        self.output("result").send(key in dt)
+        self.output("output").send(key in dt)
 
         return True
 

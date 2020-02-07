@@ -35,13 +35,13 @@ class ParamCreator(QtWidgets.QDialog):
 
         button_layout = QtWidgets.QHBoxLayout()
         self.__add = QtWidgets.QPushButton("Add")
-        self.__cancle = QtWidgets.QPushButton("Cancle")
+        self.__cancel = QtWidgets.QPushButton("Cancel")
         button_layout.addWidget(self.__add)
-        button_layout.addWidget(self.__cancle)
+        button_layout.addWidget(self.__cancel)
         main_layout.addLayout(button_layout)
 
         self.__add.clicked.connect(self.accept)
-        self.__cancle.clicked.connect(self.reject)
+        self.__cancel.clicked.connect(self.reject)
 
         self.__type_combo.currentIndexChanged.connect(self.__typeChanged)
         self.__name_line.editingFinished.connect(self.__nameChanged)

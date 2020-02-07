@@ -20,7 +20,7 @@ class ListHas(block.Block):
     def initialize(self):
         self.addInput(list, "list")
         self.addInput(anytype.AnyType, "value")
-        self.addOutput(bool, "result")
+        self.addOutput(bool, "output")
 
     def process(self):
         list_p = self.input("list").receive()
@@ -37,7 +37,7 @@ class ListHas(block.Block):
         value = value_p.value()
         value_p.drop()
 
-        self.output("result").send(value in lst)
+        self.output("output").send(value in lst)
 
         return True
 
