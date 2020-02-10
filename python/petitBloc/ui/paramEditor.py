@@ -89,20 +89,129 @@ class ParamEnum(QtWidgets.QComboBox):
         self.Changed.emit()
 
 
-class ParamLine(QtWidgets.QLineEdit):
+class ParamStatus():
     Value = 0
     Expression = 1
     ExpressionError = 2
 
+    NormalColor = "#1D1D1D"
+    ExpressionColor = "#0A4646"
+    ExpressionErrorColor = "#640A28"
+
+
+class CheckBox(QtWidgets.QCheckBox):
+    def __init__(self, checkable, parent=None):
+        super(CheckBox, self).__init__(parent=parent)
+        self.__checkable = checkable
+
+    def nextCheckState(self):
+        if self.__checkable:
+            self.setChecked(not self.isChecked())
+        else:
+            self.setChecked(self.isChecked())
+
+    def setCheckable(self, v):
+        self.__checkable = v
+
+
+class ParamCheck(QtWidgets.QWidget):
+    Changed = QtCore.Signal()
+
+    def __init__(self, param, parent=None):
+        super(ParamCheck, self).__init__(parent=parent)
+        self.__normal_style = "QCheckBox::indicator{ border: 1px solid #1D1D1D; }"
+        self.__exp_style = "QCheckBox::indicator{ margin 2px; border: 3px solid %s; }"
+        self.__current_state = ParamStatus.Value
+        self.__param = param
+
+        layout = QtWidgets.QHBoxLayout()
+        self.setLayout(layout)
+        self.__check_box = CheckBox(True, self)
+        self.__check_box.toggled.connect(self.__toggled)
+        self.__exp_line = QtWidgets.QLineEdit(self)
+        self.__exp_line.hide()
+        layout.addWidget(self.__check_box)
+        layout.addWidget(self.__exp_line)
+
+        self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        self.__check_box.blockSignals(True)
+        self.__check_box.setChecked(self.__param.get())
+        self.__check_box.blockSignals(False)
+        self.__exp_line.editingFinished.connect(self.__expFinished)
+
+        self.refresh()
+
+    def contextMenuEvent(self, evnt):
+        menu = QtWidgets.QMenu(self)
+        set_action = menu.addAction("Set Expression")
+        delete_action = menu.addAction("Delete Expression")
+        menu.popup(self.mapToGlobal(evnt.pos()))
+        set_action.triggered.connect(self.__startSetExpression)
+        delete_action.triggered.connect(self.__deleteExpression)
+
+    def __toggled(self, v):
+        self.__param.set(v)
+        self.Changed.emit()
+
+    def __startSetExpression(self):
+        self.__check_box.hide()
+        self.__exp_line.show()
+        if self.__param.hasExpression():
+            self.__exp_line.setText(self.__param.getExpression())
+        else:
+            self.__exp_line.setText("= ")
+        self.__exp_line.setFocus(QtCore.Qt.OtherFocusReason)
+
+    def __deleteExpression(self):
+        self.__check_box.show()
+        self.__exp_line.hide()
+        self.__param.setExpression(None)
+        self.refresh()
+
+    def refresh(self):
+        if not self.__param.hasExpression():
+            self.__current_state = ParamStatus.Value
+            self.__check_box.setCheckable(True)
+        elif self.__param.validExpression():
+            self.__check_box.setCheckable(False)
+            self.__current_state = ParamStatus.Expression
+        else:
+            self.__check_box.setCheckable(False)
+            self.__current_state = ParamStatus.ExpressionError
+
+        self.__setBackgroundColor()
+
+    def __setBackgroundColor(self):
+        if self.__current_state == ParamStatus.Value:
+            s = self.__normal_style
+        elif self.__current_state == ParamStatus.Expression:
+            s = self.__exp_style % ParamStatus.ExpressionColor
+        elif self.__current_state == ParamStatus.ExpressionError:
+            s = self.__exp_style % ParamStatus.ExpressionErrorColor
+
+        self.setStyleSheet(s)
+
+    def __expFinished(self):
+        txt = self.__exp_line.text()
+        if txt:
+            self.__param.setExpression(str(txt))
+        else:
+            self.__param.setExpression(None)
+
+        self.Changed.emit()
+        self.__check_box.setChecked(self.__param.get())
+        self.__check_box.show()
+        self.__exp_line.hide()
+        self.refresh()
+
+
+class ParamLine(QtWidgets.QLineEdit):
     Changed = QtCore.Signal()
 
     def __init__(self, param, parent=None, isInt=False, isFloat=False):
         super(ParamLine, self).__init__(parent=parent)
         self.__style = "QLineEdit{ background-color: %s; border: 1px solid #1D1D1D; }"
-        self.__normal_color = "#1D1D1D"
-        self.__expression_color = "#0A4646"
-        self.__expression_error_color = "#640A28"
-        self.__current_state = ParamLine.Value
+        self.__current_state = ParamStatus.Value
         self.__param = param
 
         if isInt:
@@ -116,19 +225,39 @@ class ParamLine(QtWidgets.QLineEdit):
         else:
             self.editingFinished.connect(self.__strFinished)
 
+        self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.blockSignals(True)
         self.setText(str(self.__param.get()))
         self.blockSignals(False)
 
         self.refresh()
 
+    def contextMenuEvent(self, evnt):
+        menu = QtWidgets.QMenu(self)
+        set_action = menu.addAction("Set Expression")
+        delete_action = menu.addAction("Delete Expression")
+        menu.popup(self.mapToGlobal(evnt.pos()))
+        set_action.triggered.connect(self.__startSetExpression)
+        delete_action.triggered.connect(self.__deleteExpression)
+
+    def __startSetExpression(self):
+        if self.__param.hasExpression():
+            self.setText(self.__param.getExpression())
+        else:
+            self.setText("= ")
+        self.setEditFocus(True)
+
+    def __deleteExpression(self):
+        self.__param.setExpression(None)
+        self.refresh()
+
     def refresh(self):
         if not self.__param.hasExpression():
-            self.__current_state = ParamLine.Value
+            self.__current_state = ParamStatus.Value
         elif self.__param.validExpression():
-            self.__current_state = ParamLine.Expression
+            self.__current_state = ParamStatus.Expression
         else:
-            self.__current_state = ParamLine.ExpressionError
+            self.__current_state = ParamStatus.ExpressionError
 
         self.blockSignals(True)
 
@@ -150,12 +279,12 @@ class ParamLine(QtWidgets.QLineEdit):
         self.refresh()
 
     def __setBackgroundColor(self):
-        if self.__current_state == ParamLine.Value:
-            s = self.__style % self.__normal_color
-        elif self.__current_state == ParamLine.Expression:
-            s = self.__style % self.__expression_color
-        elif self.__current_state == ParamLine.ExpressionError:
-            s = self.__style % self.__expression_error_color
+        if self.__current_state == ParamStatus.Value:
+            s = self.__style % ParamStatus.NormalColor
+        elif self.__current_state == ParamStatus.Expression:
+            s = self.__style % ParamStatus.ExpressionColor
+        elif self.__current_state == ParamStatus.ExpressionError:
+            s = self.__style % ParamStatus.ExpressionErrorColor
 
         self.setStyleSheet(s)
 
@@ -285,10 +414,8 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 
         tc = self.__param.typeClass()
         if tc == bool:
-            self.__val_edit = QtWidgets.QCheckBox()
-            self.__val_edit.setChecked(self.__param.get())
-            self.__val_edit.stateChanged.connect(self.__boolChanged)
-            self.__need_to_refresh = False
+            self.__val_edit = ParamCheck(self.__param)
+            self.__val_edit.Changed.connect(self.__editedEmit)
         elif tc == int:
             self.__val_edit = ParamLine(self.__param, isInt=True)
             self.__val_edit.Changed.connect(self.__editedEmit)
@@ -318,10 +445,6 @@ class ParamLayout(QtWidgets.QHBoxLayout):
 
     def __deleteParam(self):
         self.DeleteRequest.emit(self.__param)
-
-    def __boolChanged(self, state):
-        self.__param.set(state == QtCore.Qt.Checked)
-        self.__editedEmit()
 
     def __editedEmit(self):
         self.ParameterEdited.emit()
