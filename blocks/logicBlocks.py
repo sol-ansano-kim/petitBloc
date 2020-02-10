@@ -47,6 +47,62 @@ class Compare(block.Block):
         return True
 
 
+class BooleanOp(block.Block):
+    def __init__(self):
+        super(BooleanOp, self).__init__()
+
+    def initialize(self):
+        self.addInput(bool, "input1")
+        self.addInput(bool, "input2")
+        self.addOutput(bool, "output")
+        self.addEnumParam("operator", ["and", "or", "xor", "not"], value=0)
+
+    def process(self):
+        oper = self.param("operator").get()
+        single = (oper == 3)
+        
+        v1_p = self.input("input1").receive()
+        if v1_p.isEOP():
+            if not single:
+                return False
+            v1 = None
+        else:
+            v1 = v1_p.value()
+            v1_p.drop()
+
+        v2_p = self.input("input2").receive()
+        if v2_p.isEOP():
+            if not single:
+                return False
+            v2 = None
+        else:
+            v2 = v2_p.value()
+            v2_p.drop()
+
+        if oper == 0:
+            self.output("output").send(v1 and v2)
+
+        elif oper == 1:
+            self.output("output").send(v1 or v2)
+
+        elif oper == 2:
+            self.output("output").send((v1 and not v2) or (v2 and not v1))
+
+        else:
+            if v1 is None:
+                if v2 is None:
+                    # no input set, undefined
+                    return False
+                self.output("output").send(not v2)
+            else:
+                if v2 is not None:
+                    # both input set, which one should that be?
+                    return False
+                self.output("output").send(not v1)
+
+        return True
+
+
 class Choice(block.Block):
     def __init__(self):
         super(Choice, self).__init__()
