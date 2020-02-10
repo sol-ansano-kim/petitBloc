@@ -20,7 +20,7 @@ class DictHas(block.Block):
     def initialize(self):
         self.addInput(dict, "dict")
         self.addInput(anytype.AnyType, "key")
-        self.addOutput(bool, "output")
+        self.addOutput(bool, "has")
 
     def process(self):
         dict_p = self.input("dict").receive()
@@ -37,7 +37,7 @@ class DictHas(block.Block):
         key = key_p.value()
         key_p.drop()
 
-        self.output("output").send(key in dt)
+        self.output("has").send(key in dt)
 
         return True
 
@@ -213,7 +213,7 @@ class DictUpdate(block.Block):
     def initialize(self):
         self.addInput(dict, "dictA")
         self.addInput(dict, "dictB")
-        self.addOutput(dict, "outDict")
+        self.addOutput(dict, "output")
 
     def process(self):
         dict_a_p = self.input("dictA").receive()
@@ -232,6 +232,6 @@ class DictUpdate(block.Block):
 
         dict_a.update(dict_b)
 
-        self.output("outDict").send(dict_a)
+        self.output("output").send(dict_a)
 
         return True

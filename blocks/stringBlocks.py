@@ -106,6 +106,7 @@ class StringSplit(block.Block):
         self.addInput(str, "string")
         self.addInput(str, "substring")
         self.addOutput(str, "output")
+        self.addOutput(list, "outList")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -123,8 +124,11 @@ class StringSplit(block.Block):
         sub_p.drop()
 
         op = self.output("output")
-        for s in string.split(sub):
+        out_list = string.split(sub)
+        for s in out_list:
             op.send(s)
+
+        self.output("outList").send(out_list)
 
         return True
 
@@ -137,6 +141,7 @@ class RegexFindAll(block.Block):
         self.addInput(str, "string")
         self.addInput(str, "pattern")
         self.addOutput(str, "output")
+        self.addOutput(list, "outList")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -153,8 +158,11 @@ class RegexFindAll(block.Block):
         pat = pat_p.value()
         pat_p.drop()
 
-        for r in re.findall(pat, string):
+        out_list = re.findall(pat, string)
+        for r in out_list:
             self.output("output").send(r)
+
+        self.output("outList").send(out_list)
 
         return True
 

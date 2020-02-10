@@ -6,6 +6,8 @@ import os
 Renamed = {"Compare": {"ports": {"result": "output"}},
            "DasEval": {"ports": {"result": "output"}},
            "DasGet": {"ports": {"result": "output"}},
+           "DasNew": {"ports": {"outDasObj": "dasObj", "output": "dasObj"}},
+           "DasValidate": {"ports": {"schemed": "output"}},
            "Divide": {"ports": {"result": "output"}},
            "Minus": {"ports": {"result": "output"}},
            "Multiply": {"ports": {"result": "output"}},
@@ -17,7 +19,16 @@ Renamed = {"Compare": {"ports": {"result": "output"}},
            "StringCount": {"ports": {"result": "output"}},
            "StringReplace": {"ports": {"result": "output"}},
            "Selector": {"type": "ReRoute"},
-           "RegexSelector": {"type": "RegexReRoute"},}
+           "ListLength": {"ports": {"len": "length"}},
+           "ListAppend": {"ports": {"list": "inList", "output": "outList"}},
+           "ListRemove": {"ports": {"list": "inList", "output": "outList"}},
+           "ListExtend": {"ports": {"extended": "output"}},
+           "ListHas": {"ports": {"output": "has"}},
+           "DictHas": {"ports": {"output": "has"}},
+           "DictUpdate": {"ports": {"outDict": "output"}},
+           "RegexSelector": {"type": "RegexReRoute"},
+           "FileRead": {"ports": {"data": "line"}},
+           "FileWrite": {"ports": {"data": "line"}},}
 
 
 if __name__ == "__main__":
