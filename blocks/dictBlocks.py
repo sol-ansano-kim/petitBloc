@@ -13,6 +13,39 @@ class Dict(block.Block):
         self.output("dict").send({})
 
 
+class ToDict(block.Block):
+    def __init__(self):
+        super(ToDict, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "key")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(dict, "dict")
+
+    def run(self):
+        output = {}
+        kp = self.input("key")
+        vp = self.input("value")
+        while (True):
+            key_p = vp.receive()
+            if key_p.isEOP():
+                break
+
+            key = key_p.value()
+            key_p.drop()
+
+            value_p = vp.receive()
+            if value_p.isEOP():
+                break
+
+            value = value_p.value()
+            value_p.drop()
+
+            output[key] = value
+
+        self.output("dict").send(output)
+
+
 class DictHas(block.Block):
     def __init__(self):
         super(DictHas, self).__init__()

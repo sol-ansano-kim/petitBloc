@@ -13,6 +13,28 @@ class List(block.Block):
         self.output("list").send([])
 
 
+class ToList(block.Block):
+    def __init__(self):
+        super(ToList, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "list")
+
+    def run(self):
+        output = []
+        vp = self.input("value")
+        while (True):
+            value_p = vp.receive()
+            if value_p.isEOP():
+                break
+
+            output.append(value_p.value())
+            value_p.drop()
+
+        self.output("list").send(output)
+
+
 class ListHas(block.Block):
     def __init__(self):
         super(ListHas, self).__init__()
