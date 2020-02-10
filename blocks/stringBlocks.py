@@ -387,6 +387,26 @@ class StringLength(block.Block):
         return True
 
 
+class StringIsEmpty(block.Block):
+    def __init__(self):
+        super(StringIsEmpty, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addOutput(bool, "empty")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        self.output("empty").send(len(in_p.value()) == 0)
+        in_p.drop()
+
+        return True
+
+
 class StringEval(block.Block):
     def __init__(self):
         super(StringEval, self).__init__()
