@@ -196,9 +196,9 @@ class RegexSub(block.Block):
         return True
 
 
-class RegexSelect(block.Block):
+class RegexReRoute(block.Block):
     def __init__(self):
-        super(RegexSelect, self).__init__()
+        super(RegexReRoute, self).__init__()
 
     def initialize(self):
         self.addInput(str, "string")
@@ -227,15 +227,6 @@ class RegexSelect(block.Block):
             self.output("unmatched").send(string)
 
         return True
-
-
-class RegexSelector(RegexSelect):
-    def __init__(self):
-        super(RegexSelector, self).__init__()
-
-    def run(self):
-        self.warn("'RegexSelector' block is deprecated. Please use 'RegexSelect' instead")
-        super(RegexSelector, self).run()
 
 
 class RegexSearch(block.Block):
