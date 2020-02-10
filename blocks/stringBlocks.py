@@ -133,6 +133,35 @@ class StringSplit(block.Block):
         return True
 
 
+class StringJoin(block.Block):
+    def __init__(self):
+        super(StringJoin, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "strings")
+        self.addInput(str, "joiner")
+        self.addOutput(str, "output")
+
+    def process(self):
+        strings_p = self.input("strings").receive()
+        if strings_p.isEOP():
+            return False
+
+        sl = strings_p.value()
+        strings_p.drop()
+
+        joiner_p = self.input("joiner").receive()
+        if joiner_p.isEOP():
+            return False
+
+        j = joiner_p.value()
+        joiner_p.drop()
+
+        self.output("output").send(j.join(sl))
+
+        return True
+
+
 class RegexFindAll(block.Block):
     def __init__(self):
         super(RegexFindAll, self).__init__()
@@ -353,6 +382,26 @@ class StringLength(block.Block):
             return False
 
         self.output("length").send(len(in_p.value()))
+        in_p.drop()
+
+        return True
+
+
+class StringIsEmpty(block.Block):
+    def __init__(self):
+        super(StringIsEmpty, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addOutput(bool, "empty")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        self.output("empty").send(len(in_p.value()) == 0)
         in_p.drop()
 
         return True

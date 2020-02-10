@@ -208,6 +208,30 @@ class DictItems(block.Block):
         return True
 
 
+class DictIter(block.Block):
+    def __init__(self):
+        super(DictIter, self).__init__()
+
+    def initialize(self):
+        self.addInput(dict, "dict")
+        self.addOutput(anytype.AnyType, "key")
+        self.addOutput(anytype.AnyType, "value")
+
+    def process(self):
+        dict_p = self.input("dict").receive()
+        if dict_p.isEOP():
+            return False
+
+        d = dict_p.value()
+        dict_p.drop()
+
+        for k, v in d.items():
+            self.output("key").send(k)
+            self.output("value").send(v)
+
+        return True
+
+
 class DictRemove(block.Block):
     def __init__(self):
         super(DictRemove, self).__init__()
