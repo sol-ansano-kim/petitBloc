@@ -13,6 +13,28 @@ class List(block.Block):
         self.output("list").send([])
 
 
+class ToList(block.Block):
+    def __init__(self):
+        super(ToList, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "list")
+
+    def run(self):
+        output = []
+        vp = self.input("value")
+        while (True):
+            value_p = vp.receive()
+            if value_p.isEOP():
+                break
+
+            output.append(value_p.value())
+            value_p.drop()
+
+        self.output("list").send(output)
+
+
 class ListHas(block.Block):
     def __init__(self):
         super(ListHas, self).__init__()
@@ -20,7 +42,7 @@ class ListHas(block.Block):
     def initialize(self):
         self.addInput(list, "list")
         self.addInput(anytype.AnyType, "value")
-        self.addOutput(bool, "output")
+        self.addOutput(bool, "has")
 
     def process(self):
         list_p = self.input("list").receive()
@@ -37,7 +59,7 @@ class ListHas(block.Block):
         value = value_p.value()
         value_p.drop()
 
-        self.output("output").send(value in lst)
+        self.output("has").send(value in lst)
 
         return True
 
@@ -135,14 +157,14 @@ class ListLength(block.Block):
 
     def initialize(self):
         self.addInput(list, "list")
-        self.addOutput(int, "len")
+        self.addOutput(int, "length")
 
     def process(self):
         arr = self.input("list").receive()
         if arr.isEOP():
             return False
 
-        self.output("len").send(len(arr.value()))
+        self.output("length").send(len(arr.value()))
 
         return True
 
@@ -152,12 +174,12 @@ class ListAppend(block.Block):
         super(ListAppend, self).__init__()
 
     def initialize(self):
-        self.addInput(list, "list")
+        self.addInput(list, "inList")
         self.addInput(anytype.AnyType, "value")
         self.addOutput(list, "outList")
 
     def process(self):
-        arr_p = self.input("list").receive()
+        arr_p = self.input("inList").receive()
         if arr_p.isEOP():
             return False
 
@@ -183,12 +205,12 @@ class ListRemove(block.Block):
         super(ListRemove, self).__init__()
 
     def initialize(self):
-        self.addInput(list, "list")
+        self.addInput(list, "inList")
         self.addInput(anytype.AnyType, "value")
         self.addOutput(list, "outList")
 
     def process(self):
-        arr_p = self.input("list").receive()
+        arr_p = self.input("inList").receive()
         if arr_p.isEOP():
             return False
 
@@ -217,7 +239,7 @@ class ListExtend(block.Block):
     def initialize(self):
         self.addInput(list, "listA")
         self.addInput(list, "listB")
-        self.addOutput(list, "extended")
+        self.addOutput(list, "output")
 
     def process(self):
         arra_p = self.input("listA").receive()
@@ -236,7 +258,7 @@ class ListExtend(block.Block):
 
         arra.extend(arrb)
 
-        self.output("extended").send(arra)
+        self.output("output").send(arra)
 
         return True
 

@@ -13,6 +13,39 @@ class Dict(block.Block):
         self.output("dict").send({})
 
 
+class ToDict(block.Block):
+    def __init__(self):
+        super(ToDict, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "key")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(dict, "dict")
+
+    def run(self):
+        output = {}
+        kp = self.input("key")
+        vp = self.input("value")
+        while (True):
+            key_p = vp.receive()
+            if key_p.isEOP():
+                break
+
+            key = key_p.value()
+            key_p.drop()
+
+            value_p = vp.receive()
+            if value_p.isEOP():
+                break
+
+            value = value_p.value()
+            value_p.drop()
+
+            output[key] = value
+
+        self.output("dict").send(output)
+
+
 class DictHas(block.Block):
     def __init__(self):
         super(DictHas, self).__init__()
@@ -20,7 +53,7 @@ class DictHas(block.Block):
     def initialize(self):
         self.addInput(dict, "dict")
         self.addInput(anytype.AnyType, "key")
-        self.addOutput(bool, "output")
+        self.addOutput(bool, "has")
 
     def process(self):
         dict_p = self.input("dict").receive()
@@ -37,7 +70,7 @@ class DictHas(block.Block):
         key = key_p.value()
         key_p.drop()
 
-        self.output("output").send(key in dt)
+        self.output("has").send(key in dt)
 
         return True
 
@@ -213,7 +246,7 @@ class DictUpdate(block.Block):
     def initialize(self):
         self.addInput(dict, "dictA")
         self.addInput(dict, "dictB")
-        self.addOutput(dict, "outDict")
+        self.addOutput(dict, "output")
 
     def process(self):
         dict_a_p = self.input("dictA").receive()
@@ -232,6 +265,6 @@ class DictUpdate(block.Block):
 
         dict_a.update(dict_b)
 
-        self.output("outDict").send(dict_a)
+        self.output("output").send(dict_a)
 
         return True

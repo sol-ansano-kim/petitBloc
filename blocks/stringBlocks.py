@@ -106,6 +106,7 @@ class StringSplit(block.Block):
         self.addInput(str, "string")
         self.addInput(str, "substring")
         self.addOutput(str, "output")
+        self.addOutput(list, "outList")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -123,8 +124,11 @@ class StringSplit(block.Block):
         sub_p.drop()
 
         op = self.output("output")
-        for s in string.split(sub):
+        out_list = string.split(sub)
+        for s in out_list:
             op.send(s)
+
+        self.output("outList").send(out_list)
 
         return True
 
@@ -166,6 +170,7 @@ class RegexFindAll(block.Block):
         self.addInput(str, "string")
         self.addInput(str, "pattern")
         self.addOutput(str, "output")
+        self.addOutput(list, "outList")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -182,8 +187,11 @@ class RegexFindAll(block.Block):
         pat = pat_p.value()
         pat_p.drop()
 
-        for r in re.findall(pat, string):
+        out_list = re.findall(pat, string)
+        for r in out_list:
             self.output("output").send(r)
+
+        self.output("outList").send(out_list)
 
         return True
 
@@ -225,9 +233,9 @@ class RegexSub(block.Block):
         return True
 
 
-class RegexSelect(block.Block):
+class RegexReRoute(block.Block):
     def __init__(self):
-        super(RegexSelect, self).__init__()
+        super(RegexReRoute, self).__init__()
 
     def initialize(self):
         self.addInput(str, "string")
@@ -256,15 +264,6 @@ class RegexSelect(block.Block):
             self.output("unmatched").send(string)
 
         return True
-
-
-class RegexSelector(RegexSelect):
-    def __init__(self):
-        super(RegexSelector, self).__init__()
-
-    def run(self):
-        self.warn("'RegexSelector' block is deprecated. Please use 'RegexSelect' instead")
-        super(RegexSelector, self).run()
 
 
 class RegexSearch(block.Block):

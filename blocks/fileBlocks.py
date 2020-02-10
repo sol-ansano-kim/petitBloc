@@ -7,17 +7,27 @@ class FileRead(block.Block):
         super(FileRead, self).__init__()
 
     def initialize(self):
-        self.addParam(str, "filePath")
-        self.addOutput(str, "data")
+        self.addInput(str, "filePath")
+        self.addOutput(str, "line")
+        self.addOutput(list, "lines")
 
-    def run(self):
-        path = self.param("filePath").get()
-        if not os.path.isfile(path):
-            return
+    def process(self):
+        path_p = self.input("filePath").receive()
+        if path_p.isEOP():
+            return False
 
+        path = path_p.value()
+        path_p.drop()
+
+        lines = []
         with open(path, "r") as f:
             for l in f.readlines():
-                self.output("data").send(l)
+                lines.append(l)
+                self.output("line").send(l)
+
+        self.output("lines").send(lines)
+
+        return True
 
 
 class FileWrite(block.Block):
@@ -25,34 +35,35 @@ class FileWrite(block.Block):
         super(FileWrite, self).__init__()
 
     def initialize(self):
-        self.addParam(str, "filePath")
-        self.addInput(str, "data")
+        self.addInput(str, "filePath")
+        self.addInput(list, "lines")
+        self.addOutput(bool, "output")
 
-    def run(self):
-        path = os.path.abspath(self.param("filePath").get())
-        if not path:
-            return
+    def process(self):
+        path_p = self.input("filePath").receive()
+        if path_p.isEOP():
+            return False
+
+        path = path_p.value()
+        path_p.drop()
+
+        lines_p = self.input("lines").receive()
+        if lines_p.isEOP():
+            return False
+
+        lines = lines_p.value()
+        lines_p.drop()
 
         dirname = os.path.dirname(path)
-
-        if not dirname:
-            return
 
         if not os.path.isdir(dirname):
             os.makedirs(dirname)
 
-        in_port = self.input("data")
-        datas = []
-        while (True):
-            package = in_port.receive()
-            if package.isEOP():
-                break
-
-            datas.append(package.value())
-
         with open(path, "w") as f:
-            for d in datas:
+            for d in lines:
                 f.write(d)
+
+        return True
 
 
 class ListDir(block.Block):
@@ -62,7 +73,9 @@ class ListDir(block.Block):
     def initialize(self):
         self.addInput(str, "dirPath")
         self.addOutput(str, "file")
+        self.addOutput(list, "files")
         self.addOutput(str, "directory")
+        self.addOutput(list, "directories")
 
     def process(self):
         in_p = self.input("dirPath").receive()
@@ -73,14 +86,21 @@ class ListDir(block.Block):
         path = in_p.value()
         in_p.drop()
 
+        files = []
+        directories = []
+
         if os.path.isdir(path):
             for p in os.listdir(path):
                 fp = os.path.abspath(os.path.join(path, p)).replace("\\", "/")
 
                 if os.path.isdir(fp):
                     self.output("directory").send(fp)
-                    continue
+                    directories.append(fp)
+                else:
+                    self.output("file").send(fp)
+                    files.append(fp)
 
-                self.output("file").send(fp)
+        self.output("directories").send(directories)
+        self.output("files").send(files)
 
         return True
