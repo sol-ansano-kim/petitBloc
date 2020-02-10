@@ -105,7 +105,7 @@ class StringSplit(block.Block):
     def initialize(self):
         self.addInput(str, "string")
         self.addInput(str, "substring")
-        self.addOutput(list, "output")
+        self.addOutput(str, "output")
 
     def process(self):
         string_p = self.input("string").receive()
@@ -122,7 +122,9 @@ class StringSplit(block.Block):
         sub = sub_p.value()
         sub_p.drop()
 
-        self.output("output").send(string.split(sub))
+        op = self.output("output")
+        for s in string.split(sub):
+            op.send(s)
 
         return True
 
