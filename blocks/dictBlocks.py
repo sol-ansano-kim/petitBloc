@@ -23,12 +23,86 @@ class ToDict(block.Block):
         self.addInput(int, "groupBy")
         self.addOutput(dict, "dict")
 
+    def _exhaust_package(self, port):
+        p = port.receive()
+        while not p.isEOP():
+            p.drop()
+            p = port.receive()
+
     def run(self):
-        output = {}
         gp = self.input("groupBy")
         kp = self.input("key")
         vp = self.input("value")
 
+        hasgrp = gp.isConnected()
+        count = None
+        err = None
+
+        grp_eop = False
+        key_eop = False
+        val_eop = False
+
+        while not grp_eop:
+            if hasgrp:
+                grp_p = gp.receive()
+                grp_eop = grp_p.isEOP()
+                if not grp_eop:
+                    count = grp_p.value()
+                    grp_p.drop()
+                else:
+                    count = 0
+            else:
+                grp_eop = True
+
+            kc = 0
+            vc = 0
+            cur = 0
+            output = {}
+
+            while (count is None or cur < count) and not key_eop and not val_eop:
+                key_p = kp.receive()
+                key_eop = key_p.isEOP()
+                if not key_eop:
+                    key = key_p.value()
+                    key_p.drop()
+                    kc += 1
+
+                val_p = vp.receive()
+                val_eop = val_p.isEOP()
+                if not val_eop:
+                    val = val_p.value()
+                    val_p.drop()
+                    vc += 1
+
+                if not key_eop and not val_eop:
+                    output[key] = val
+                else:
+                    break
+
+                cur += 1
+
+            if kc != vc:
+                err = "Key/Value count mismatch"
+                break
+            elif (count is not None and kc != count):
+                err = "Not enough Key/Value pairs"
+                break
+            else:
+                self.output("dict").send(output)
+
+        if not grp_eop:
+            self._exhaust_package(gp)
+
+        if not key_eop:
+            self._exhaust_package(kp)
+
+        if not val_eop:
+            self._exhaust_package(vp)
+
+        if err:
+            raise Exception(err)
+
+        """
         is_eop = False
         while (not is_eop):
             group_p = gp.receive()
@@ -79,6 +153,7 @@ class ToDict(block.Block):
 
             if len(output):
                 self.output("dict").send(output)
+        """
 
 
 class DictHas(block.Block):
