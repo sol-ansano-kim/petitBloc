@@ -23,46 +23,74 @@ class ToList(block.Block):
         self.addInput(int, "groupBy")
         self.addOutput(list, "list")
 
+    def _exhaust_package(self, port, pkgtype=None):
+        p = port.receive()
+        while not p.isEOP():
+            if pkgtype:
+                v = p.value()
+                self.warn("ToList node '%s' dropped %s packet (%s)" % (self.name(), pkgtype, repr(v)))
+            p.drop()
+            p = port.receive()
+
     def run(self):
         gp = self.input("groupBy")
         vp = self.input("value")
 
-        value_is_eop = False
-        while (not value_is_eop):
-            group_p = gp.receive()
-            if group_p.isEOP():
+        hasgrp = gp.isConnected()
+        count = None
+        err = None
+
+        grp_eop = False
+        val_eop = False
+
+        while not grp_eop:
+            if hasgrp:
+                grp_p = gp.receive()
+                grp_eop = grp_p.isEOP()
+                if not grp_eop:
+                    count = grp_p.value()
+                    if count < 0:
+                        err = "Invalid packet count %d" % count
+                        break
+                    grp_p.drop()
+                else:
+                    count = 0
+            else:
+                grp_eop = True
+
+            vc = 0
+            cur = 0
+            output = []
+
+            while (count is None or cur < count) and not val_eop:
+                val_p = vp.receive()
+                val_eop = val_p.isEOP()
+                if not val_eop:
+                    val = val_p.value()
+                    val_p.drop()
+                    vc += 1
+
+                if not val_eop:
+                    output.append(val)
+                else:
+                    break
+
+                cur += 1
+
+            if (count is not None and vc != count):
+                err = "Not enough values (got %d, expected %d)" % (vc, count)
                 break
-
-            group_size = group_p.value()
-            group_p.drop()
-
-            count = 0
-            output = []
-            while (count < group_size):
-                value_p = vp.receive()
-                if value_p.isEOP():
-                    value_is_eop = True
-                    break
-
-                count += 1
-                output.append(value_p.value())
-                value_p.drop()
-
-            self.output("list").send(output)
-
-        if not value_is_eop:
-            output = []
-
-            while (True):
-                value_p = vp.receive()
-                if value_p.isEOP():
-                    break
-
-                output.append(value_p.value())
-                value_p.drop()
-
-            if len(output):
+            elif count != 0:
                 self.output("list").send(output)
+
+        if not grp_eop:
+            self._exhaust_package(gp, pkgtype=(None if err else "groupBy"))
+
+        if not val_eop:
+            self._exhaust_package(vp, pkgtype=(None if err else "value"))
+
+        if err:
+            raise Exception(err)
 
 
 class ListHas(block.Block):
