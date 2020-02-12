@@ -30,7 +30,10 @@ Renamed = {"Compare": {"ports": {"result": "output"}},
            "RegexSelector": {"type": "RegexFork"},
            "RegexReRoute": {"type": "RegexFork"},
            "FileRead": {"ports": {"data": "line"}},
-           "FileWrite": {"ports": {"data": "line"}},}
+           "FileWrite": {"ports": {"data": "line"}},
+           "CastToFloat": {"type": "ToFloat"},
+           "CastToInt": {"type": "ToInt"},
+           "CastToBool": {"type": "ToBool"}}
 
 
 if __name__ == "__main__":

@@ -122,12 +122,12 @@ class Divide(block.Block):
         return True
 
 
-class CastToInt(block.Block):
+class ToInt(block.Block):
     def __init__(self):
-        super(CastToInt, self).__init__()
+        super(ToInt, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input")
+        self.addInput(anytype.AnyType, "input")
         self.addOutput(int, "output")
 
     def process(self):
@@ -135,18 +135,18 @@ class CastToInt(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("output").send(in_p.value())
+        self.output("output").send(int(in_p.value()))
         in_p.drop()
 
         return True
 
 
-class CastToFloat(block.Block):
+class ToFloat(block.Block):
     def __init__(self):
-        super(CastToFloat, self).__init__()
+        super(ToFloat, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input")
+        self.addInput(anytype.AnyType, "input")
         self.addOutput(float, "output")
 
     def process(self):
@@ -154,18 +154,18 @@ class CastToFloat(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("output").send(in_p.value())
+        self.output("output").send(float(in_p.value()))
         in_p.drop()
 
         return True
 
 
-class CastToBool(block.Block):
+class ToBool(block.Block):
     def __init__(self):
-        super(CastToBool, self).__init__()
+        super(ToBool, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input")
+        self.addInput(anytype.AnyType, "input")
         self.addOutput(bool, "output")
 
     def process(self):
@@ -173,7 +173,7 @@ class CastToBool(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("output").send(in_p.value())
+        self.output("output").send(bool(in_p.value()))
         in_p.drop()
 
         return True
