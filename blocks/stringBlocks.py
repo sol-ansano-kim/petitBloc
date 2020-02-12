@@ -233,9 +233,9 @@ class RegexSub(block.Block):
         return True
 
 
-class RegexReRoute(block.Block):
+class RegexFork(block.Block):
     def __init__(self):
-        super(RegexReRoute, self).__init__()
+        super(RegexFork, self).__init__()
 
     def initialize(self):
         self.addInput(str, "string")
