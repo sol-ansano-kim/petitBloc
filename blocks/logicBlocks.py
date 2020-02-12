@@ -140,9 +140,9 @@ class Choice(block.Block):
         return True
 
 
-class ReRoute(block.Block):
+class Fork(block.Block):
     def __init__(self):
-        super(ReRoute, self).__init__()
+        super(Fork, self).__init__()
 
     def initialize(self):
         self.addInput(anytype.AnyType, "value")
