@@ -392,6 +392,7 @@ class StringIsEmpty(block.Block):
         super(StringIsEmpty, self).__init__()
 
     def initialize(self):
+        self.addParam(bool, "invert", value=False)
         self.addInput(str, "string")
         self.addOutput(bool, "empty")
 
@@ -401,9 +402,14 @@ class StringIsEmpty(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("empty").send(len(in_p.value()) == 0)
+        empty = (len(in_p.value()) == 0)
         in_p.drop()
 
+        invert = self.param("invert").get()
+
+        self.output("empty").send(empty if not invert else not empty)
+
+        return True
         return True
 
 
