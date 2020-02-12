@@ -410,6 +410,45 @@ class StringIsEmpty(block.Block):
         self.output("empty").send(empty if not invert else not empty)
 
         return True
+
+
+class StringCompare(block.Block):
+    def __init__(self):
+        super(StringCompare, self).__init__()
+
+    def initialize(self):
+        self.addParam(bool, "caseSensitive", value=True)
+        self.addParam(bool, "invert", value=False)
+        self.addInput(str, "string1")
+        self.addInput(str, "string2")
+        self.addOutput(bool, "same")
+
+    def process(self):
+        in_s1 = self.input("string1").receive()
+
+        if in_s1.isEOP():
+            return False
+
+        s1 = in_s1.value()
+        in_s1.drop()
+
+        in_s2 = self.input("string2").receive()
+
+        if in_s2.isEOP():
+            return False
+
+        s2 = in_s2.value()
+        in_s2.drop()
+
+        caseSensitive = self.param("caseSensitive").get()
+        if not caseSensitive:
+            s1 = s1.lower()
+            s2 = s2.lower()
+
+        invert = self.param("invert").get()
+
+        self.output("same").send(s1 == s2 if not invert else s1 != s2)
+
         return True
 
 
