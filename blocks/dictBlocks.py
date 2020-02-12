@@ -27,7 +27,7 @@ class ToDict(block.Block):
         kp = self.input("key")
         vp = self.input("value")
         while (True):
-            key_p = vp.receive()
+            key_p = kp.receive()
             if key_p.isEOP():
                 break
 
