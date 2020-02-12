@@ -10,7 +10,7 @@
         }, 
         {
             "path": "MayaSnapShot.filePath", 
-            "src": "path.result"
+            "src": "path.output"
         }, 
         {
             "path": "SlackMessage.channel", 

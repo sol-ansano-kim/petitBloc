@@ -18,21 +18,51 @@ class ToList(block.Block):
         super(ToList, self).__init__()
 
     def initialize(self):
+        # TODO : size can be ignored. notice it visually
         self.addInput(anytype.AnyType, "value")
+        self.addInput(int, "groupBy")
         self.addOutput(list, "list")
 
     def run(self):
-        output = []
+        gp = self.input("groupBy")
         vp = self.input("value")
-        while (True):
-            value_p = vp.receive()
-            if value_p.isEOP():
+
+        value_is_eop = False
+        while (not value_is_eop):
+            group_p = gp.receive()
+            if group_p.isEOP():
                 break
 
-            output.append(value_p.value())
-            value_p.drop()
+            group_size = group_p.value()
+            group_p.drop()
 
-        self.output("list").send(output)
+            count = 0
+            output = []
+            while (count < group_size):
+                value_p = vp.receive()
+                if value_p.isEOP():
+                    value_is_eop = True
+                    break
+
+                count += 1
+                output.append(value_p.value())
+                value_p.drop()
+
+            self.output("list").send(output)
+
+        if not value_is_eop:
+            output = []
+
+            while (True):
+                value_p = vp.receive()
+                if value_p.isEOP():
+                    break
+
+                output.append(value_p.value())
+                value_p.drop()
+
+            if len(output):
+                self.output("list").send(output)
 
 
 class ListHas(block.Block):
@@ -137,6 +167,8 @@ class ListIter(block.Block):
         super(ListIter, self).__init__()
 
     def initialize(self):
+        self.addOutput(int, "index")
+        self.addOutput(int, "length")
         self.addOutput(anytype.AnyType, "value")
         self.addInput(list, "list")
 
@@ -145,8 +177,13 @@ class ListIter(block.Block):
         if arr.isEOP():
             return False
 
-        for i in arr.value():
-            self.output("value").send(i)
+        values = arr.value()
+        arr.drop()
+
+        self.output("length").send(len(values))
+        for i, v in enumerate(values):
+            self.output("index").send(i)
+            self.output("value").send(v)
 
         return True
 
