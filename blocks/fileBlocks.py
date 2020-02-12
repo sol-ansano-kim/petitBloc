@@ -104,3 +104,139 @@ class ListDir(block.Block):
         self.output("files").send(files)
 
         return True
+
+
+class PathDirname(block.Block):
+    def __init__(self):
+        super(PathDirname, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "filePath")
+        self.addOutput(str, "dirname")
+
+    def process(self):
+        in_p = self.input("filePath").receive()
+
+        if in_p.isEOP():
+            return False
+
+        path = in_p.value()
+        in_p.drop()
+
+        self.output("dirname").send(os.path.dirname(path))
+
+        return True
+
+
+class PathBasename(block.Block):
+    def __init__(self):
+        super(PathBasename, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "filePath")
+        self.addOutput(str, "basename")
+
+    def process(self):
+        in_p = self.input("filePath").receive()
+
+        if in_p.isEOP():
+            return False
+
+        path = in_p.value()
+        in_p.drop()
+
+        self.output("basename").send(os.path.basename(path))
+
+        return True
+
+
+class FileExtension(block.Block):
+    def __init__(self):
+        super(FileExtension, self).__init__()
+
+    def initialize(self):
+        self.addParam(bool, "keepDot", value=True)
+        self.addInput(str, "filePath")
+        self.addOutput(str, "extension")
+
+    def process(self):
+        in_p = self.input("filePath").receive()
+
+        if in_p.isEOP():
+            return False
+
+        path = in_p.value()
+        in_p.drop()
+
+        ext = os.path.splitext(path)[1]
+        if not self.param("keepDot").get() and ext.startswith("."):
+            ext = ext[1:]
+
+        self.output("extension").send(ext)
+
+        return True
+
+
+class FileSetExtension(block.Block):
+    def __init__(self):
+        super(FileSetExtension, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "inputPath")
+        self.addInput(str, "extension")
+        self.addOutput(str, "outputPath")
+
+    def process(self):
+        in_p = self.input("inputPath").receive()
+
+        if in_p.isEOP():
+            return False
+
+        path = in_p.value()
+        in_p.drop()
+
+        in_e = self.input("extension").receive()
+
+        if in_e.isEOP():
+            return False
+
+        ext = in_e.value()
+        in_e.drop()
+
+        if ext and not ext.startswith("."):
+            ext = "." + ext
+
+        self.output("outputPath").send(os.path.splitext(path)[0] + ext)
+
+        return True
+
+
+class PathJoin(block.Block):
+    def __init__(self):
+        super(PathJoin, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "dirName")
+        self.addInput(str, "baseName")
+        self.addOutput(str, "outputPath")
+
+    def process(self):
+        in_d = self.input("dirName").receive()
+
+        if in_d.isEOP():
+            return False
+
+        dn = in_d.value()
+        in_d.drop()
+
+        in_b = self.input("baseName").receive()
+
+        if in_b.isEOP():
+            return False
+
+        bn = in_b.value()
+        in_b.drop()
+
+        self.output("outputPath").send(os.path.join(dn, bn))
+
+        return True

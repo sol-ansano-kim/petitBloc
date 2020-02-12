@@ -392,6 +392,7 @@ class StringIsEmpty(block.Block):
         super(StringIsEmpty, self).__init__()
 
     def initialize(self):
+        self.addParam(bool, "invert", value=False)
         self.addInput(str, "string")
         self.addOutput(bool, "empty")
 
@@ -401,8 +402,52 @@ class StringIsEmpty(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("empty").send(len(in_p.value()) == 0)
+        empty = (len(in_p.value()) == 0)
         in_p.drop()
+
+        invert = self.param("invert").get()
+
+        self.output("empty").send(empty if not invert else not empty)
+
+        return True
+
+
+class StringCompare(block.Block):
+    def __init__(self):
+        super(StringCompare, self).__init__()
+
+    def initialize(self):
+        self.addParam(bool, "caseSensitive", value=True)
+        self.addParam(bool, "invert", value=False)
+        self.addInput(str, "string1")
+        self.addInput(str, "string2")
+        self.addOutput(bool, "same")
+
+    def process(self):
+        in_s1 = self.input("string1").receive()
+
+        if in_s1.isEOP():
+            return False
+
+        s1 = in_s1.value()
+        in_s1.drop()
+
+        in_s2 = self.input("string2").receive()
+
+        if in_s2.isEOP():
+            return False
+
+        s2 = in_s2.value()
+        in_s2.drop()
+
+        caseSensitive = self.param("caseSensitive").get()
+        if not caseSensitive:
+            s1 = s1.lower()
+            s2 = s2.lower()
+
+        invert = self.param("invert").get()
+
+        self.output("same").send(s1 == s2 if not invert else s1 != s2)
 
         return True
 
@@ -424,5 +469,36 @@ class StringEval(block.Block):
         self.output("output").send(eval(in_p.value()))
 
         in_p.drop()
+
+        return True
+
+
+class StringStrip(block.Block):
+    def __init__(self):
+        super(StringStrip, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addEnumParam("where", ["left", "right", "both"], value=2)
+        self.addOutput(str, "output")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        s = in_p.value()
+        in_p.drop()
+
+        where = self.param("where").get()
+        if where <= 0:
+            s = s.lstrip()
+        elif where == 1:
+            s = s.rstrip()
+        else:
+            s = s.strip()
+
+        self.output("output").send(s)
 
         return True

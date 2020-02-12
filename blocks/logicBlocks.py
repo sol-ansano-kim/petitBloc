@@ -114,20 +114,6 @@ class Choice(block.Block):
         self.addOutput(anytype.AnyType, "output")
 
     def process(self):
-        tv_p = self.input("trueValue").receive()
-        if tv_p.isEOP():
-            return
-
-        tv = tv_p.value()
-        tv_p.drop()
-
-        fv_p = self.input("falseValue").receive()
-        if fv_p.isEOP():
-            return
-
-        fv = fv_p.value()
-        fv_p.drop()
-
         con_p = self.input("condition").receive()
         if con_p.isEOP():
             return False
@@ -135,7 +121,33 @@ class Choice(block.Block):
         con = con_p.value()
         con_p.drop()
 
-        self.output("output").send(tv if con else fv)
+        if con:
+            fv_p = self.input("falseValue").receive()
+            if not fv_p.isEOP():
+                fv_p.drop()
+
+            tv_p = self.input("trueValue").receive()
+            if tv_p.isEOP():
+                return
+
+            tv = tv_p.value()
+            tv_p.drop()
+
+            self.output("output").send(tv)
+
+        else:
+            tv_p = self.input("trueValue").receive()
+            if not tv_p.isEOP():
+                tv_p.drop()
+
+            fv_p = self.input("falseValue").receive()
+            if fv_p.isEOP():
+                return
+
+            fv = fv_p.value()
+            fv_p.drop()
+
+            self.output("output").send(fv)
 
         return True
 
