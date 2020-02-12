@@ -329,3 +329,41 @@ class DictUpdate(block.Block):
         self.output("output").send(dict_a)
 
         return True
+
+
+class DictFormat(block.Block):
+    def __init__(self):
+        super(DictFormat, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "prefix", value="")
+        self.addParam(str, "keyValueJoin", value="=")
+        self.addParam(str, "itemPrefix", value="")
+        self.addParam(str, "itemSuffix", value="")
+        self.addParam(str, "itemJoin", value=", ")
+        self.addParam(str, "suffix", value="")
+        self.addInput(dict, "dict")
+        self.addOutput(str, "output")
+
+    def process(self):
+        in_d = self.input("dict").receive()
+        if in_d.isEOP():
+            return False
+        d = in_d.value()
+        in_d.drop()
+
+        pjn = self.param("keyValueJoin").get()
+        ipf = self.param("itemPrefix").get()
+        ijn = self.param("itemJoin").get()
+        isf = self.param("itemSuffix").get()
+
+        out = self.param("prefix").get()
+        lst = []
+        for k, v in d.items():
+            lst.append(ipf + pjn.join(map(str, [k, v])) + isf)
+        out += ijn.join(lst)
+        out += self.param("suffix").get()
+
+        self.output("output").send(out)
+
+        return True

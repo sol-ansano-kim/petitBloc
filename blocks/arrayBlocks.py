@@ -317,3 +317,40 @@ class Range(block.Block):
 
         for n in range(self.param("start").get(), self.param("stop").get(), step):
             self.output(0).send(n)
+
+
+
+class ListFormat(block.Block):
+    def __init__(self):
+        super(ListFormat, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "prefix", value="")
+        self.addParam(str, "itemPrefix", value="")
+        self.addParam(str, "itemSuffix", value="")
+        self.addParam(str, "itemJoin", value=", ")
+        self.addParam(str, "suffix", value="")
+        self.addInput(list, "list")
+        self.addOutput(str, "output")
+
+    def process(self):
+        in_d = self.input("list").receive()
+        if in_d.isEOP():
+            return False
+        l = in_d.value()
+        in_d.drop()
+
+        ipf = self.param("itemPrefix").get()
+        ijn = self.param("itemJoin").get()
+        isf = self.param("itemSuffix").get()
+
+        out = self.param("prefix").get()
+        lst = []
+        for v in l:
+            lst.append(ipf + str(v) + isf)
+        out += ijn.join(lst)
+        out += self.param("suffix").get()
+
+        self.output("output").send(out)
+
+        return True
