@@ -23,9 +23,12 @@ class ToDict(block.Block):
         self.addInput(int, "groupBy")
         self.addOutput(dict, "dict")
 
-    def _exhaust_package(self, port):
+    def _exhaust_package(self, port, pkgtype=None):
         p = port.receive()
         while not p.isEOP():
+            if pkgtype:
+                v = p.value()
+                self.warn("ToDict node '%s' dropped %s packet (%s)" % (self.name(), pkgtype, repr(v)))
             p.drop()
             p = port.receive()
 
@@ -48,6 +51,9 @@ class ToDict(block.Block):
                 grp_eop = grp_p.isEOP()
                 if not grp_eop:
                     count = grp_p.value()
+                    if count < 0:
+                        err = "Invalid packet count %d" % count
+                        break
                     grp_p.drop()
                 else:
                     count = 0
@@ -82,78 +88,25 @@ class ToDict(block.Block):
                 cur += 1
 
             if kc != vc:
-                err = "Key/Value count mismatch"
+                err = "Key/Value count mismatch (got %d key(s), %d value(s))" % (kc, vc)
                 break
             elif (count is not None and kc != count):
-                err = "Not enough Key/Value pairs"
+                err = "Not enough Key/Value pairs (got %d, expected %d)" % (kc, count)
                 break
-            else:
+            elif count != 0:
                 self.output("dict").send(output)
 
         if not grp_eop:
-            self._exhaust_package(gp)
+            self._exhaust_package(gp, pkgtype=(None if err else "groupBy"))
 
         if not key_eop:
-            self._exhaust_package(kp)
+            self._exhaust_package(kp, pkgtype=(None if err else "key"))
 
         if not val_eop:
-            self._exhaust_package(vp)
+            self._exhaust_package(vp, pkgtype=(None if err else "value"))
 
         if err:
             raise Exception(err)
-
-        """
-        is_eop = False
-        while (not is_eop):
-            group_p = gp.receive()
-            if group_p.isEOP():
-                break
-
-            group_size = group_p.value()
-            group_p.drop()
-
-            count = 0
-            output = {}
-            while (count < group_size):
-                key_p = kp.receive()
-                value_p = vp.receive()
-                if key_p.isEOP():
-                    if not value_p.isEOP():
-                        value_p.drop()
-                    is_eop = True
-                    break
-                if value_p.isEOP():
-                    if not key_p.isEOP():
-                        key_p.drop()
-                    is_eop = True
-                    break
-
-                count += 1
-                output[key_p.value()] = value_p.value()
-                key_p.drop()
-                value_p.drop()
-
-            self.output("dict").send(output)
-
-        if not is_eop:
-            output = {}
-
-            while (True):
-                key_p = kp.receive()
-                if key_p.isEOP():
-                    break
-
-                value_p = vp.receive()
-                if value_p.isEOP():
-                    break
-
-                output[key_p.value()] = value_p.value()
-                key_p.drop()
-                value_p.drop()
-
-            if len(output):
-                self.output("dict").send(output)
-        """
 
 
 class DictHas(block.Block):
