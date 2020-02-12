@@ -471,3 +471,34 @@ class StringEval(block.Block):
         in_p.drop()
 
         return True
+
+
+class StringStrip(block.Block):
+    def __init__(self):
+        super(StringStrip, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addEnumParam("where", ["left", "right", "both"], value=2)
+        self.addOutput(str, "output")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        s = in_p.value()
+        in_p.drop()
+
+        where = self.param("where").get()
+        if where <= 0:
+            s = s.lstrip()
+        elif where == 1:
+            s = s.rstrip()
+        else:
+            s = s.strip()
+
+        self.output("output").send(s)
+
+        return True
