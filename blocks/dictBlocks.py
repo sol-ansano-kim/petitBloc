@@ -20,30 +20,65 @@ class ToDict(block.Block):
     def initialize(self):
         self.addInput(anytype.AnyType, "key")
         self.addInput(anytype.AnyType, "value")
+        self.addInput(int, "groupBy")
         self.addOutput(dict, "dict")
 
     def run(self):
         output = {}
+        gp = self.input("groupBy")
         kp = self.input("key")
         vp = self.input("value")
-        while (True):
-            key_p = vp.receive()
-            if key_p.isEOP():
+
+        is_eop = False
+        while (not is_eop):
+            group_p = gp.receive()
+            if group_p.isEOP():
                 break
 
-            key = key_p.value()
-            key_p.drop()
+            group_size = group_p.value()
+            group_p.drop()
 
-            value_p = vp.receive()
-            if value_p.isEOP():
-                break
+            count = 0
+            output = {}
+            while (count < group_size):
+                key_p = kp.receive()
+                value_p = vp.receive()
+                if key_p.isEOP():
+                    if not value_p.isEOP():
+                        value_p.drop()
+                    is_eop = True
+                    break
+                if value_p.isEOP():
+                    if not key_p.isEOP():
+                        key_p.drop()
+                    is_eop = True
+                    break
 
-            value = value_p.value()
-            value_p.drop()
+                count += 1
+                output[key_p.value()] = value_p.value()
+                key_p.drop()
+                value_p.drop()
 
-            output[key] = value
+            self.output("dict").send(output)
 
-        self.output("dict").send(output)
+        if not is_eop:
+            output = {}
+
+            while (True):
+                key_p = kp.receive()
+                if key_p.isEOP():
+                    break
+
+                value_p = vp.receive()
+                if value_p.isEOP():
+                    break
+
+                output[key_p.value()] = value_p.value()
+                key_p.drop()
+                value_p.drop()
+
+            if len(output):
+                self.output("dict").send(output)
 
 
 class DictHas(block.Block):
@@ -216,6 +251,7 @@ class DictIter(block.Block):
         self.addInput(dict, "dict")
         self.addOutput(anytype.AnyType, "key")
         self.addOutput(anytype.AnyType, "value")
+        self.addOutput(int, "length")
 
     def process(self):
         dict_p = self.input("dict").receive()
@@ -225,6 +261,7 @@ class DictIter(block.Block):
         d = dict_p.value()
         dict_p.drop()
 
+        self.output("length").send(len(d))
         for k, v in d.items():
             self.output("key").send(k)
             self.output("value").send(v)

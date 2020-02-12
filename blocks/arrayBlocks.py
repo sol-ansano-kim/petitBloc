@@ -19,8 +19,8 @@ class ToList(block.Block):
 
     def initialize(self):
         # TODO : size can be ignored. notice it visually
-        self.addInput(int, "groupBy")
         self.addInput(anytype.AnyType, "value")
+        self.addInput(int, "groupBy")
         self.addOutput(list, "list")
 
     def run(self):
