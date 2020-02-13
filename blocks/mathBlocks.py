@@ -2,14 +2,14 @@ from petitBloc import block
 from petitBloc import anytype
 
 
-class Plus(block.Block):
+class Add(block.Block):
     def __init__(self):
-        super(Plus, self).__init__()
+        super(Add, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "output")
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
@@ -30,15 +30,23 @@ class Plus(block.Block):
 
         return True
 
-
-class Minus(block.Block):
+class Plus(Add):
     def __init__(self):
-        super(Minus, self).__init__()
+        super(Plus, self).__init__()
+
+    def run(self):
+        self.warn("Plus block is deprecated, use Add instead")
+        super(Plus, self).run()
+
+
+class Subtract(block.Block):
+    def __init__(self):
+        super(Subtract, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "output")
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
@@ -59,15 +67,23 @@ class Minus(block.Block):
 
         return True
 
+class Minus(Subtract):
+    def __init__(self):
+        super(Minus, self).__init__()
+
+    def run(self):
+        self.warn("Minis block is deprecated, use Subtract instead")
+        super(Minus, self).run()
+
 
 class Multiply(block.Block):
     def __init__(self):
         super(Multiply, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "output")
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
@@ -94,9 +110,9 @@ class Divide(block.Block):
         super(Divide, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "output")
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
         in1_p = self.input("input1").receive()
