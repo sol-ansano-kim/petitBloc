@@ -159,7 +159,86 @@ class Graph(nodz_main.Nodz):
             self.setInteractive(False)
             return
 
+        if evnt.button() == QtCore.Qt.LeftButton and evnt.modifiers() == QtCore.Qt.NoModifier:
+            blocs = []
+            scn_pos = self.mapToScene(evnt.pos())
+            for item in self.scene().items(scn_pos):
+
+                if isinstance(item, BackdropItem):
+                    if item.isOnEvent():
+                        super(Graph, self).mousePressEvent(evnt)
+                        return
+                else:
+                    blocs.append(item)
+
+            if blocs:
+                self.currentState = 'DRAG_ITEM'
+                self.setInteractive(True)
+                QtWidgets.QGraphicsView.mousePressEvent(self, evnt)
+                return
+            else:
+                self.currentState = 'SELECTION'
+                self._initRubberband(evnt.pos())
+                self.setInteractive(False)
+                return
+
         super(Graph, self).mousePressEvent(evnt)
+
+    def mouseReleaseEvent(self, evnt):
+        if self.currentState in ['SELECTION', 'ADD_SELECTION', 'SUBTRACT_SELECTION', 'TOGGLE_SELECTION']:
+            self.rubberband.setGeometry(QtCore.QRect(self.origin, evnt.pos()).normalized())
+            pp = self._releaseRubberband()
+            self.setInteractive(True)
+
+            block_items = {}
+            backdrop_items = {}
+            target_items = []
+
+            path_rect = pp.boundingRect()
+
+            for item in self.scene().items(pp):
+                if isinstance(item, BackdropItem):
+                    sr = item.mapRectToScene(item.boundingRect().toRect())
+                    if path_rect.contains(sr):
+                        backdrop_items[item] = sr
+                        target_items.append(item)
+                else:
+                    br = item.boundingRect()
+                    block_items[item] = item.mapRectToScene(item.boundingRect().toRect())
+
+            ignore = []
+            for item, item_bound in block_items.items():
+                included = False
+                for bd, br in backdrop_items.items():
+                    if br.contains(item_bound):
+                        included = True
+                        break
+                if not included:
+                    target_items.append(item)
+
+            if self.currentState == "SELECTION":
+                for item in self.scene().items():
+                    item.setSelected(False)
+
+                for item in target_items:
+                    item.setSelected(True)
+
+            elif self.currentState == "ADD_SELECTION":
+                for item in target_items:
+                    item.setSelected(True)
+
+            elif self.currentState == "SUBTRACT_SELECTION":
+                for item in target_items:
+                    item.setSelected(False)
+
+            else:
+                for item in target_items:
+                    item.setSelected(item.isSelected() == False)
+
+            self.currentState = 'DEFAULT'
+
+        else:
+            super(Graph, self).mouseReleaseEvent(evnt)
 
     def findNodeFromName(self, name):
         for nodename, node in self.scene().nodes.iteritems():
@@ -729,15 +808,16 @@ class BlocItem(nodz_main.NodeItem):
 
 
 class BackdropItem(BlocItem):
-    ResizeOff = 0
-    ResizeLeftBorder = 1
-    ResizeRightBorder = 2
-    ResizeTopBorder = 3
-    ResizeBottomBorder = 4
-    ResizeTopLeftCorner = 5
-    ResizeTopRightCorner = 6
-    ResizeBottomLeftCorner = 7
-    ResizeBottomRightCorner = 8
+    BDEventNoEvent = 0
+    BDEventResizeLeftBorder = 1
+    BDEventResizeRightBorder = 2
+    BDEventResizeTopBorder = 3
+    BDEventResizeBottomBorder = 4
+    BDEventResizeTopLeftCorner = 5
+    BDEventResizeTopRightCorner = 6
+    BDEventResizeBottomLeftCorner = 7
+    BDEventResizeBottomRightCorner = 8
+    BDEventMove = 9
 
     def __init__(self, bloc, config):
         self.__back = bloc
@@ -751,12 +831,16 @@ class BackdropItem(BlocItem):
         self._pen = QtGui.QPen()
         self._penSel = QtGui.QPen()
         self._textPen = QtGui.QPen()
+        self.__text_bound = QtCore.QRect()
 
         super(BackdropItem, self).__init__(bloc, False, config)
         self.setZValue(-10)
         self.setZValue = lambda x: x
-        self.__resize_mode = BackdropItem.ResizeOff
+        self.__resize_mode = BackdropItem.BDEventNoEvent
         self.__pre_event_pos = QtCore.QPointF()
+
+    def isResizing(self):
+        return self.__resize_mode != BackdropItem.BDEventNoEvent
 
     def __leftBorderRect(self):
         return QtCore.QRectF(0, 0, self.border, self.height)
@@ -798,37 +882,40 @@ class BackdropItem(BlocItem):
     def hoverMoveEvent(self, evnt):
         pos = self.mapToItem(self, evnt.pos().x(), evnt.pos().y())
         if self.__pointInRect(pos, self.__topLeftCornerRect()):
-            self.__resize_mode = BackdropItem.ResizeTopLeftCorner
+            self.__resize_mode = BackdropItem.BDEventResizeTopLeftCorner
             self.setCursor(QtCore.Qt.SizeFDiagCursor)
         elif self.__pointInRect(pos, self.__topRightCornerRect()):
-            self.__resize_mode = BackdropItem.ResizeTopRightCorner
+            self.__resize_mode = BackdropItem.BDEventResizeTopRightCorner
             self.setCursor(QtCore.Qt.SizeBDiagCursor)
         elif self.__pointInRect(pos, self.__bottomLeftCornerRect()):
-            self.__resize_mode = BackdropItem.ResizeBottomLeftCorner
+            self.__resize_mode = BackdropItem.BDEventResizeBottomLeftCorner
             self.setCursor(QtCore.Qt.SizeBDiagCursor)
         elif self.__pointInRect(pos, self.__bottomRightCornerRect()):
-            self.__resize_mode = BackdropItem.ResizeBottomRightCorner
+            self.__resize_mode = BackdropItem.BDEventResizeBottomRightCorner
             self.setCursor(QtCore.Qt.SizeFDiagCursor)
         elif self.__pointInRect(pos, self.__leftBorderRect()):
-            self.__resize_mode = BackdropItem.ResizeLeftBorder
+            self.__resize_mode = BackdropItem.BDEventResizeLeftBorder
             self.setCursor(QtCore.Qt.SizeHorCursor)
         elif self.__pointInRect(pos, self.__rightBorderRect()):
-            self.__resize_mode = BackdropItem.ResizeRightBorder
+            self.__resize_mode = BackdropItem.BDEventResizeRightBorder
             self.setCursor(QtCore.Qt.SizeHorCursor)
         elif self.__pointInRect(pos, self.__topBorderRect()):
-            self.__resize_mode = BackdropItem.ResizeTopBorder
+            self.__resize_mode = BackdropItem.BDEventResizeTopBorder
             self.setCursor(QtCore.Qt.SizeVerCursor)
         elif self.__pointInRect(pos, self.__bottomBorderRect()):
-            self.__resize_mode = BackdropItem.ResizeBottomBorder
+            self.__resize_mode = BackdropItem.BDEventResizeBottomBorder
             self.setCursor(QtCore.Qt.SizeVerCursor)
+        elif self.__pointInRect(pos, self.__text_bound):
+            self.__resize_mode = BackdropItem.BDEventMove
+            self.setCursor(QtCore.Qt.PointingHandCursor)
         else:
-            self.__resize_mode = BackdropItem.ResizeOff
+            self.__resize_mode = BackdropItem.BDEventNoEvent
             self.setCursor(QtCore.Qt.ArrowCursor)
 
         super(BackdropItem, self).hoverMoveEvent(evnt)
 
     def hoverLeaveEvent(self, evnt):
-        self.__resize_mode = BackdropItem.ResizeOff
+        self.__resize_mode = BackdropItem.BDEventNoEvent
         self.setCursor(QtCore.Qt.ArrowCursor)
         super(BackdropItem, self).hoverLeaveEvent(evnt)
 
@@ -855,9 +942,9 @@ class BackdropItem(BlocItem):
 
         delta = cur_event_pos - self.__pre_event_pos
 
-        if self.__resize_mode is BackdropItem.ResizeOff:
+        if self.__resize_mode is BackdropItem.BDEventMove or self.__resize_mode is BackdropItem.BDEventNoEvent:
+            self.__in_area = self.scene().items(QtCore.QRectF(self.pos(), self.boundingRect().size()), QtCore.Qt.ContainsItemShape)
             self.setPos(pre_node_pos + delta)
-
             for itm in self.__in_area:
                 if isinstance(itm, BlocItem) and itm != self:
                     itm.setPos(itm.pos() + delta)
@@ -866,41 +953,41 @@ class BackdropItem(BlocItem):
             w_pam = self.__back.param("width")
             h_pam = self.__back.param("height")
 
-            if self.__resize_mode is BackdropItem.ResizeTopLeftCorner:
+            if self.__resize_mode is BackdropItem.BDEventResizeTopLeftCorner:
                 w_pam.set(w_pam.get() - delta.x())
                 h_pam.set(h_pam.get() - delta.y())
                 self.setPos(pre_node_pos + delta)
 
-            elif self.__resize_mode is BackdropItem.ResizeTopRightCorner:
+            elif self.__resize_mode is BackdropItem.BDEventResizeTopRightCorner:
                 w_pam.set(w_pam.get() + delta.x())
                 h_pam.set(h_pam.get() - delta.y())
                 self.setPos(pre_node_pos.x(), (pre_node_pos + delta).y())
                 self.__pre_event_pos = QtCore.QPointF(cur_event_pos.x(), self.__pre_event_pos.y())
 
-            elif self.__resize_mode is BackdropItem.ResizeBottomLeftCorner:
+            elif self.__resize_mode is BackdropItem.BDEventResizeBottomLeftCorner:
                 w_pam.set(w_pam.get() - delta.x())
                 h_pam.set(h_pam.get() + delta.y())
                 self.setPos((pre_node_pos + delta).x(), pre_node_pos.y())
                 self.__pre_event_pos = QtCore.QPointF(self.__pre_event_pos.x(), cur_event_pos.y())
 
-            elif self.__resize_mode is BackdropItem.ResizeBottomRightCorner:
+            elif self.__resize_mode is BackdropItem.BDEventResizeBottomRightCorner:
                 w_pam.set(w_pam.get() + delta.x())
                 h_pam.set(h_pam.get() + delta.y())
                 self.__pre_event_pos = cur_event_pos
 
-            elif self.__resize_mode is BackdropItem.ResizeLeftBorder:
+            elif self.__resize_mode is BackdropItem.BDEventResizeLeftBorder:
                 w_pam.set(w_pam.get() - delta.x())
                 self.setPos((pre_node_pos + delta).x(), pre_node_pos.y())
 
-            elif self.__resize_mode is BackdropItem.ResizeRightBorder:
+            elif self.__resize_mode is BackdropItem.BDEventResizeRightBorder:
                 w_pam.set(w_pam.get() + delta.x())
                 self.__pre_event_pos = cur_event_pos
 
-            elif self.__resize_mode is BackdropItem.ResizeTopBorder:
+            elif self.__resize_mode is BackdropItem.BDEventResizeTopBorder:
                 h_pam.set(h_pam.get() - delta.y())
                 self.setPos(pre_node_pos.x(), (pre_node_pos + delta).y())
 
-            elif self.__resize_mode is BackdropItem.ResizeBottomBorder:
+            elif self.__resize_mode is BackdropItem.BDEventResizeBottomBorder:
                 h_pam.set(h_pam.get() + delta.y())
                 self.__pre_event_pos = cur_event_pos
 
@@ -952,6 +1039,9 @@ class BackdropItem(BlocItem):
         self._attrBrushAlt.setStyle(QtCore.Qt.SolidPattern)
         self._attrPen.setStyle(QtCore.Qt.SolidLine)
 
+    def isOnEvent(self):
+        return self.__resize_mode != BackdropItem.BDEventNoEvent
+
     def paint(self, painter, option, widget):
         painter.setBrush(self._brush)
         painter.setPen(self.pen)
@@ -960,13 +1050,14 @@ class BackdropItem(BlocItem):
         painter.setPen(self._textPen)
         painter.setFont(self._nodeTextFont)
         metrics = QtGui.QFontMetrics(painter.font())
-        text_rect = metrics.boundingRect(self.name)
-        text_width = text_rect.width() + 14
-        text_height = text_rect.height() + 14
+        text_bound = metrics.boundingRect(self.name)
+        # self.__text_bound = QtCore.QRect(0, 0, self.baseWidth, text_bound.height())
+        text_width = text_bound.width() + 14
+        text_height = text_bound.height() + 14
         margin = (text_width - self.baseWidth) * 0.5
-        textRect = QtCore.QRect(-margin, 0, text_width, text_height)
+        self.__text_bound = QtCore.QRect(-margin, 0, text_width, text_height)
 
-        painter.drawText(textRect, QtCore.Qt.AlignCenter, self.name)
+        painter.drawText(self.__text_bound, QtCore.Qt.AlignCenter, self.name)
 
 
 class ContextItem(BlocItem):
