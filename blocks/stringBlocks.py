@@ -320,6 +320,36 @@ class ToString(block.Block):
         return True
 
 
+class StringFormat(block.Block):
+    def __init__(self):
+        super(StringFormat, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "formatString")
+        self.addEnumParam("formatSyntax", ["printf", "python"], value=0)
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(str, "string")
+
+    def process(self):
+        fmt = self.param("formatString").get()
+        syn = self.param("formatSyntax").get()
+
+        val_p = self.input("value").receive()
+        if val_p.isEOP():
+            return False
+        val = val_p.value()
+        val_p.drop()
+
+        if syn == 0:
+            ret = fmt % val
+        else:
+            ret = fmt.format(val)
+
+        self.output("string").send(ret)
+
+        return True
+
+
 class FloatToString(block.Block):
     def __init__(self):
         super(FloatToString, self).__init__()
@@ -344,6 +374,10 @@ class FloatToString(block.Block):
 
         return True
 
+    def run(self):
+        self.warn("FloatToString is deprecated, use StringFormat instead")
+        super(FloatToString, self).run()
+
 
 class StringToFloat(block.Block):
     def __init__(self):
@@ -365,6 +399,10 @@ class StringToFloat(block.Block):
         self.output("float").send(float(v))
 
         return True
+
+    def run(self):
+        self.warn("StringToFloat is deprecated, use ToFloat instead")
+        super(StringToFloat, self).run()
 
 
 class StringLength(block.Block):
