@@ -42,7 +42,7 @@ def QueryScene(path):
     return scene.QueryScene(path)
 
 
-def Run(path=None, contexts=None, parameters=None, blocks=False, query=False, info=None, maxProcess=1, verbose=1):
+def Run(path=None, contexts=None, parameters=None, blocks=False, query=False, info=None, maxProcess=1, verbose=2):
     if blocks:
         print("'blocks' options is deprecated, please use 'AllBlockTypes' function instead")
         return AllBlockTypes()

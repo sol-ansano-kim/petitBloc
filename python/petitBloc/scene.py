@@ -417,7 +417,7 @@ def Write(path, data):
     print("// Save : {}".format(path))
 
 
-def Run(filePath, contexts=None, parameters=None, maxProcess=1, multiProcessing=False, attrbutes=None, verbose=1):
+def Run(filePath, contexts=None, parameters=None, maxProcess=1, multiProcessing=False, attrbutes=None, verbose=2):
     try:
         if contexts is None:
             contexts = []

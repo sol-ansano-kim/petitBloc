@@ -189,7 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
         log_group.addAction(error_log)
         log_group.addAction(warn_log)
         log_group.addAction(debug_log)
-        error_log.setChecked(True)
+        warn_log.setChecked(True)
         no_log.triggered.connect(self.__noLogTriggered)
         error_log.triggered.connect(self.__errorLogTriggered)
         warn_log.triggered.connect(self.__warnLogTriggered)
