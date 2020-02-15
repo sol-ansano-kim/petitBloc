@@ -13,7 +13,7 @@ if __name__ == "__main__":
     ## running
     parser.add_option("-c", dest="context", help="Override scene context value (mult-usable) (e.g. -c $testInt=1 -p $testBool=[0|1])", action="append", default=[])
     parser.add_option("-p", dest="parameter", help="Override parmeter value (mult-usable) (e.g. -p /scene/test@value=1.5 -p /scene/test@on=[0|1])", action="append", default=[])
-    parser.add_option("-v", dest="verboseLevel", help="Verbose level(0~3)(default 1)", type="int", action="store", default=1)
+    parser.add_option("-v", dest="verboseLevel", help="Verbose level(0~3)(default 2)", type="int", action="store", default=2)
     parser.add_option("-m", dest="maxProcess", help="Max process count(default 1)", type="int", action="store", default=1)
 
     ## query

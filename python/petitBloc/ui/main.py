@@ -189,7 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
         log_group.addAction(error_log)
         log_group.addAction(warn_log)
         log_group.addAction(debug_log)
-        error_log.setChecked(True)
+        warn_log.setChecked(True)
         no_log.triggered.connect(self.__noLogTriggered)
         error_log.triggered.connect(self.__errorLogTriggered)
         warn_log.triggered.connect(self.__warnLogTriggered)
@@ -637,6 +637,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__resetTabIndice()
         self.__setPath(path)
+
+    def fitInView(self):
+        self.__graph._focus()
 
     def __open(self):
         res = QtWidgets.QFileDialog.getOpenFileName(self, "Open", "", "*.blcs")

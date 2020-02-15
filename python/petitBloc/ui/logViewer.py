@@ -11,7 +11,7 @@ class LogViewer(QtWidgets.QWidget):
         self.__debug = []
         self.__warn = []
         self.__error = []
-        self.__log_level = const.LogLevel.Error
+        self.__log_level = const.LogLevel.Warn
 
         self.__time_view = None
         self.__error_label = None
