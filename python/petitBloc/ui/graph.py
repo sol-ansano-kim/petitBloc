@@ -56,9 +56,9 @@ class Graph(nodz_main.Nodz):
         offset_y = 0
 
         if itemsArea.x() < 0:
-            offset_x = -itemsArea.x()
+            offset_x = -itemsArea.x() + 40
         if itemsArea.y() < 0:
-            offset_y = -itemsArea.y()
+            offset_y = -itemsArea.y() + 40
 
         if offset_x > 0 or offset_y > 0:
             for itm in self.scene().items():
@@ -72,6 +72,10 @@ class Graph(nodz_main.Nodz):
 
             self.scene().updateScene()
 
+        itemsArea.setX(itemsArea.x() - 40)
+        itemsArea.setY(itemsArea.y() - 40)
+        itemsArea.setWidth(itemsArea.width() + 40)
+        itemsArea.setHeight(itemsArea.height() + 40)
         self.fitInView(itemsArea, QtCore.Qt.KeepAspectRatio)
 
     def isTop(self):

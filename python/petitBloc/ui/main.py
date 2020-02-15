@@ -638,6 +638,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__resetTabIndice()
         self.__setPath(path)
 
+    def fitInView(self):
+        self.__graph._focus()
+
     def __open(self):
         res = QtWidgets.QFileDialog.getOpenFileName(self, "Open", "", "*.blcs")
 

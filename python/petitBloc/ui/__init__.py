@@ -13,7 +13,7 @@ def Show(path=None):
             win.openScene(path)
 
     win.show()
-
+    win.fitInView()
     app.exec_()
 
 
