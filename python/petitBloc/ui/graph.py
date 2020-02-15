@@ -159,11 +159,18 @@ class Graph(nodz_main.Nodz):
             self.setInteractive(False)
             return
 
+        elif evnt.button() == QtCore.Qt.LeftButton and evnt.modifiers() == QtCore.Qt.ShiftModifier:
+            scn_pos = self.mapToScene(evnt.pos())
+            for item in self.scene().items(scn_pos):
+                if isinstance(item, BackdropItem):
+                    if item.isOnEvent():
+                        item.setSelected(item.isSelected() == False)
+                        return
+
         if evnt.button() == QtCore.Qt.LeftButton and evnt.modifiers() == QtCore.Qt.NoModifier:
             blocs = []
             scn_pos = self.mapToScene(evnt.pos())
             for item in self.scene().items(scn_pos):
-
                 if isinstance(item, BackdropItem):
                     if item.isOnEvent():
                         super(Graph, self).mousePressEvent(evnt)
@@ -185,6 +192,12 @@ class Graph(nodz_main.Nodz):
         super(Graph, self).mousePressEvent(evnt)
 
     def mouseReleaseEvent(self, evnt):
+        if self.currentState == "DRAG_ITEM":
+            items = self.scene().selectedItems()
+            super(Graph, self).mouseReleaseEvent(evnt)
+            for it in items:
+                it.setSelected(True)
+
         if self.currentState in ['SELECTION', 'ADD_SELECTION', 'SUBTRACT_SELECTION', 'TOGGLE_SELECTION']:
             self.rubberband.setGeometry(QtCore.QRect(self.origin, evnt.pos()).normalized())
             pp = self._releaseRubberband()
@@ -608,7 +621,7 @@ class BlocItem(nodz_main.NodeItem):
         self.__emphasize = False
 
     def mouseMoveEvent(self, event):
-        if self.scene().views()[0].gridSnapToggle or self.scene().views()[0]._nodeSnap:
+        if self.scene().views()[0].gridVisToggle and (self.scene().views()[0].gridSnapToggle or self.scene().views()[0]._nodeSnap):
             gridSize = self.scene().gridSize
 
             currentPos = self.mapToScene(event.pos().x() - self.baseWidth / 2,
@@ -931,10 +944,16 @@ class BackdropItem(BlocItem):
     def refresh(self):
         self._createStyle(self.__config)
 
+    def itemChange(self, change, value):
+        if change == QtWidgets.QGraphicsItem.ItemSelectedHasChanged:
+            for item in self.scene().items(QtCore.QRectF(self.pos(), self.boundingRect().size()), QtCore.Qt.ContainsItemShape):
+                item.setSelected(value)
+
+        return super(BackdropItem, self).itemChange(change, value)
+
     def mousePressEvent(self, event):
         self.__pre_event_pos = event.pos()
         super(BackdropItem, self).mousePressEvent(event)
-        self.__in_area = self.scene().items(QtCore.QRectF(self.pos(), self.boundingRect().size()), QtCore.Qt.ContainsItemShape)
 
     def mouseMoveEvent(self, event):
         pre_node_pos = self.pos()
@@ -943,12 +962,7 @@ class BackdropItem(BlocItem):
         delta = cur_event_pos - self.__pre_event_pos
 
         if self.__resize_mode is BackdropItem.BDEventMove or self.__resize_mode is BackdropItem.BDEventNoEvent:
-            self.__in_area = self.scene().items(QtCore.QRectF(self.pos(), self.boundingRect().size()), QtCore.Qt.ContainsItemShape)
-            self.setPos(pre_node_pos + delta)
-            for itm in self.__in_area:
-                if isinstance(itm, BlocItem) and itm != self:
-                    itm.setPos(itm.pos() + delta)
-
+            super(BackdropItem, self).mouseMoveEvent(event)
         else:
             w_pam = self.__back.param("width")
             h_pam = self.__back.param("height")
