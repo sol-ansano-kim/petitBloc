@@ -196,11 +196,12 @@ class PacketBase(object):
 
 
 class PortBase(object):
-    def __init__(self, typeClass, name=None, parent=None):
+    def __init__(self, typeClass, name=None, parent=None, optional=False):
         super(PortBase, self).__init__()
         self.__type_class = typeClass
         self.__parent = parent
         self.__name = name
+        self.__optional = optional
 
     def name(self):
         return self.__name
@@ -269,6 +270,9 @@ class PortBase(object):
 
     def isOutPort(self):
         return isinstance(self, PortOut)
+
+    def isOptional(self):
+        return self.__optional
 
     def hasLinkedParam(self):
         return False
