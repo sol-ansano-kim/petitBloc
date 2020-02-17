@@ -3,9 +3,14 @@
 
 basedir=$(dirname "$0")
 
-
 for test in "$basedir"/*.py
 do
     echo "## Test : $test"
     python $test
+
+    if [[ $? != 0 ]]
+    then
+        echo "ERROR!"
+        break
+    fi
 done

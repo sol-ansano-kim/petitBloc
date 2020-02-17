@@ -27,6 +27,7 @@ class Graph(nodz_main.Nodz):
     BoxCreated = QtCore.Signal(object)
     BoxDeleted = QtCore.Signal(object)
     CurrentNodeChanged = QtCore.Signal(object)
+    RefreshParamRequest = QtCore.Signal()
 
     def __init__(self, name="", boxObject=None, parent=None):
         super(Graph, self).__init__(parent, configPath=getConfigFile())
@@ -392,8 +393,14 @@ class Graph(nodz_main.Nodz):
     def portConnected(self, srcPort, dstPort):
         self.__model.connect(srcPort, dstPort)
 
+        if self.__current_block == srcPort.parent() or self.__current_block == dstPort.parent():
+            self.RefreshParamRequest.emit()
+
     def portDisconnected(self, srcPort, dstPort):
         self.__model.disconnect(srcPort, dstPort)
+
+        if self.__current_block == srcPort.parent() or self.__current_block == dstPort.parent():
+            self.RefreshParamRequest.emit()
 
     def addBlock(self, blockType, blockName=None, position=None):
         if not blockType:

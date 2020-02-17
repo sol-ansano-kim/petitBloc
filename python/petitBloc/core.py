@@ -270,6 +270,18 @@ class PortBase(object):
     def isOutPort(self):
         return isinstance(self, PortOut)
 
+    def hasLinkedParam(self):
+        return False
+
+    def linkedParam(self):
+        return None
+
+    def linkParam(self, param):
+        return False
+
+    def unlinkParam(self):
+        pass
+
     def activate(self):
         pass
 

@@ -243,6 +243,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__parm_editor.BlockRenamed.connect(self.__blockRenamed)
 
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        self.__graph.RefreshParamRequest.connect(self.__parm_editor.forceRefresh)
         self.__graph.ShowGraphRequest.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
         self.__graph.BoxCreated.connect(self.__boxCreated)
@@ -319,6 +320,8 @@ class MainWindow(QtWidgets.QMainWindow):
         grph = graph.SubNet(boxObject=boxBloc)
         grph.ShowGraphRequest.connect(self.__showGraphTab)
         grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        grph.RefreshParamRequest.connect(self.__parm_editor.forceRefresh)
+
         grph.ProxyPortAdded.connect(self.__addProxyPort)
         grph.ProxyPortRemoved.connect(self.__removeProxyPort)
         grph.BoxCreated.connect(self.__boxCreated)
@@ -499,6 +502,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__networks[self.__graph.box()] = {"graph": self.__graph}
 
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        self.__graph.RefreshParamRequest.connect(self.__parm_editor.forceRefresh)
         self.__graph.ShowGraphRequest.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
         self.__graph.BoxCreated.connect(self.__boxCreated)

@@ -474,6 +474,9 @@ class ParamEditor(QtWidgets.QWidget):
         self.__bloc = bloc
         self.__refresh()
 
+    def forceRefresh(self):
+        self.__refresh()
+
     def __initialize(self):
         # scroll area
         main_layout = QtWidgets.QVBoxLayout()
@@ -604,12 +607,21 @@ class ParamEditor(QtWidgets.QWidget):
             r += 1
             return
 
+        to_disable = set()
+        for ip in self.__bloc.inputs():
+            if ip.hasLinkedParam() and ip.isConnected():
+                to_disable.add(ip.linkedParam().name())
+
         for p in self.__bloc.params(includeExtraParam=False):
             pm = Parameter(p)
             pm.ParameterEdited.connect(self.__update_all_params)
             pm.DeleteRequest.connect(self.__deleteParam)
             self.__params.append(pm)
+
+            enable = p.name() not in to_disable
+
             for c, pw in enumerate(pm.widgets()):
+                pw.setEnabled(enable)
                 self.__param_layout.addWidget(pw, r, c)
             r += 1
 
@@ -618,7 +630,10 @@ class ParamEditor(QtWidgets.QWidget):
             pm.ParameterEdited.connect(self.__update_all_params)
             pm.DeleteRequest.connect(self.__deleteParam)
             self.__params.append(pm)
+            enable = p.name() not in to_disable
+
             for c, pw in enumerate(pm.widgets()):
+                pw.setEnabled(enable)
                 self.__param_layout.addWidget(pw, r, c)
             r += 1
 
