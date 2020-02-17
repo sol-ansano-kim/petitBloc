@@ -499,7 +499,7 @@ class ComponentBase(object):
     def byPass(self):
         self.__state = ComponentBase.ByPassing
 
-    def addInput(self, typeClass, name=None):
+    def addInput(self, typeClass, name=None, optional=False):
         return None
 
     def removeInput(self, inPort):
@@ -508,7 +508,7 @@ class ComponentBase(object):
     def removeOutput(self, outPort):
         return False
 
-    def addOutput(self, typeClass, name=None):
+    def addOutput(self, typeClass, name=None, optional=False):
         return None
 
     def outputs(self):

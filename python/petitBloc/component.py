@@ -74,7 +74,7 @@ class Component(core.ComponentBase):
         for p in self.__params:
             p.terminate()
 
-    def addInput(self, typeClass, name=None):
+    def addInput(self, typeClass, name=None, optional=False):
         if name is None or not util.ValidateName(name):
             name = "input"
 
@@ -82,12 +82,12 @@ class Component(core.ComponentBase):
 
         name = util.GetUniqueName(name, all_names)
 
-        p = port.InPort(typeClass, name=name, parent=self)
+        p = port.InPort(typeClass, name=name, parent=self, optional=optional)
         self.__inputs.append(p)
 
         return p
 
-    def addOutput(self, typeClass, name=None):
+    def addOutput(self, typeClass, name=None, optional=False):
         if name is None or not util.ValidateName(name):
             name = "output"
 
@@ -95,7 +95,7 @@ class Component(core.ComponentBase):
 
         name = util.GetUniqueName(name, all_names)
 
-        p = port.OutPort(typeClass, name=name, parent=self)
+        p = port.OutPort(typeClass, name=name, parent=self, optional=optional)
         self.__outputs.append(p)
 
         return p
