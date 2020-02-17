@@ -1,6 +1,7 @@
 import os
 import re
 from Nodz import nodz_main
+from Nodz import nodz_utils
 from Qt import QtGui
 from Qt import QtCore
 from Qt import QtWidgets
@@ -1130,6 +1131,10 @@ class OutputPortItem(nodz_main.PlugItem):
             name = port.parent().name()
 
         super(OutputPortItem, self).__init__(parent, name, index, preset, dataType)
+        self._connectable_pen = QtGui.QPen()
+        self._connectable_pen.setStyle(QtCore.Qt.SolidLine)
+        self._connectable_pen.setWidth(2)
+        self._connectable_pen.setColor(QtGui.QColor(255, 255, 255, 255))
         self.__port = port
 
     def port(self):
@@ -1147,14 +1152,43 @@ class OutputPortItem(nodz_main.PlugItem):
                 if (self.slotType == nodzInst.sourceSlot.slotType or (self.slotType != nodzInst.sourceSlot.slotType and not nodzInst.sourceSlot.port().match(self.port()))):
                     painter.setBrush(uiUtil.ConvertDataToColor(config['non_connectable_color']))
                 else:
-                    _penValid = QtGui.QPen()
-                    _penValid.setStyle(QtCore.Qt.SolidLine)
-                    _penValid.setWidth(2)
-                    _penValid.setColor(QtGui.QColor(255, 255, 255, 255))
-                    painter.setPen(_penValid)
+                    painter.setPen(self._connectable_pen)
                     painter.setBrush(self.brush)
 
-        painter.drawEllipse(self.boundingRect())
+        rect =  self.boundingRect()
+
+        if self.__port.isOptional():
+            poly = QtGui.QPolygonF()
+            w = rect.width()
+            h = rect.height()
+            x0 = rect.x()
+            y0 = rect.y() + h * 0.1
+            x1 = x0 + w * 0.25
+            y1 = y0 + h * 0.25
+            x2 = x0 + w * 0.75
+            y2 = y0 + h * 0.75
+            x3 = x0 + w
+            y3 = y0 + h
+
+            poly.append(QtCore.QPoint(x0, y1))
+            poly.append(QtCore.QPoint(x1, y1))
+            poly.append(QtCore.QPoint(x1, y0))
+            poly.append(QtCore.QPoint(x2, y0))
+            poly.append(QtCore.QPoint(x2, y1))
+            poly.append(QtCore.QPoint(x3, y1))
+            poly.append(QtCore.QPoint(x3, y2))
+            poly.append(QtCore.QPoint(x2, y2))
+            poly.append(QtCore.QPoint(x2, y3))
+            poly.append(QtCore.QPoint(x1, y3))
+            poly.append(QtCore.QPoint(x1, y2))
+            poly.append(QtCore.QPoint(x0, y2))
+            painter.drawPolygon(poly)
+        elif self.__port.hasLinkedParam():
+            rect.setY(rect.y() + 4)
+            rect.setHeight(rect.height() - 2)
+            painter.drawRect(rect)
+        else:
+            painter.drawEllipse(rect)
 
     def connect(self, socket_item, connection):
         """
@@ -1314,6 +1348,10 @@ class InputPortItem(nodz_main.SocketItem):
 
         super(InputPortItem, self).__init__(parent, name, index, preset, dataType)
         self.__port = port
+        self._connectable_pen = QtGui.QPen()
+        self._connectable_pen.setStyle(QtCore.Qt.SolidLine)
+        self._connectable_pen.setWidth(2)
+        self._connectable_pen.setColor(QtGui.QColor(255, 255, 255, 255))
 
     def port(self):
         return self.__port
@@ -1330,14 +1368,43 @@ class InputPortItem(nodz_main.SocketItem):
                 if (self.slotType == nodzInst.sourceSlot.slotType or (self.slotType != nodzInst.sourceSlot.slotType and not self.port().match(nodzInst.sourceSlot.port()))):
                     painter.setBrush(uiUtil.ConvertDataToColor(config['non_connectable_color']))
                 else:
-                    _penValid = QtGui.QPen()
-                    _penValid.setStyle(QtCore.Qt.SolidLine)
-                    _penValid.setWidth(2)
-                    _penValid.setColor(QtGui.QColor(255, 255, 255, 255))
-                    painter.setPen(_penValid)
+                    painter.setPen(self._connectable_pen)
                     painter.setBrush(self.brush)
 
-        painter.drawEllipse(self.boundingRect())
+        rect =  self.boundingRect()
+
+        if self.__port.isOptional():
+            poly = QtGui.QPolygonF()
+            w = rect.width()
+            h = rect.height()
+            x0 = rect.x()
+            y0 = rect.y() + h * 0.1
+            x1 = x0 + w * 0.25
+            y1 = y0 + h * 0.25
+            x2 = x0 + w * 0.75
+            y2 = y0 + h * 0.75
+            x3 = x0 + w
+            y3 = y0 + h
+
+            poly.append(QtCore.QPoint(x0, y1))
+            poly.append(QtCore.QPoint(x1, y1))
+            poly.append(QtCore.QPoint(x1, y0))
+            poly.append(QtCore.QPoint(x2, y0))
+            poly.append(QtCore.QPoint(x2, y1))
+            poly.append(QtCore.QPoint(x3, y1))
+            poly.append(QtCore.QPoint(x3, y2))
+            poly.append(QtCore.QPoint(x2, y2))
+            poly.append(QtCore.QPoint(x2, y3))
+            poly.append(QtCore.QPoint(x1, y3))
+            poly.append(QtCore.QPoint(x1, y2))
+            poly.append(QtCore.QPoint(x0, y2))
+            painter.drawPolygon(poly)
+        elif self.__port.hasLinkedParam():
+            rect.setY(rect.y() + 4)
+            rect.setHeight(rect.height() - 2)
+            painter.drawRect(rect)
+        else:
+            painter.drawEllipse(rect)
 
     def connect(self, plug_item, connection):
         """

@@ -1,5 +1,3 @@
-- Visualize ignorable ports
-- Linking outport and parameter
 - Loop
 - Block accepts name and parent arguments. But many subclassed blocks don't accept that. And Component has to call addBlock() of its parent
-- improve python interface
+- improve and clean up python interface
