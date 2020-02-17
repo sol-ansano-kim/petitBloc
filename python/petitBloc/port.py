@@ -6,8 +6,8 @@ import copy
 
 
 class InPort(core.PortIn, core.PortBase):
-    def __init__(self, typeClass, name=None, parent=None):
-        super(InPort, self).__init__(typeClass, name=name, parent=parent)
+    def __init__(self, typeClass, name=None, parent=None, optional=False):
+        super(InPort, self).__init__(typeClass, name=name, parent=parent, optional=optional)
         self.__in_chain = None
         self.__values = []
         self.__value_queue = None
@@ -112,8 +112,8 @@ class InPort(core.PortIn, core.PortBase):
 
 
 class OutPort(core.PortOut, core.PortBase):
-    def __init__(self, typeClass, name=None, parent=None):
-        super(OutPort, self).__init__(typeClass, name=name, parent=parent)
+    def __init__(self, typeClass, name=None, parent=None, optional=False):
+        super(OutPort, self).__init__(typeClass, name=name, parent=parent, optional=optional)
         self.__out_chains = []
         self.__values = []
         self.__value_queue = None
