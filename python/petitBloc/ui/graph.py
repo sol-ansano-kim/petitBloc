@@ -1183,10 +1183,6 @@ class OutputPortItem(nodz_main.PlugItem):
             poly.append(QtCore.QPoint(x1, y2))
             poly.append(QtCore.QPoint(x0, y2))
             painter.drawPolygon(poly)
-        elif self.__port.hasLinkedParam():
-            rect.setY(rect.y() + 4)
-            rect.setHeight(rect.height() - 2)
-            painter.drawRect(rect)
         else:
             painter.drawEllipse(rect)
 
