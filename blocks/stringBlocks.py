@@ -9,7 +9,9 @@ class StringAdd(block.Block):
 
     def initialize(self):
         self.addInput(str, "string1")
-        self.addInput(str, "string2")
+        str_port = self.addInput(str, "string2")
+        str_parm = self.addParam(str, "string2")
+        str_port.linkParam(str_parm)
         self.addOutput(str, "output")
 
     def process(self):
@@ -38,8 +40,12 @@ class StringReplace(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "old")
-        self.addInput(str, "new")
+        old_port = self.addInput(str, "old")
+        old_param = self.addParam(str, "old")
+        new_port = self.addInput(str, "new")
+        new_param = self.addParam(str, "new")
+        old_port.linkParam(old_param)
+        new_port.linkParam(new_param)
         self.addOutput(str, "output")
 
     def process(self):
@@ -75,7 +81,9 @@ class StringCount(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "substring")
+        sub_port = self.addInput(str, "substring")
+        sub_param = self.addParam(str, "substring")
+        sub_port.linkParam(sub_param)
         self.addOutput(int, "output")
 
     def process(self):
@@ -104,7 +112,9 @@ class StringSplit(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "substring")
+        sub_port = self.addInput(str, "substring")
+        sub_param = self.addParam(str, "substring")
+        sub_port.linkParam(sub_param)
         self.addOutput(str, "output")
         self.addOutput(list, "outList")
 
@@ -139,7 +149,9 @@ class StringJoin(block.Block):
 
     def initialize(self):
         self.addInput(list, "strings")
-        self.addInput(str, "joiner")
+        joiner_port = self.addInput(str, "joiner")
+        joiner_param = self.addParam(str, "joiner")
+        joiner_port.linkParam(joiner_param)
         self.addOutput(str, "output")
 
     def process(self):
@@ -168,7 +180,9 @@ class RegexFindAll(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
+        pattern_port = self.addInput(str, "pattern")
+        pattern_param = self.addParam(str, "pattern")
+        pattern_port.linkParam(pattern_param)
         self.addOutput(str, "output")
         self.addOutput(list, "outList")
 
@@ -202,8 +216,12 @@ class RegexSub(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
-        self.addInput(str, "replace")
+        pattern_port = self.addInput(str, "pattern")
+        replace_port = self.addInput(str, "replace")
+        pattern_param = self.addParam(str, "pattern")
+        replace_param = self.addParam(str, "replace")
+        pattern_port.linkParam(pattern_param)
+        replace_port.linkParam(replace_param)
         self.addOutput(str, "output")
 
     def process(self):
@@ -239,7 +257,9 @@ class RegexFork(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
+        pattern_port = self.addInput(str, "pattern")
+        pattern_param = self.addParam(str, "pattern")
+        pattern_port.linkParam(pattern_param)
         self.addOutput(str, "matched")
         self.addOutput(str, "unmatched")
 
@@ -272,7 +292,9 @@ class RegexSearch(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
+        pattern_port = self.addInput(str, "pattern")
+        pattern_param = self.addParam(str, "pattern")
+        pattern_port.linkParam(pattern_param)
         self.addOutput(str, "output")
 
     def process(self):
@@ -325,12 +347,12 @@ class FloatToString(block.Block):
         super(FloatToString, self).__init__()
 
     def initialize(self):
-        self.addParam(int, "demical", value=3)
+        self.addParam(int, "decimal", value=3)
         self.addInput(float, "float")
         self.addOutput(str, "string")
 
     def process(self):
-        demi = self.param("demical").get()
+        demi = self.param("decimal").get()
         demi = 1 if demi < 1 else demi
         in_p = self.input("float").receive()
 
@@ -420,7 +442,9 @@ class StringCompare(block.Block):
         self.addParam(bool, "caseSensitive", value=True)
         self.addParam(bool, "invert", value=False)
         self.addInput(str, "string1")
-        self.addInput(str, "string2")
+        string2_port = self.addInput(str, "string2")
+        string2_param = self.addParam(str, "string2")
+        string2_port.linkParam(string2_param)
         self.addOutput(bool, "same")
 
     def process(self):

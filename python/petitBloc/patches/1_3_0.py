@@ -25,7 +25,8 @@ Renamed = {"Compare": {"ports": {"result": "output"}},
            "RegexSelector": {"type": "RegexFork"},
            "RegexReRoute": {"type": "RegexFork"},
            "FileRead": {"ports": {"data": "line"}},
-           "FileWrite": {"ports": {"data": "line"}},}
+           "FileWrite": {"ports": {"data": "line"}},
+           "FloatToString": {"params": {"demical": "decimal"}}, }
 
 
 def Patch(d):
@@ -51,3 +52,8 @@ def Patch(d):
     bt = b["type"]
     if bt in Renamed and "type" in Renamed[bt]:
       b["type"] = Renamed[bt]["type"]
+
+    if "params" in b and bt in Renamed and "params" in Renamed[bt]:
+      for be, af in Renamed[bt]["params"].items():
+        if be in b["params"]:
+          b["params"][af] = b["params"].pop(be)
