@@ -18,9 +18,8 @@ class ToList(block.Block):
         super(ToList, self).__init__()
 
     def initialize(self):
-        # TODO : size can be ignored. notice it visually
         self.addInput(anytype.AnyType, "value")
-        self.addInput(int, "groupBy")
+        self.addInput(int, "groupBy", optional=True)
         self.addOutput(list, "list")
 
     def _exhaust_package(self, port, pkgtype=None):

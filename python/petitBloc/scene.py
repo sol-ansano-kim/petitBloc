@@ -7,6 +7,8 @@ from . import proxy
 from . import blockManager
 from . import workerManager
 from . import const
+from . import version
+from . import patches
 import os
 
 
@@ -314,6 +316,8 @@ def __readBlocksFile(filePath):
     data["connections"] = __sortDataByPath(data["connections"])
     data["proxyPorts"] = __sortDataByPath(data["proxyPorts"])
 
+    patches.AttachPatch(data)
+
     return data
 
 
@@ -410,6 +414,7 @@ def Write(path, data):
     data["blocks"] = __sortDataByPath(data["blocks"])
     data["connections"] = __sortDataByPath(data["connections"])
     data["proxyPorts"] = __sortDataByPath(data["proxyPorts"])
+    data["apiVersion"] = version.version()
 
     with open(path, "w") as f:
         json.dump(data, f, indent=4)

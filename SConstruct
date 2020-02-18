@@ -1,4 +1,19 @@
 import os
+
+
+version = "1.3.0"
+
+
+def GenerateVersion(target, source, env):
+    info = """def version():
+    return \"{}\"
+""".format(version)
+
+    tgt = target[0].get_abspath()
+    with open(tgt, "w") as f:
+        f.write(info)
+
+
 env = Environment()
 
 
@@ -40,7 +55,9 @@ except:
     install_das = True
 
 
+version_file = env.Command(os.path.abspath("python/petitBloc/version.py"), None, GenerateVersion)
 env.Install(os.path.join(dist_path, "python/petitBloc"), Glob("python/petitBloc/*.py"))
+env.Install(os.path.join(dist_path, "python/petitBloc"), Glob("python/petitBloc/version.py"))
 env.Install(os.path.join(dist_path, "bin"), Glob("bin/*"))
 env.Install(os.path.join(dist_path, "python/petitBloc/ui"), Glob("python/petitBloc/ui/*.py"))
 env.Install(os.path.join(dist_path, "python/petitBloc/ui"), Glob("python/petitBloc/ui/*.json"))
@@ -48,6 +65,7 @@ env.Install(os.path.join(dist_path, "python/petitBloc/ui"), Glob("python/petitBl
 env.Install(os.path.join(dist_path, "python/petitBloc/ui/icons"), Glob("python/petitBloc/ui/icons/*.png"))
 env.Install(os.path.join(dist_path, "python/petitBloc/blocks"), Glob("blocks/*.py"))
 env.Install(os.path.join(dist_path, "python/petitBloc/blocks"), Glob("blocks/*.config"))
+env.Install(os.path.join(dist_path, "python/petitBloc/patches"), Glob("python/petitBloc/patches/*.py"))
 
 
 if install_nodz:

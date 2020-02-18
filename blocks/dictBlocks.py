@@ -20,7 +20,7 @@ class ToDict(block.Block):
     def initialize(self):
         self.addInput(anytype.AnyType, "key")
         self.addInput(anytype.AnyType, "value")
-        self.addInput(int, "groupBy")
+        self.addInput(int, "groupBy", optional=True)
         self.addOutput(dict, "dict")
 
     def _exhaust_package(self, port, pkgtype=None):
