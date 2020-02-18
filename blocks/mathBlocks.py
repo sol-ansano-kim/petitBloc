@@ -30,6 +30,7 @@ class Add(block.Block):
 
         return True
 
+
 class Plus(Add):
     def __init__(self):
         super(Plus, self).__init__()
@@ -66,6 +67,7 @@ class Subtract(block.Block):
         self.output("output").send(in1 - in2)
 
         return True
+
 
 class Minus(Subtract):
     def __init__(self):

@@ -8,7 +8,9 @@ class Compare(block.Block):
 
     def initialize(self):
         self.addInput(float, "input1")
-        self.addInput(float, "input2")
+        input2_port = self.addInput(float, "input2")
+        input2_param = self.addParam(float, "input2")
+        input2_port.linkParam(input2_param)
         self.addOutput(bool, "output")
         self.addEnumParam("operator", [">", ">=", "==", "<=", "<"], value=2)
 
