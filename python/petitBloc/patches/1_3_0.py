@@ -26,7 +26,10 @@ Renamed = {"Compare": {"ports": {"result": "output"}},
            "RegexReRoute": {"type": "RegexFork"},
            "FileRead": {"ports": {"data": "line"}},
            "FileWrite": {"ports": {"data": "line"}},
-           "FloatToString": {"params": {"demical": "decimal"}}, }
+           "CastToFloat": {"type": "ToFloat"},
+           "CastToInt": {"type": "ToInt"},
+           "CastToBool": {"type": "ToBool"},
+           "FloatToString": {"params": {"demical": "decimal"}},}
 
 
 def Patch(d):

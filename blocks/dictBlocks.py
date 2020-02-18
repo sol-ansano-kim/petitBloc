@@ -23,62 +23,90 @@ class ToDict(block.Block):
         self.addInput(int, "groupBy", optional=True)
         self.addOutput(dict, "dict")
 
+    def _exhaust_package(self, port, pkgtype=None):
+        p = port.receive()
+        while not p.isEOP():
+            if pkgtype:
+                v = p.value()
+                self.warn("ToDict node '%s' dropped %s packet (%s)" % (self.name(), pkgtype, repr(v)))
+            p.drop()
+            p = port.receive()
+
     def run(self):
-        output = {}
         gp = self.input("groupBy")
         kp = self.input("key")
         vp = self.input("value")
 
-        is_eop = False
-        while (not is_eop):
-            group_p = gp.receive()
-            if group_p.isEOP():
+        hasgrp = gp.isConnected()
+        count = None
+        err = None
+
+        grp_eop = False
+        key_eop = False
+        val_eop = False
+
+        while not grp_eop:
+            if hasgrp:
+                grp_p = gp.receive()
+                grp_eop = grp_p.isEOP()
+                if not grp_eop:
+                    count = grp_p.value()
+                    if count < 0:
+                        err = "Invalid packet count %d" % count
+                        break
+                    grp_p.drop()
+                else:
+                    count = 0
+            else:
+                grp_eop = True
+
+            kc = 0
+            vc = 0
+            cur = 0
+            output = {}
+
+            while (count is None or cur < count) and not key_eop and not val_eop:
+                key_p = kp.receive()
+                key_eop = key_p.isEOP()
+                if not key_eop:
+                    key = key_p.value()
+                    key_p.drop()
+                    kc += 1
+
+                val_p = vp.receive()
+                val_eop = val_p.isEOP()
+                if not val_eop:
+                    val = val_p.value()
+                    val_p.drop()
+                    vc += 1
+
+                if not key_eop and not val_eop:
+                    output[key] = val
+                else:
+                    break
+
+                cur += 1
+
+            if kc != vc:
+                err = "Key/Value count mismatch (got %d key(s), %d value(s))" % (kc, vc)
                 break
-
-            group_size = group_p.value()
-            group_p.drop()
-
-            count = 0
-            output = {}
-            while (count < group_size):
-                key_p = kp.receive()
-                value_p = vp.receive()
-                if key_p.isEOP():
-                    if not value_p.isEOP():
-                        value_p.drop()
-                    is_eop = True
-                    break
-                if value_p.isEOP():
-                    if not key_p.isEOP():
-                        key_p.drop()
-                    is_eop = True
-                    break
-
-                count += 1
-                output[key_p.value()] = value_p.value()
-                key_p.drop()
-                value_p.drop()
-
-            self.output("dict").send(output)
-
-        if not is_eop:
-            output = {}
-
-            while (True):
-                key_p = kp.receive()
-                if key_p.isEOP():
-                    break
-
-                value_p = vp.receive()
-                if value_p.isEOP():
-                    break
-
-                output[key_p.value()] = value_p.value()
-                key_p.drop()
-                value_p.drop()
-
-            if len(output):
+            elif (count is not None and kc != count):
+                err = "Not enough Key/Value pairs (got %d, expected %d)" % (kc, count)
+                break
+            elif count != 0:
                 self.output("dict").send(output)
+
+        if not grp_eop:
+            self._exhaust_package(gp, pkgtype=(None if err else "groupBy"))
+
+        if not key_eop:
+            self._exhaust_package(kp, pkgtype=(None if err else "key"))
+
+        if not val_eop:
+            self._exhaust_package(vp, pkgtype=(None if err else "value"))
+
+        if err:
+            raise Exception(err)
 
 
 class DictHas(block.Block):
@@ -327,5 +355,43 @@ class DictUpdate(block.Block):
         dict_a.update(dict_b)
 
         self.output("output").send(dict_a)
+
+        return True
+
+
+class DictFormat(block.Block):
+    def __init__(self):
+        super(DictFormat, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "prefix", value="")
+        self.addParam(str, "keyValueJoin", value="=")
+        self.addParam(str, "itemPrefix", value="")
+        self.addParam(str, "itemSuffix", value="")
+        self.addParam(str, "itemJoin", value=", ")
+        self.addParam(str, "suffix", value="")
+        self.addInput(dict, "dict")
+        self.addOutput(str, "output")
+
+    def process(self):
+        in_d = self.input("dict").receive()
+        if in_d.isEOP():
+            return False
+        d = in_d.value()
+        in_d.drop()
+
+        pjn = self.param("keyValueJoin").get()
+        ipf = self.param("itemPrefix").get()
+        ijn = self.param("itemJoin").get()
+        isf = self.param("itemSuffix").get()
+
+        out = self.param("prefix").get()
+        lst = []
+        for k, v in d.items():
+            lst.append(ipf + pjn.join(map(str, [k, v])) + isf)
+        out += ijn.join(lst)
+        out += self.param("suffix").get()
+
+        self.output("output").send(out)
 
         return True
