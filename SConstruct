@@ -65,6 +65,7 @@ env.Install(os.path.join(dist_path, "python/petitBloc/ui"), Glob("python/petitBl
 env.Install(os.path.join(dist_path, "python/petitBloc/ui/icons"), Glob("python/petitBloc/ui/icons/*.png"))
 env.Install(os.path.join(dist_path, "python/petitBloc/blocks"), Glob("blocks/*.py"))
 env.Install(os.path.join(dist_path, "python/petitBloc/blocks"), Glob("blocks/*.config"))
+env.Install(os.path.join(dist_path, "python/petitBloc/patches"), Glob("python/petitBloc/patches/*.py"))
 
 
 if install_nodz:
