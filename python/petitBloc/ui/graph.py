@@ -1159,29 +1159,9 @@ class OutputPortItem(nodz_main.PlugItem):
 
         if self.__port.isOptional():
             poly = QtGui.QPolygonF()
-            w = rect.width()
-            h = rect.height()
-            x0 = rect.x()
-            y0 = rect.y() + h * 0.1
-            x1 = x0 + w * 0.25
-            y1 = y0 + h * 0.25
-            x2 = x0 + w * 0.75
-            y2 = y0 + h * 0.75
-            x3 = x0 + w
-            y3 = y0 + h
-
-            poly.append(QtCore.QPoint(x0, y1))
-            poly.append(QtCore.QPoint(x1, y1))
-            poly.append(QtCore.QPoint(x1, y0))
-            poly.append(QtCore.QPoint(x2, y0))
-            poly.append(QtCore.QPoint(x2, y1))
-            poly.append(QtCore.QPoint(x3, y1))
-            poly.append(QtCore.QPoint(x3, y2))
-            poly.append(QtCore.QPoint(x2, y2))
-            poly.append(QtCore.QPoint(x2, y3))
-            poly.append(QtCore.QPoint(x1, y3))
-            poly.append(QtCore.QPoint(x1, y2))
-            poly.append(QtCore.QPoint(x0, y2))
+            poly.append(QtCore.QPointF(rect.x() + rect.width() * 0.5, rect.y() + 2))
+            poly.append(QtCore.QPointF(rect.x() + rect.width(), rect.y() + rect.height()))
+            poly.append(QtCore.QPointF(rect.x(), rect.y() + rect.height()))
             painter.drawPolygon(poly)
         else:
             painter.drawEllipse(rect)
@@ -1371,33 +1351,11 @@ class InputPortItem(nodz_main.SocketItem):
 
         if self.__port.isOptional():
             poly = QtGui.QPolygonF()
-            w = rect.width()
-            h = rect.height()
-            x0 = rect.x()
-            y0 = rect.y() + h * 0.1
-            x1 = x0 + w * 0.25
-            y1 = y0 + h * 0.25
-            x2 = x0 + w * 0.75
-            y2 = y0 + h * 0.75
-            x3 = x0 + w
-            y3 = y0 + h
-
-            poly.append(QtCore.QPoint(x0, y1))
-            poly.append(QtCore.QPoint(x1, y1))
-            poly.append(QtCore.QPoint(x1, y0))
-            poly.append(QtCore.QPoint(x2, y0))
-            poly.append(QtCore.QPoint(x2, y1))
-            poly.append(QtCore.QPoint(x3, y1))
-            poly.append(QtCore.QPoint(x3, y2))
-            poly.append(QtCore.QPoint(x2, y2))
-            poly.append(QtCore.QPoint(x2, y3))
-            poly.append(QtCore.QPoint(x1, y3))
-            poly.append(QtCore.QPoint(x1, y2))
-            poly.append(QtCore.QPoint(x0, y2))
+            poly.append(QtCore.QPointF(rect.x() + rect.width() * 0.5, rect.y() + 2))
+            poly.append(QtCore.QPointF(rect.x() + rect.width(), rect.y() + rect.height()))
+            poly.append(QtCore.QPointF(rect.x(), rect.y() + rect.height()))
             painter.drawPolygon(poly)
         elif self.__port.hasLinkedParam():
-            rect.setY(rect.y() + 4)
-            rect.setHeight(rect.height() - 2)
             painter.drawRect(rect)
         else:
             painter.drawEllipse(rect)
