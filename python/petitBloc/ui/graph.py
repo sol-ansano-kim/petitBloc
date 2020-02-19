@@ -963,7 +963,7 @@ class BackdropItem(BlocItem):
         self._createStyle(self.__config)
 
     def itemChange(self, change, value):
-        if change == QtWidgets.QGraphicsItem.ItemSelectedHasChanged:
+        if change == QtWidgets.QGraphicsItem.ItemSelectedChange:
             for item in self.scene().items(QtCore.QRectF(self.pos(), self.boundingRect().size()), QtCore.Qt.ContainsItemShape):
                 item.setSelected(value)
 
