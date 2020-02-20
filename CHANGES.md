@@ -56,7 +56,7 @@ class SomeBlock(Block):
 - ContextDict : Generates a dict packet of containing SceneContext values 
 
 ## GUI improvements
-- Improve Backdrop handling
+- Improved Backdrop handling
 - Default log level is now Warning
 - Packet history viewer scrolls per pixel
 - Boolean type parameter supports expression by mouse right click
