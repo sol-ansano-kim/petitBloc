@@ -446,6 +446,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__scene_state.setStates(*self.__graph.boxModel().getState())
         self.__progress.hide()
         self.__is_running = False
+        self.repaint()
 
     def __getParentGraph(self, path):
         return self.__getGraph(self.__parentName(path))
