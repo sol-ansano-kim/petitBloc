@@ -192,6 +192,10 @@ If you want logging of some information, you can output it with debug, warn or e
 ...
 ```
 
+## Changes
+
+[Release Notes](CHANGES.md)
+
 ## Block Packages
 
 - [DCC software](https://github.com/sol-ansano-kim/pbDCCPacks)

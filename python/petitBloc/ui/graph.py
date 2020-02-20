@@ -364,13 +364,21 @@ class Graph(nodz_main.Nodz):
             self.CurrentNodeChanged.emit(None)
             return
 
-        node = selectedNodes[0]
-        if self.__context_node and self.__context_node.name == node:
-            self.__current_block = self.__context_node.block()
-            self.CurrentNodeChanged.emit(self.__current_block)
-            return
+        block = None
+        context_name = None
+        if self.__context_node:
+            context_name = self.__context_node.name
 
-        self.__current_block = self.__model.block(node)
+        for n in selectedNodes:
+            if context_name == n:
+                self.__current_block = self.__context_node.block()
+                break
+
+            self.__current_block = self.__model.block(n)
+
+            if self.__current_block.isBlank():
+                break
+
         self.CurrentNodeChanged.emit(self.__current_block)
 
     def _deleteSelectedNodes(self):
@@ -963,7 +971,7 @@ class BackdropItem(BlocItem):
         self._createStyle(self.__config)
 
     def itemChange(self, change, value):
-        if change == QtWidgets.QGraphicsItem.ItemSelectedHasChanged:
+        if change == QtWidgets.QGraphicsItem.ItemSelectedChange:
             for item in self.scene().items(QtCore.QRectF(self.pos(), self.boundingRect().size()), QtCore.Qt.ContainsItemShape):
                 item.setSelected(value)
 
