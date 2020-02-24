@@ -1,94 +1,81 @@
 from petitBloc import block
+from petitBloc import anytype
 
 
-class Plus(block.Block):
+class Add(block.Block):
+    def __init__(self):
+        super(Add, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
+
+    def process(self):
+        in1_p = self.input("input1").receive()
+        if in1_p.isEOP():
+            return False
+
+        in1 = in1_p.value()
+        in1_p.drop()
+
+        in2_p = self.input("input2").receive()
+        if in2_p.isEOP():
+            return False
+
+        in2 = in2_p.value()
+        in2_p.drop()
+
+        self.output("output").send(in1 + in2)
+
+        return True
+
+
+class Plus(Add):
     def __init__(self):
         super(Plus, self).__init__()
 
-    def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "result")
-
     def run(self):
-        self.__i1_eop = False
-        self.__i2_eop = False
-        self.__v1 = None
-        self.__v2 = None
+        self.warn("Plus block is deprecated, use Add instead")
         super(Plus, self).run()
 
+
+class Subtract(block.Block):
+    def __init__(self):
+        super(Subtract, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
+
     def process(self):
-        if not self.__i1_eop:
-            in1 = self.input("input1").receive()
-            if in1.isEOP():
-                self.__i1_eop = True
-            else:
-                self.__v1 = in1.value()
-
-        if self.__v1 is None:
+        in1_p = self.input("input1").receive()
+        if in1_p.isEOP():
             return False
 
-        if not self.__i2_eop:
-            in2 = self.input("input2").receive()
-            if in2.isEOP():
-                self.__i2_eop = True
-            else:
-                self.__v2 = in2.value()
+        in1 = in1_p.value()
+        in1_p.drop()
 
-        if self.__v2 is None:
+        in2_p = self.input("input2").receive()
+        if in2_p.isEOP():
             return False
 
-        if self.__i1_eop and self.__i2_eop:
-            return False
+        in2 = in2_p.value()
+        in2_p.drop()
 
-        self.output("result").send(self.__v1 + self.__v2)
+        self.output("output").send(in1 - in2)
 
         return True
 
 
-class Minus(block.Block):
+class Minus(Subtract):
     def __init__(self):
         super(Minus, self).__init__()
 
-    def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "result")
-
     def run(self):
-        self.__i1_eop = False
-        self.__i2_eop = False
-        self.__v1 = None
-        self.__v2 = None
+        self.warn("Minis block is deprecated, use Subtract instead")
         super(Minus, self).run()
-
-    def process(self):
-        if not self.__i1_eop:
-            in1 = self.input("input1").receive()
-            if in1.isEOP():
-                self.__i1_eop = True
-            else:
-                self.__v1 = in1.value()
-
-        if self.__v1 is None:
-            return False
-
-        if not self.__i2_eop:
-            in2 = self.input("input2").receive()
-            if in2.isEOP():
-                self.__i2_eop = True
-            else:
-                self.__v2 = in2.value()
-
-        if self.__v2 is None:
-            return False
-
-        if self.__i1_eop and self.__i2_eop:
-            return False
-
-        self.output("result").send(self.__v1 - self.__v2)
-
-        return True
 
 
 class Multiply(block.Block):
@@ -96,42 +83,26 @@ class Multiply(block.Block):
         super(Multiply, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "result")
-
-    def run(self):
-        self.__i1_eop = False
-        self.__i2_eop = False
-        self.__v1 = None
-        self.__v2 = None
-        super(Multiply, self).run()
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
-        if not self.__i1_eop:
-            in1 = self.input("input1").receive()
-            if in1.isEOP():
-                self.__i1_eop = True
-            else:
-                self.__v1 = in1.value()
-
-        if self.__v1 is None:
+        in1_p = self.input("input1").receive()
+        if in1_p.isEOP():
             return False
 
-        if not self.__i2_eop:
-            in2 = self.input("input2").receive()
-            if in2.isEOP():
-                self.__i2_eop = True
-            else:
-                self.__v2 = in2.value()
+        in1 = in1_p.value()
+        in1_p.drop()
 
-        if self.__v2 is None:
+        in2_p = self.input("input2").receive()
+        if in2_p.isEOP():
             return False
 
-        if self.__i1_eop and self.__i2_eop:
-            return False
+        in2 = in2_p.value()
+        in2_p.drop()
 
-        self.output("result").send(self.__v1 * self.__v2)
+        self.output("output").send(in1 * in2)
 
         return True
 
@@ -141,56 +112,41 @@ class Divide(block.Block):
         super(Divide, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input1")
-        self.addInput(float, "input2")
-        self.addOutput(float, "result")
-
-    def run(self):
-        self.__i1_eop = False
-        self.__i2_eop = False
-        self.__v1 = None
-        self.__v2 = None
-        super(Divide, self).run()
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
-        if not self.__i1_eop:
-            in1 = self.input("input1").receive()
-            if in1.isEOP():
-                self.__i1_eop = True
-            else:
-                self.__v1 = in1.value()
-
-        if self.__v1 is None:
+        in1_p = self.input("input1").receive()
+        if in1_p.isEOP():
             return False
 
-        if not self.__i2_eop:
-            in2 = self.input("input2").receive()
-            if in2.isEOP():
-                self.__i2_eop = True
-            else:
-                self.__v2 = in2.value()
+        in1 = in1_p.value()
+        in1_p.drop()
 
-        if self.__v2 is None:
+        in2_p = self.input("input2").receive()
+        if in2_p.isEOP():
             return False
 
-        if self.__i1_eop and self.__i2_eop:
-            return False
+        in2 = in2_p.value()
+        in2_p.drop()
 
-        if self.__v2 == 0:
-            self.output("result").send(0)
+        if in2 == 0:
+            self.output("output").send(0)
+            self.warn("'{}' division by zero division. result will be 0".format(in1))
             return True
 
-        self.output("result").send(self.__v1 / self.__v2)
+        self.output("output").send(in1 / in2)
 
         return True
 
 
-class CastToInt(block.Block):
+class ToInt(block.Block):
     def __init__(self):
-        super(CastToInt, self).__init__()
+        super(ToInt, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input")
+        self.addInput(anytype.AnyType, "input")
         self.addOutput(int, "output")
 
     def process(self):
@@ -198,18 +154,18 @@ class CastToInt(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("output").send(in_p.value())
+        self.output("output").send(int(in_p.value()))
         in_p.drop()
 
         return True
 
 
-class CastToFloat(block.Block):
+class ToFloat(block.Block):
     def __init__(self):
-        super(CastToFloat, self).__init__()
+        super(ToFloat, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input")
+        self.addInput(anytype.AnyType, "input")
         self.addOutput(float, "output")
 
     def process(self):
@@ -217,18 +173,18 @@ class CastToFloat(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("output").send(in_p.value())
+        self.output("output").send(float(in_p.value()))
         in_p.drop()
 
         return True
 
 
-class CastToBool(block.Block):
+class ToBool(block.Block):
     def __init__(self):
-        super(CastToBool, self).__init__()
+        super(ToBool, self).__init__()
 
     def initialize(self):
-        self.addInput(float, "input")
+        self.addInput(anytype.AnyType, "input")
         self.addOutput(bool, "output")
 
     def process(self):
@@ -236,7 +192,66 @@ class CastToBool(block.Block):
         if in_p.isEOP():
             return False
 
-        self.output("output").send(in_p.value())
+        self.output("output").send(bool(in_p.value()))
         in_p.drop()
 
         return True
+
+
+class Min(block.Block):
+    def __init__(self):
+        super(Min, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
+
+    def process(self):
+        in1_p = self.input("input1").receive()
+        if in1_p.isEOP():
+            return False
+
+        in1 = in1_p.value()
+        in1_p.drop()
+
+        in2_p = self.input("input2").receive()
+        if in2_p.isEOP():
+            return False
+
+        in2 = in2_p.value()
+        in2_p.drop()
+
+        self.output("output").send(min(in1, in2))
+
+        return True
+
+
+class Max(block.Block):
+    def __init__(self):
+        super(Max, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "input1")
+        self.addInput(anytype.AnyType, "input2")
+        self.addOutput(anytype.AnyType, "output")
+
+    def process(self):
+        in1_p = self.input("input1").receive()
+        if in1_p.isEOP():
+            return False
+
+        in1 = in1_p.value()
+        in1_p.drop()
+
+        in2_p = self.input("input2").receive()
+        if in2_p.isEOP():
+            return False
+
+        in2 = in2_p.value()
+        in2_p.drop()
+
+        self.output("output").send(max(in1, in2))
+
+        return True
+

@@ -35,13 +35,13 @@ class ParamCreator(QtWidgets.QDialog):
 
         button_layout = QtWidgets.QHBoxLayout()
         self.__add = QtWidgets.QPushButton("Add")
-        self.__cancle = QtWidgets.QPushButton("Cancle")
+        self.__cancel = QtWidgets.QPushButton("Cancel")
         button_layout.addWidget(self.__add)
-        button_layout.addWidget(self.__cancle)
+        button_layout.addWidget(self.__cancel)
         main_layout.addLayout(button_layout)
 
         self.__add.clicked.connect(self.accept)
-        self.__cancle.clicked.connect(self.reject)
+        self.__cancel.clicked.connect(self.reject)
 
         self.__type_combo.currentIndexChanged.connect(self.__typeChanged)
         self.__name_line.editingFinished.connect(self.__nameChanged)
@@ -89,20 +89,129 @@ class ParamEnum(QtWidgets.QComboBox):
         self.Changed.emit()
 
 
-class ParamLine(QtWidgets.QLineEdit):
+class ParamStatus():
     Value = 0
     Expression = 1
     ExpressionError = 2
 
+    NormalColor = "#1D1D1D"
+    ExpressionColor = "#0A4646"
+    ExpressionErrorColor = "#640A28"
+
+
+class CheckBox(QtWidgets.QCheckBox):
+    def __init__(self, checkable, parent=None):
+        super(CheckBox, self).__init__(parent=parent)
+        self.__checkable = checkable
+
+    def nextCheckState(self):
+        if self.__checkable:
+            self.setChecked(not self.isChecked())
+        else:
+            self.setChecked(self.isChecked())
+
+    def setCheckable(self, v):
+        self.__checkable = v
+
+
+class ParamCheck(QtWidgets.QWidget):
+    Changed = QtCore.Signal()
+
+    def __init__(self, param, parent=None):
+        super(ParamCheck, self).__init__(parent=parent)
+        self.__normal_style = "QCheckBox::indicator{ border: 1px solid #1D1D1D; }"
+        self.__exp_style = "QCheckBox::indicator{ margin 2px; border: 3px solid %s; }"
+        self.__current_state = ParamStatus.Value
+        self.__param = param
+
+        layout = QtWidgets.QHBoxLayout()
+        self.setLayout(layout)
+        self.__check_box = CheckBox(True, self)
+        self.__check_box.toggled.connect(self.__toggled)
+        self.__exp_line = QtWidgets.QLineEdit(self)
+        self.__exp_line.hide()
+        layout.addWidget(self.__check_box)
+        layout.addWidget(self.__exp_line)
+
+        self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
+        self.__check_box.blockSignals(True)
+        self.__check_box.setChecked(self.__param.get())
+        self.__check_box.blockSignals(False)
+        self.__exp_line.editingFinished.connect(self.__expFinished)
+
+        self.refresh()
+
+    def contextMenuEvent(self, evnt):
+        menu = QtWidgets.QMenu(self)
+        set_action = menu.addAction("Set Expression")
+        delete_action = menu.addAction("Delete Expression")
+        menu.popup(self.mapToGlobal(evnt.pos()))
+        set_action.triggered.connect(self.__startSetExpression)
+        delete_action.triggered.connect(self.__deleteExpression)
+
+    def __toggled(self, v):
+        self.__param.set(v)
+        self.Changed.emit()
+
+    def __startSetExpression(self):
+        self.__check_box.hide()
+        self.__exp_line.show()
+        if self.__param.hasExpression():
+            self.__exp_line.setText(self.__param.getExpression())
+        else:
+            self.__exp_line.setText("= ")
+        self.__exp_line.setFocus(QtCore.Qt.OtherFocusReason)
+
+    def __deleteExpression(self):
+        self.__check_box.show()
+        self.__exp_line.hide()
+        self.__param.setExpression(None)
+        self.refresh()
+
+    def refresh(self):
+        if not self.__param.hasExpression():
+            self.__current_state = ParamStatus.Value
+            self.__check_box.setCheckable(True)
+        elif self.__param.validExpression():
+            self.__check_box.setCheckable(False)
+            self.__current_state = ParamStatus.Expression
+        else:
+            self.__check_box.setCheckable(False)
+            self.__current_state = ParamStatus.ExpressionError
+
+        self.__setBackgroundColor()
+
+    def __setBackgroundColor(self):
+        if self.__current_state == ParamStatus.Value:
+            s = self.__normal_style
+        elif self.__current_state == ParamStatus.Expression:
+            s = self.__exp_style % ParamStatus.ExpressionColor
+        elif self.__current_state == ParamStatus.ExpressionError:
+            s = self.__exp_style % ParamStatus.ExpressionErrorColor
+
+        self.setStyleSheet(s)
+
+    def __expFinished(self):
+        txt = self.__exp_line.text()
+        if txt:
+            self.__param.setExpression(str(txt))
+        else:
+            self.__param.setExpression(None)
+
+        self.Changed.emit()
+        self.__check_box.setChecked(self.__param.get())
+        self.__check_box.show()
+        self.__exp_line.hide()
+        self.refresh()
+
+
+class ParamLine(QtWidgets.QLineEdit):
     Changed = QtCore.Signal()
 
     def __init__(self, param, parent=None, isInt=False, isFloat=False):
         super(ParamLine, self).__init__(parent=parent)
         self.__style = "QLineEdit{ background-color: %s; border: 1px solid #1D1D1D; }"
-        self.__normal_color = "#1D1D1D"
-        self.__expression_color = "#0A4646"
-        self.__expression_error_color = "#640A28"
-        self.__current_state = ParamLine.Value
+        self.__current_state = ParamStatus.Value
         self.__param = param
 
         if isInt:
@@ -116,19 +225,39 @@ class ParamLine(QtWidgets.QLineEdit):
         else:
             self.editingFinished.connect(self.__strFinished)
 
+        self.setContextMenuPolicy(QtCore.Qt.DefaultContextMenu)
         self.blockSignals(True)
         self.setText(str(self.__param.get()))
         self.blockSignals(False)
 
         self.refresh()
 
+    def contextMenuEvent(self, evnt):
+        menu = QtWidgets.QMenu(self)
+        set_action = menu.addAction("Set Expression")
+        delete_action = menu.addAction("Delete Expression")
+        menu.popup(self.mapToGlobal(evnt.pos()))
+        set_action.triggered.connect(self.__startSetExpression)
+        delete_action.triggered.connect(self.__deleteExpression)
+
+    def __startSetExpression(self):
+        if self.__param.hasExpression():
+            self.setText(self.__param.getExpression())
+        else:
+            self.setText("= ")
+        self.setEditFocus(True)
+
+    def __deleteExpression(self):
+        self.__param.setExpression(None)
+        self.refresh()
+
     def refresh(self):
         if not self.__param.hasExpression():
-            self.__current_state = ParamLine.Value
+            self.__current_state = ParamStatus.Value
         elif self.__param.validExpression():
-            self.__current_state = ParamLine.Expression
+            self.__current_state = ParamStatus.Expression
         else:
-            self.__current_state = ParamLine.ExpressionError
+            self.__current_state = ParamStatus.ExpressionError
 
         self.blockSignals(True)
 
@@ -150,22 +279,22 @@ class ParamLine(QtWidgets.QLineEdit):
         self.refresh()
 
     def __setBackgroundColor(self):
-        if self.__current_state == ParamLine.Value:
-            s = self.__style % self.__normal_color
-        elif self.__current_state == ParamLine.Expression:
-            s = self.__style % self.__expression_color
-        elif self.__current_state == ParamLine.ExpressionError:
-            s = self.__style % self.__expression_error_color
+        if self.__current_state == ParamStatus.Value:
+            s = self.__style % ParamStatus.NormalColor
+        elif self.__current_state == ParamStatus.Expression:
+            s = self.__style % ParamStatus.ExpressionColor
+        elif self.__current_state == ParamStatus.ExpressionError:
+            s = self.__style % ParamStatus.ExpressionErrorColor
 
         self.setStyleSheet(s)
 
     def __intOnly(self, txt):
         if not ReEqual.search(txt):
-            self.setText(ParamLayout.RegexInt.sub("", txt))
+            self.setText(Parameter.RegexInt.sub("", txt))
 
     def __floatOnly(self, txt):
         if not ReEqual.search(txt):
-            self.setText(ParamLayout.RegexFloat.sub("", txt))
+            self.setText(Parameter.RegexFloat.sub("", txt))
 
     def __intFinished(self):
         txt = str(self.text())
@@ -217,7 +346,7 @@ class ParamLine(QtWidgets.QLineEdit):
         self.Changed.emit()
 
 
-class ColorPicker(QtWidgets.QHBoxLayout):
+class ColorPicker(QtCore.QObject):
     Changed = QtCore.Signal()
 
     def __init__(self, r, g, b):
@@ -225,19 +354,21 @@ class ColorPicker(QtWidgets.QHBoxLayout):
         self.__r = r
         self.__g = g
         self.__b = b
+        self.__label = None
         self.__button = None
         self.__style = "QPushButton{ background-color: rgb(%s, %s, %s); border: 1px solid #1D1D1D; }"
         self.initialize()
         self.refresh()
 
+    def widgets(self):
+        return [self.__label, self.__button]
+
     def initialize(self):
-        self.setAlignment(QtCore.Qt.AlignLeft)
-        __label = QtWidgets.QLabel("Color")
-        __label.setMinimumWidth(const.ParamLabelMinimumWidth)
-        __label.setMaximumWidth(const.ParamLabelMaximumWidth)
+        self.__label = QtWidgets.QLabel("Color")
+        self.__label.setMinimumWidth(const.ParamLabelMinimumWidth)
+        self.__label.setMaximumWidth(const.ParamLabelMaximumWidth)
         self.__button = QtWidgets.QPushButton()
-        self.addWidget(__label)
-        self.addWidget(self.__button)
+        self.__button.setFixedSize(18, 18)
 
         self.__button.clicked.connect(self.__pickColor)
 
@@ -256,14 +387,14 @@ class ColorPicker(QtWidgets.QHBoxLayout):
         self.refresh()
 
 
-class ParamLayout(QtWidgets.QHBoxLayout):
+class Parameter(QtCore.QObject):
     RegexInt = re.compile("[^0-9-]")
     RegexFloat = re.compile("[^0-9-.]")
     ParameterEdited = QtCore.Signal()
     DeleteRequest = QtCore.Signal(object)
 
     def __init__(self, param, deletable=False):
-        super(ParamLayout, self).__init__()
+        super(Parameter, self).__init__()
         self.__label = None
         self.__param = param
         self.__val_edit = None
@@ -272,23 +403,24 @@ class ParamLayout(QtWidgets.QHBoxLayout):
         self.__deletable = deletable
         self.__initialize()
 
+    def widgets(self):
+        widgets = [self.__label, self.__val_edit]
+        if self.__delete_button:
+            widgets.append(self.__delete_button)
+
+        return widgets
+
     def refresh(self):
         if self.__need_to_refresh:
             self.__val_edit.refresh()
 
     def __initialize(self):
-        self.setAlignment(QtCore.Qt.AlignLeft)
         self.__label = QtWidgets.QLabel(self.__param.name())
-        self.__label.setMinimumWidth(const.ParamLabelMinimumWidth)
-        self.__label.setMaximumWidth(const.ParamLabelMaximumWidth)
-        self.addWidget(self.__label)
 
         tc = self.__param.typeClass()
         if tc == bool:
-            self.__val_edit = QtWidgets.QCheckBox()
-            self.__val_edit.setChecked(self.__param.get())
-            self.__val_edit.stateChanged.connect(self.__boolChanged)
-            self.__need_to_refresh = False
+            self.__val_edit = ParamCheck(self.__param)
+            self.__val_edit.Changed.connect(self.__editedEmit)
         elif tc == int:
             self.__val_edit = ParamLine(self.__param, isInt=True)
             self.__val_edit.Changed.connect(self.__editedEmit)
@@ -303,25 +435,15 @@ class ParamLayout(QtWidgets.QHBoxLayout):
             self.__val_edit.Changed.connect(self.__editedEmit)
             self.__need_to_refresh = False
 
-        self.__delete_button = QtWidgets.QPushButton()
-        self.__delete_button.setObjectName("RemoveButton")
-        self.__delete_button.setFixedSize(14, 14)
-        self.__delete_button.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.__delete_button.clicked.connect(self.__deleteParam)
-        if not self.__deletable:
-            self.__delete_button.hide()
-
-        self.addWidget(self.__val_edit)
-        self.addWidget(self.__delete_button)
-
-        self.setSpacing(10)
+        if self.__deletable:
+            self.__delete_button = QtWidgets.QPushButton()
+            self.__delete_button.setObjectName("RemoveButton")
+            self.__delete_button.setFixedSize(14, 14)
+            self.__delete_button.setFocusPolicy(QtCore.Qt.NoFocus)
+            self.__delete_button.clicked.connect(self.__deleteParam)
 
     def __deleteParam(self):
         self.DeleteRequest.emit(self.__param)
-
-    def __boolChanged(self, state):
-        self.__param.set(state == QtCore.Qt.Checked)
-        self.__editedEmit()
 
     def __editedEmit(self):
         self.ParameterEdited.emit()
@@ -352,10 +474,29 @@ class ParamEditor(QtWidgets.QWidget):
         self.__bloc = bloc
         self.__refresh()
 
+    def forceRefresh(self):
+        self.__refresh()
+
     def __initialize(self):
+        # scroll area
         main_layout = QtWidgets.QVBoxLayout()
-        main_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
-        self.__param_layout = QtWidgets.QVBoxLayout()
+        self.setLayout(main_layout)
+
+        contents_widget = QtWidgets.QWidget()
+        contents_layout = QtWidgets.QVBoxLayout()
+        contents_layout.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft)
+        contents_widget.setLayout(contents_layout)
+
+        scroll_area = QtWidgets.QScrollArea()
+        scroll_area.setSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(contents_widget)
+        main_layout.addWidget(scroll_area)
+
+        # parameters
+        self.__param_layout = QtWidgets.QGridLayout()
+        self.__param_layout.setSpacing(10)
+        self.__param_layout.setVerticalSpacing(5)
         self.__block_type_label = QtWidgets.QLabel()
         self.__block_type_label.setAlignment(QtCore.Qt.AlignCenter)
 
@@ -378,13 +519,11 @@ class ParamEditor(QtWidgets.QWidget):
         add_layout.setAlignment(QtCore.Qt.AlignCenter)
         add_layout.addWidget(self.__add_param_button)
 
-        main_layout.addWidget(self.__block_type_label)
-        main_layout.addLayout(name_layout)
-        main_layout.addLayout(self.__param_layout)
-        main_layout.addLayout(add_layout)
+        contents_layout.addWidget(self.__block_type_label)
+        contents_layout.addLayout(name_layout)
+        contents_layout.addLayout(self.__param_layout)
+        contents_layout.addLayout(add_layout)
         self.__add_param_button.hide()
-
-        self.setLayout(main_layout)
 
         self.__param_creator = ParamCreator(self)
 
@@ -427,6 +566,7 @@ class ParamEditor(QtWidgets.QWidget):
         self.__params = []
 
         self.__clearLayout(self.__param_layout)
+
         if self.__bloc is None:
             self.__block_type_label.setText("")
             self.__block_name.setText("")
@@ -454,29 +594,48 @@ class ParamEditor(QtWidgets.QWidget):
         self.__build_params()
 
     def __build_params(self):
+        r = 0
         if self.__bloc is None:
             return
 
         if self.__bloc.isBlank():
-            lay = ColorPicker(self.__bloc.param("r"), self.__bloc.param("g"), self.__bloc.param("b"))
-            lay.Changed.connect(partial(self.NodeRefreshRequest.emit, self.__bloc))
-            self.__params.append(lay)
-            self.__param_layout.addLayout(lay)
+            pm = ColorPicker(self.__bloc.param("r"), self.__bloc.param("g"), self.__bloc.param("b"))
+            pm.Changed.connect(partial(self.NodeRefreshRequest.emit, self.__bloc))
+            self.__params.append(pm)
+            for c, pw in enumerate(pm.widgets()):
+                self.__param_layout.addWidget(pw, r, c)
+            r += 1
             return
 
+        to_disable = set()
+        for ip in self.__bloc.inputs():
+            if ip.hasLinkedParam() and ip.isConnected():
+                to_disable.add(ip.linkedParam().name())
+
         for p in self.__bloc.params(includeExtraParam=False):
-            lay = ParamLayout(p)
-            lay.ParameterEdited.connect(self.__update_all_params)
-            lay.DeleteRequest.connect(self.__deleteParam)
-            self.__params.append(lay)
-            self.__param_layout.addLayout(lay)
+            pm = Parameter(p)
+            pm.ParameterEdited.connect(self.__update_all_params)
+            pm.DeleteRequest.connect(self.__deleteParam)
+            self.__params.append(pm)
+
+            enable = p.name() not in to_disable
+
+            for c, pw in enumerate(pm.widgets()):
+                pw.setEnabled(enable)
+                self.__param_layout.addWidget(pw, r, c)
+            r += 1
 
         for p in self.__bloc.extraParams():
-            lay = ParamLayout(p, deletable=True)
-            lay.ParameterEdited.connect(self.__update_all_params)
-            lay.DeleteRequest.connect(self.__deleteParam)
-            self.__params.append(lay)
-            self.__param_layout.addLayout(lay)
+            pm = Parameter(p, deletable=True)
+            pm.ParameterEdited.connect(self.__update_all_params)
+            pm.DeleteRequest.connect(self.__deleteParam)
+            self.__params.append(pm)
+            enable = p.name() not in to_disable
+
+            for c, pw in enumerate(pm.widgets()):
+                pw.setEnabled(enable)
+                self.__param_layout.addWidget(pw, r, c)
+            r += 1
 
     def __addParam(self):
         if self.__param_creator.exec_() == QtWidgets.QDialog.Accepted:

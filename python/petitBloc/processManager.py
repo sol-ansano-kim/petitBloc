@@ -1,25 +1,8 @@
-import multiprocessing
-import copy
 import time
+import copy
+import multiprocessing
 from . import const
-import subprocess
-
-
-class SubprocessWorker(object):
-    def __init__(self, cmd):
-        self.__command = cmd
-        self.__p = subprocess.Popen(cmd, shell=True)
-
-    def command(self):
-        return self.__command
-
-    def isRunning(self):
-        return self.__p.poll() is None
-
-    def result(self):
-        self.__p.communicate()
-
-        return self.__p.returncode == 0
+from . import subproc
 
 
 class SubprocessManager(object):
@@ -68,7 +51,7 @@ class SubprocessManager(object):
                     running_count += 1
 
             if running_count < SubprocessManager.__MaxProcess:
-                worker = SubprocessWorker(cmd)
+                worker = subproc.SubprocessWorker(cmd)
                 SubprocessManager.__Processes[index] = worker
 
                 index += 1
@@ -271,7 +254,7 @@ class QueueManager(object):
 
 
 class ProcessWorker(multiprocessing.Process):
-    def __init__(self, obj, args=(), kwargs={}):
+    def __init__(self, obj, *args, **kwargs):
         super(ProcessWorker, self).__init__()
         self.daemon = True
         self.__obj = obj
@@ -346,12 +329,12 @@ class ProcessManager(object):
         return len(ProcessManager.__Processes)
 
     @staticmethod
-    def Submit(obj, args=(), kwargs={}):
+    def Submit(obj, *args, **kwargs):
         while (len(ProcessManager.__Processes) >= ProcessManager.__MaxProcess):
             ProcessManager.CleanUp()
 
         LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
-        p = ProcessWorker(obj, args=args, kwargs=kwargs)
+        p = ProcessWorker(obj, *args, **kwargs)
         ProcessManager.__Processes.append(p)
 
         p.start()

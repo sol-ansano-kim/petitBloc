@@ -62,7 +62,7 @@ class DasGet(block.Block):
     def initialize(self):
         self.addInput(dastype.DasTypeBase, "dasObj")
         self.addInput(str, "key")
-        self.addOutput(anytype.AnyType, "result")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
         dp = self.input("dasObj").receive()
@@ -79,7 +79,7 @@ class DasGet(block.Block):
         kv = kp.value()
         kp.drop()
 
-        self.output("result").send(das.cli.get(dv, kv))
+        self.output("output").send(das.cli.get(dv, kv))
 
         return True
 
@@ -130,7 +130,7 @@ class DasEval(block.Block):
     def initialize(self):
         self.addInput(dastype.DasTypeBase, "inDasObj")
         self.addInput(str, "expression")
-        self.addOutput(anytype.AnyType, "result")
+        self.addOutput(anytype.AnyType, "output")
         self.addOutput(anytype.AnyType, "outDasObj")
 
     def process(self):
@@ -149,7 +149,7 @@ class DasEval(block.Block):
         ep.drop()
 
         res = das.cli.eval(dv, ev)
-        self.output("result").send(res)
+        self.output("output").send(res)
         self.output("outDasObj").send(dv)
 
         return True
@@ -160,44 +160,23 @@ class DasNew(block.Block):
         super(DasNew, self).__init__()
 
     def initialize(self):
-        self.addInput(str, "schemaType")
-        self.addOutput(anytype.AnyType, "outDasObj")
-
-    def process(self):
-        st = self.input("schemaType").receive()
-        if st.isEOP():
-            return False
-
-        rv = das.make_default(st.value())
-
-        st.drop()
-
-        self.output("outDasObj").send(rv)
-
-        return True
-
-
-
-class DasNew(block.Block):
-    def __init__(self):
-        super(DasNew, self).__init__()
-
-    def initialize(self):
+        self.addParam(bool, "specifyFields")
         self.addInput(str, "schemaType")
         self.addInput(dict, "fields")
-        self.addOutput(anytype.AnyType, "outDasObj")
+        self.addOutput(anytype.AnyType, "dasObj")
 
     def process(self):
         st = self.input("schemaType").receive()
         if st.isEOP():
             return False
 
-        if not self.input("fields").isConnected():
+        if not self.param("specifyFields").get():
             fd = {}
         else:
             _fd = self.input("fields").receive()
             if _fd.isEOP():
                 return False
+
             fd = _fd.value()
             _fd.drop()
 
@@ -205,10 +184,9 @@ class DasNew(block.Block):
 
         st.drop()
 
-        self.output("outDasObj").send(rv)
+        self.output("dasObj").send(rv)
 
         return True
-
 
 
 class DasAdd(block.Block):
@@ -256,7 +234,7 @@ class DasValidate(block.Block):
     def initialize(self):
         self.addInput(anytype.AnyType, "value")
         self.addInput(str, "schema")
-        self.addOutput(anytype.AnyType, "schemed")
+        self.addOutput(anytype.AnyType, "output")
 
     def process(self):
         dp = self.input("value").receive()
@@ -273,6 +251,6 @@ class DasValidate(block.Block):
         sv = sp.value()
         sp.drop()
 
-        self.output("schemed").send(das.validate(dv, sv))
+        self.output("output").send(das.validate(dv, sv))
 
         return True

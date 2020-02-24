@@ -49,7 +49,7 @@ if UseDas:
 
         def __init__(self, value):
             super(Das, self).__init__()
-            self.__v = das.validate(value, self.Schema)
+            self.__v = das.conform(value, self.Schema, fill=False)
 
         @classmethod
         def schema(cls):
@@ -60,7 +60,11 @@ if UseDas:
 
         @classmethod
         def check(cls, v):
-            return das.check(v, cls.Schema)
+            try:
+                das.conform(v, cls.Schema, fill=False)
+                return True
+            except:
+                return False
 
 else:
     class Das(Any):
@@ -192,11 +196,12 @@ class PacketBase(object):
 
 
 class PortBase(object):
-    def __init__(self, typeClass, name=None, parent=None):
+    def __init__(self, typeClass, name=None, parent=None, optional=False):
         super(PortBase, self).__init__()
         self.__type_class = typeClass
         self.__parent = parent
         self.__name = name
+        self.__optional = optional
 
     def name(self):
         return self.__name
@@ -265,6 +270,21 @@ class PortBase(object):
 
     def isOutPort(self):
         return isinstance(self, PortOut)
+
+    def isOptional(self):
+        return self.__optional
+
+    def hasLinkedParam(self):
+        return False
+
+    def linkedParam(self):
+        return None
+
+    def linkParam(self, param):
+        return False
+
+    def unlinkParam(self):
+        pass
 
     def activate(self):
         pass
@@ -479,7 +499,7 @@ class ComponentBase(object):
     def byPass(self):
         self.__state = ComponentBase.ByPassing
 
-    def addInput(self, typeClass, name=None):
+    def addInput(self, typeClass, name=None, optional=False):
         return None
 
     def removeInput(self, inPort):
@@ -488,7 +508,7 @@ class ComponentBase(object):
     def removeOutput(self, outPort):
         return False
 
-    def addOutput(self, typeClass, name=None):
+    def addOutput(self, typeClass, name=None, optional=False):
         return None
 
     def outputs(self):

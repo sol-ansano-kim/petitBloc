@@ -200,6 +200,14 @@ class ChainTest(unittest.TestCase):
         dst_port.terminate()
         self.assertEqual(workerManager.WorkerManager.QueueCount(), 0)
 
+    def test_optional(self):
+        in_port = port.InPort(int)
+        in_optional_port = port.InPort(int, optional=True)
+        self.assertIsNotNone(in_port)
+        self.assertIsNotNone(in_optional_port)
+        self.assertFalse(in_port.isOptional())
+        self.assertTrue(in_optional_port.isOptional())
+
 
 if __name__ == "__main__":
     unittest.main()

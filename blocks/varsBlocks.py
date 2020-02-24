@@ -1,4 +1,5 @@
 from petitBloc import block
+import re
 
 
 class Int(block.Block):
@@ -47,3 +48,23 @@ class String(block.Block):
 
     def run(self):
         self.output("value").send(self.param("value").get())
+
+
+class ContextDict(block.Block):
+    def __init__(self):
+        super(ContextDict, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "fields")
+        self.addOutput(dict, "dict")
+
+    def run(self):
+        fields = self.param("fields").get()
+        keys = re.split(r"[\s,:;]+", fields)
+        out = {}
+        ctx = self.ancestor().getContext()
+        for k in keys:
+            v = ctx.get(k, None)
+            if v is not None:
+                out[k] = v
+        self.output("dict").send(out)

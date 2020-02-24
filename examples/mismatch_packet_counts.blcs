@@ -1,0 +1,374 @@
+{
+    "connections": [
+        {
+            "path": "DuplicateFlow.by", 
+            "src": "StringSplit.output"
+        }, 
+        {
+            "path": "DuplicateFlow.flow", 
+            "src": "String1.value"
+        }, 
+        {
+            "path": "ListIter.list", 
+            "src": "StringSplit.outList"
+        }, 
+        {
+            "path": "ListLength.list", 
+            "src": "StringSplit.outList"
+        }, 
+        {
+            "path": "Repeat.inValue", 
+            "src": "String1.value"
+        }, 
+        {
+            "path": "Repeat.time", 
+            "src": "ListLength.length"
+        }, 
+        {
+            "path": "StringAdd.string1", 
+            "src": "StringSplit.output"
+        }, 
+        {
+            "path": "StringAdd.string2", 
+            "src": "String1.value"
+        }, 
+        {
+            "path": "StringAdd1.string1", 
+            "src": "ListIter.value"
+        }, 
+        {
+            "path": "StringAdd1.string2", 
+            "src": "Repeat.outValue"
+        }, 
+        {
+            "path": "StringAdd2.string1", 
+            "src": "StringSplit.output"
+        }, 
+        {
+            "path": "StringAdd2.string2", 
+            "src": "DuplicateFlow.output"
+        }, 
+        {
+            "path": "StringAdd3.string1", 
+            "src": "StringSplit.output"
+        }, 
+        {
+            "path": "StringSplit.string", 
+            "src": "String.value"
+        }
+    ], 
+    "proxyPorts": [], 
+    "blocks": [
+        {
+            "path": "DuplicateFlow", 
+            "type": "DuplicateFlow", 
+            "pos": [
+                50731.82184372728, 
+                50639.33689818413
+            ]
+        }, 
+        {
+            "path": "ListIter", 
+            "type": "ListIter", 
+            "pos": [
+                50912.771427527514, 
+                49969.15874560021
+            ]
+        }, 
+        {
+            "path": "ListLength", 
+            "type": "ListLength", 
+            "pos": [
+                50663.6597944357, 
+                50063.455239482406
+            ]
+        }, 
+        {
+            "path": "MultiplePacket", 
+            "type": "Backdrop", 
+            "pos": [
+                49235.612401407816, 
+                49729.31910561189
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 595.9141089134355
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 174
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 46
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 122
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 380.1880736780877
+                }
+            }
+        }, 
+        {
+            "path": "Repeat", 
+            "type": "Repeat", 
+            "pos": [
+                50909.956606814645, 
+                50208.41850619685
+            ]
+        }, 
+        {
+            "path": "SinglePacket", 
+            "type": "Backdrop", 
+            "pos": [
+                49268.37694527944, 
+                50206.37104481459
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 400.0
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 165
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 16
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 101
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 290.009534803874
+                }
+            }
+        }, 
+        {
+            "path": "String", 
+            "type": "String", 
+            "pos": [
+                49133.93859353472, 
+                49629.58815500585
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": "a_b_c_d"
+                }
+            }
+        }, 
+        {
+            "path": "String1", 
+            "type": "String", 
+            "pos": [
+                49275.47492876464, 
+                50182.2256709978
+            ], 
+            "params": {
+                "value": {
+                    "expression": null, 
+                    "value": ":"
+                }
+            }
+        }, 
+        {
+            "path": "StringAdd", 
+            "type": "StringAdd", 
+            "pos": [
+                50108.84054833849, 
+                49242.388516322986
+            ], 
+            "params": {
+                "string2": {
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "StringAdd1", 
+            "type": "StringAdd", 
+            "pos": [
+                51150.62377776774, 
+                50131.01093659205
+            ], 
+            "params": {
+                "string2": {
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "StringAdd2", 
+            "type": "StringAdd", 
+            "pos": [
+                51010.58029811326, 
+                50600.86375288135
+            ], 
+            "params": {
+                "string2": {
+                    "expression": null, 
+                    "value": ""
+                }
+            }
+        }, 
+        {
+            "path": "StringAdd3", 
+            "type": "StringAdd", 
+            "pos": [
+                50864.134293586234, 
+                49574.596593469316
+            ], 
+            "params": {
+                "string2": {
+                    "expression": null, 
+                    "value": ":"
+                }
+            }
+        }, 
+        {
+            "path": "StringSplit", 
+            "type": "StringSplit", 
+            "pos": [
+                49381.044609440294, 
+                49654.494024964166
+            ], 
+            "params": {
+                "substring": {
+                    "expression": null, 
+                    "value": "_"
+                }
+            }
+        }, 
+        {
+            "path": "problem", 
+            "type": "Backdrop", 
+            "pos": [
+                50102.875476809895, 
+                49283.13807175522
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 400.0
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 255
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 35
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 19
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 273.18533853544795
+                }
+            }
+        }, 
+        {
+            "path": "solution_1_linkParam", 
+            "type": "Backdrop", 
+            "pos": [
+                50865.84198896466, 
+                49601.919719524085
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 526.3694580033116
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 63
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 206
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 374.1849285991557
+                }
+            }
+        }, 
+        {
+            "path": "solution_2_Repeat", 
+            "type": "Backdrop", 
+            "pos": [
+                50873.36393754689, 
+                50146.49245051302
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 791.2600790933502
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 14
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 209
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 543.40812697402
+                }
+            }
+        }, 
+        {
+            "path": "solution_3_DuplicateFlow", 
+            "type": "Backdrop", 
+            "pos": [
+                50868.99351656409, 
+                50674.20445932282
+            ], 
+            "params": {
+                "width": {
+                    "expression": null, 
+                    "value": 601.5080546539248
+                }, 
+                "r": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "b": {
+                    "expression": null, 
+                    "value": 0
+                }, 
+                "g": {
+                    "expression": null, 
+                    "value": 213
+                }, 
+                "height": {
+                    "expression": null, 
+                    "value": 329.78484876015864
+                }
+            }
+        }
+    ], 
+    "apiVersion": "1.3.0"
+}

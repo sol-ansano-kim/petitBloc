@@ -14,7 +14,7 @@
         }, 
         {
             "path": "MakeTXBox/MakeTx.outImage", 
-            "src": "MakeTXBox/StringAdd.result"
+            "src": "MakeTXBox/StringAdd.output"
         }, 
         {
             "path": "MakeTXBox/SplitExt.path", 

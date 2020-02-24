@@ -119,6 +119,8 @@ class PacketView(QtWidgets.QTableView):
     def __initialize(self):
         self.__model = PacketModel()
         self.setModel(self.__model)
+        self.setHorizontalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
+        self.setVerticalScrollMode(QtWidgets.QAbstractItemView.ScrollPerPixel)
 
     def setMaxSize(self, v):
         self.__model.setMaxSize(v)

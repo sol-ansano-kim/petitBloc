@@ -22,11 +22,11 @@
         }, 
         {
             "path": "StringLength.string", 
-            "src": "RegexSearch.result"
+            "src": "RegexSearch.output"
         }, 
         {
             "path": "Selector.condition", 
-            "src": "Compare.result"
+            "src": "Compare.output"
         }, 
         {
             "path": "Selector.value", 
@@ -62,7 +62,7 @@
         }, 
         {
             "path": "GetNewPath/Join1.input2", 
-            "src": "GetNewPath/StringAdd4.result"
+            "src": "GetNewPath/StringAdd4.output"
         }, 
         {
             "path": "GetNewPath/MakeDirs.path", 
@@ -82,7 +82,7 @@
         }, 
         {
             "path": "GetNewPath/StringAdd1.string1", 
-            "src": "GetNewPath/StringAdd.result"
+            "src": "GetNewPath/StringAdd.output"
         }, 
         {
             "path": "GetNewPath/StringAdd1.string2", 
@@ -98,15 +98,15 @@
         }, 
         {
             "path": "GetNewPath/StringAdd3.string1", 
-            "src": "GetNewPath/StringAdd2.result"
+            "src": "GetNewPath/StringAdd2.output"
         }, 
         {
             "path": "GetNewPath/StringAdd3.string2", 
-            "src": "GetNewPath/StringAdd1.result"
+            "src": "GetNewPath/StringAdd1.output"
         }, 
         {
             "path": "GetNewPath/StringAdd4.string1", 
-            "src": "GetNewPath/StringAdd3.result"
+            "src": "GetNewPath/StringAdd3.output"
         }, 
         {
             "path": "GetNewPath/StringAdd4.string2", 
@@ -126,7 +126,7 @@
         }, 
         {
             "path": "Resize/OIIOImageResize.height", 
-            "src": "Resize/heightMultiply.result"
+            "src": "Resize/heightMultiply.output"
         }, 
         {
             "path": "Resize/OIIOImageResize.image", 
@@ -134,7 +134,7 @@
         }, 
         {
             "path": "Resize/OIIOImageResize.width", 
-            "src": "Resize/widthMultiply.result"
+            "src": "Resize/widthMultiply.output"
         }, 
         {
             "path": "Resize/OIIOImageSize.image", 
@@ -142,7 +142,7 @@
         }, 
         {
             "path": "Resize/height.input", 
-            "src": "Resize/heightMultiply.result"
+            "src": "Resize/heightMultiply.output"
         }, 
         {
             "path": "Resize/heightMultiply.input1", 
@@ -166,7 +166,7 @@
         }, 
         {
             "path": "Resize/width.input", 
-            "src": "Resize/widthMultiply.result"
+            "src": "Resize/widthMultiply.output"
         }, 
         {
             "path": "Resize/widthMultiply.input1", 
@@ -386,7 +386,7 @@
         }, 
         {
             "path": "Selector", 
-            "type": "Selector", 
+            "type": "ReRoute", 
             "pos": [
                 5367.068058156033, 
                 4526.032636050663
