@@ -114,7 +114,7 @@ class PlusNumber(block.Block):
 ```sh
 export PETITBLOC_BLOCK_PATH=$PETITBLOC_BLOCK_PATH:<file directory>
 or
-set PETITBLOC_BLOCK_PATH=%PETITBLOC_BLOCK_PATH%:<file directory>
+set PETITBLOC_BLOCK_PATH=%PETITBLOC_BLOCK_PATH%;<file directory>
 ```
 
 
@@ -128,6 +128,21 @@ And add any ports or parameters in the initialize method.
         self.addOutput(float, "output")
 ...
 ```
+
+Possible to declare that the port is optional explicitly.
+
+Also possible to link a port and a parameter. ([More detail](CHANGES.md#mismatch-packet-count-issue))
+
+```python
+...
+    def initialize(self):
+        self.addInput(float, "input1", optional=True)
+        inport = self.addInput(float, "input2",)
+        num_param = self.addParam(float, "number")
+        inport.linkParam(num_param)
+...
+```
+
 
 Write processing of a packet(s) into process() method.
 The process() method will be called by run() method, and when the process() returns True, the block will keep accepting packets from input ports.
