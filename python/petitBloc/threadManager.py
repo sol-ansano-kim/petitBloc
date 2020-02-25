@@ -1,27 +1,10 @@
-import threading
-import Queue
-import copy
 import time
-from . import const
-import subprocess
+import copy
+import Queue
+import threading
 import multiprocessing
-
-
-class SubprocessWorker(object):
-    def __init__(self, cmd):
-        self.__command = cmd
-        self.__p = subprocess.Popen(cmd, shell=True)
-
-    def command(self):
-        return self.__command
-
-    def isRunning(self):
-        return self.__p.poll() is None
-
-    def result(self):
-        self.__p.communicate()
-
-        return self.__p.returncode == 0
+from . import const
+from . import subproc
 
 
 class SubprocessManager(object):
@@ -64,7 +47,7 @@ class SubprocessManager(object):
             SubprocessManager.__Lock.acquire()
 
             if SubprocessManager.Count() < SubprocessManager.__MaxProcess:
-                worker = SubprocessWorker(cmd)
+                worker = subproc.SubprocessWorker(cmd)
                 SubprocessManager.__Processes.append(worker)
                 SubprocessManager.__Lock.release()
 
@@ -262,7 +245,7 @@ class QueueManager(object):
 
 
 class ProcessWorker(threading.Thread):
-    def __init__(self, obj, args=(), kwargs={}):
+    def __init__(self, obj, *args, **kwargs):
         super(ProcessWorker, self).__init__()
         self.daemon = True
         self.__obj = obj
@@ -335,7 +318,7 @@ class ThreadManager(object):
         return len(ThreadManager.__Threads)
 
     @staticmethod
-    def Execute(obj, args=(), kwargs={}):
+    def Execute(obj, *args, **kwargs):
         LogManager.IncreaseCount()
         st = time.time()
         success = True
@@ -359,12 +342,12 @@ class ThreadManager(object):
         LogManager.TimeReport(obj.path(), time.time() - st)
 
     @staticmethod
-    def Submit(obj, args=(), kwargs={}):
+    def Submit(obj, *args, **kwargs):
         while (len(ThreadManager.__Threads) >= ThreadManager.__MaxThreads):
             ThreadManager.CleaunUp()
 
         LogManager.Debug("__main__", "  {0:>10}      {1}".format("Start -", obj.path()))
-        p = ProcessWorker(obj, args=args, kwargs=kwargs)
+        p = ProcessWorker(obj, *args, **kwargs)
         ThreadManager.__Threads.append(p)
 
         p.start()

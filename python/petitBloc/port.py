@@ -6,11 +6,12 @@ import copy
 
 
 class InPort(core.PortIn, core.PortBase):
-    def __init__(self, typeClass, name=None, parent=None):
-        super(InPort, self).__init__(typeClass, name=name, parent=parent)
+    def __init__(self, typeClass, name=None, parent=None, optional=False):
+        super(InPort, self).__init__(typeClass, name=name, parent=parent, optional=optional)
         self.__in_chain = None
         self.__values = []
         self.__value_queue = None
+        self.__linked_param = None
 
     def packetHistory(self):
         return copy.copy(self.__values)
@@ -33,10 +34,20 @@ class InPort(core.PortIn, core.PortBase):
             self.__in_chain = None
 
     def receive(self, timeout=None):
-        if self.__in_chain is None:
-            return packet.EndOfPacket
+        p = None
 
-        p = self.__in_chain.receive(timeout=timeout)
+        if self.__in_chain is not None:
+            p = self.__in_chain.receive(timeout=timeout)
+        elif self.__linked_param is not None:
+            if issubclass(self.typeClass(), core.Any):
+                p = packet.Packet(core.Any(self.__linked_param.get()))
+            else:
+                p = packet.Packet(self.typeClass()(self.__linked_param.get()))
+
+            p.setRefCount(1)
+        else:
+            p = packet.EndOfPacket
+
         if self.__value_queue is not None and not p.isEOP():
             self.__value_queue.put(p.value())
 
@@ -74,10 +85,35 @@ class InPort(core.PortIn, core.PortBase):
         if self.__in_chain:
             self.__in_chain.terminate()
 
+    def hasLinkedParam(self):
+        return self.__linked_param is not None
+
+    def linkedParam(self):
+        return self.__linked_param
+
+    def linkParam(self, param):
+        if not isinstance(param, core.ParameterBase):
+            return False
+
+        if self.parent() != param.parent():
+            return False
+
+        if not issubclass(self.typeClass(), core.Any) and \
+           self.typeClass() != param.typeClass() and \
+           not (issubclass(self.typeClass(), Number) and issubclass(param.typeClass(), Number)):
+            return False
+
+        self.__linked_param = param
+
+        return True
+
+    def unlinkParam(self):
+        self.__linked_param = None
+
 
 class OutPort(core.PortOut, core.PortBase):
-    def __init__(self, typeClass, name=None, parent=None):
-        super(OutPort, self).__init__(typeClass, name=name, parent=parent)
+    def __init__(self, typeClass, name=None, parent=None, optional=False):
+        super(OutPort, self).__init__(typeClass, name=name, parent=parent, optional=optional)
         self.__out_chains = []
         self.__values = []
         self.__value_queue = None

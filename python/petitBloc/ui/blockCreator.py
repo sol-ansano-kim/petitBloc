@@ -5,9 +5,14 @@ from Qt import QtCore
 class BlockCreator(QtWidgets.QLineEdit):
     BlockCreatorEnd = QtCore.Signal(str)
 
-    def __init__(self, parent=None, blockList=[], excludeList=[]):
+    def __init__(self, parent=None, blockList=None, excludeList=None):
         super(BlockCreator, self).__init__(parent=parent)
         self.setObjectName("BlockCreator")
+        if excludeList is None:
+            excludeList = []
+        if blockList is None:
+            blockList = []
+
         self.__exclude = excludeList
         self.setBlockList(blockList)
         self.editingFinished.connect(self.__editingFinished)

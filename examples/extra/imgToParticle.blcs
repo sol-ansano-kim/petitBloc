@@ -14,7 +14,7 @@
         }, 
         {
             "path": "Choice.condition", 
-            "src": "Compare.result"
+            "src": "Compare.output"
         }, 
         {
             "path": "Choice.falseValue", 
@@ -58,27 +58,27 @@
         }, 
         {
             "path": "MayaCreateParticle.b", 
-            "src": "B.result"
+            "src": "B.output"
         }, 
         {
             "path": "MayaCreateParticle.g", 
-            "src": "G.result"
+            "src": "G.output"
         }, 
         {
             "path": "MayaCreateParticle.r", 
-            "src": "R.result"
+            "src": "R.output"
         }, 
         {
             "path": "MayaCreateParticle.x", 
-            "src": "X.result"
+            "src": "X.output"
         }, 
         {
             "path": "MayaCreateParticle.y", 
-            "src": "Y.result"
+            "src": "Y.output"
         }, 
         {
             "path": "MayaCreateParticle.z", 
-            "src": "Z.result"
+            "src": "Z.output"
         }, 
         {
             "path": "Multiply.input1", 
@@ -86,7 +86,7 @@
         }, 
         {
             "path": "Multiply.input2", 
-            "src": "Divide.result"
+            "src": "Divide.output"
         }, 
         {
             "path": "Multiply1.input1", 
@@ -94,23 +94,23 @@
         }, 
         {
             "path": "Multiply1.input2", 
-            "src": "Divide.result"
+            "src": "Divide.output"
         }, 
         {
             "path": "Plus.input1", 
-            "src": "R.result"
+            "src": "R.output"
         }, 
         {
             "path": "Plus.input2", 
-            "src": "G.result"
+            "src": "G.output"
         }, 
         {
             "path": "Plus1.input1", 
-            "src": "Plus.result"
+            "src": "Plus.output"
         }, 
         {
             "path": "Plus1.input2", 
-            "src": "B.result"
+            "src": "B.output"
         }, 
         {
             "path": "QImageIndices.qimage", 
@@ -134,7 +134,7 @@
         }, 
         {
             "path": "QimageResized.height", 
-            "src": "Multiply1.result"
+            "src": "Multiply1.output"
         }, 
         {
             "path": "QimageResized.qimage", 
@@ -142,7 +142,7 @@
         }, 
         {
             "path": "QimageResized.width", 
-            "src": "Multiply.result"
+            "src": "Multiply.output"
         }, 
         {
             "path": "R.input1", 
@@ -170,7 +170,7 @@
         }, 
         {
             "path": "Y.input1", 
-            "src": "Plus1.result"
+            "src": "Plus1.output"
         }, 
         {
             "path": "Y.input2", 

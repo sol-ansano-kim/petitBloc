@@ -9,43 +9,27 @@ class StringAdd(block.Block):
 
     def initialize(self):
         self.addInput(str, "string1")
-        self.addInput(str, "string2")
-        self.addOutput(str, "result")
-
-    def run(self):
-        self.__str1_eop = False
-        self.__str2_eop = False
-        self.__str1_dmp = None
-        self.__str2_dmp = None
-        super(StringAdd, self).run()
+        str_port = self.addInput(str, "string2")
+        str_parm = self.addParam(str, "string2")
+        str_port.linkParam(str_parm)
+        self.addOutput(str, "output")
 
     def process(self):
-        if not self.__str1_eop:
-            in1 = self.input("string1").receive()
-            if in1.isEOP():
-                self.__str1_eop = True
-            else:
-                self.__str1_dmp = in1.value()
-                in1.drop()
-
-        if self.__str1_dmp is None:
+        s1_p = self.input("string1").receive()
+        if s1_p.isEOP():
             return False
 
-        if not self.__str2_eop:
-            in2 = self.input("string2").receive()
-            if in2.isEOP():
-                self.__str2_eop = True
-            else:
-                self.__str2_dmp = in2.value()
-                in2.drop()
+        s1 = s1_p.value()
+        s1_p.drop()
 
-        if self.__str2_dmp is None:
+        s2_p = self.input("string2").receive()
+        if s2_p.isEOP():
             return False
 
-        if self.__str1_eop and self.__str2_eop:
-            return False
+        s2 = s2_p.value()
+        s2_p.drop()
 
-        self.output("result").send(self.__str1_dmp + self.__str2_dmp)
+        self.output("output").send(s1 + s2)
 
         return True
 
@@ -56,48 +40,37 @@ class StringReplace(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "old")
-        self.addInput(str, "new")
-        self.addOutput(str, "result")
-
-    def run(self):
-        self.__old_eop = False
-        self.__new_eop = False
-        self.__old_dmp = None
-        self.__new_dmp = None
-        super(StringReplace, self).run()
+        old_port = self.addInput(str, "old")
+        old_param = self.addParam(str, "old")
+        new_port = self.addInput(str, "new")
+        new_param = self.addParam(str, "new")
+        old_port.linkParam(old_param)
+        new_port.linkParam(new_param)
+        self.addOutput(str, "output")
 
     def process(self):
-        in1 = self.input("string").receive()
-        if in1.isEOP():
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
             return False
 
-        v1 = in1.value()
-        in1.drop()
+        string = string_p.value()
+        string_p.drop()
 
-        if not self.__old_eop:
-            in2 = self.input("old").receive()
-            if in2.isEOP():
-                self.__old_eop = True
-            else:
-                self.__old_dmp = in2.value()
-                in2.drop()
-
-        if self.__old_dmp is None:
+        old_p = self.input("old").receive()
+        if old_p.isEOP():
             return False
 
-        if not self.__new_eop:
-            in3 = self.input("new").receive()
-            if in3.isEOP():
-                self.__new_eop = True
-            else:
-                self.__new_dmp = in3.value()
-                in3.drop()
+        old = old_p.value()
+        old_p.drop()
 
-        if self.__new_dmp is None:
+        new_p = self.input("new").receive()
+        if new_p.isEOP():
             return False
 
-        self.output("result").send(v1.replace(self.__old_dmp, self.__new_dmp))
+        new = new_p.value()
+        new_p.drop()
+
+        self.output("output").send(string.replace(old, new))
 
         return True
 
@@ -108,34 +81,95 @@ class StringCount(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "substring")
-        self.addOutput(int, "result")
-
-    def run(self):
-        self.__sub_eop = False
-        self.__sub_dmp = None
-        super(StringCount, self).run()
+        sub_port = self.addInput(str, "substring")
+        sub_param = self.addParam(str, "substring")
+        sub_port.linkParam(sub_param)
+        self.addOutput(int, "output")
 
     def process(self):
-        in1 = self.input("string").receive()
-        if in1.isEOP():
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
             return False
 
-        v1 = in1.value()
-        in1.drop()
+        string = string_p.value()
+        string_p.drop()
 
-        if not self.__sub_eop:
-            in2 = self.input("substring").receive()
-            if in2.isEOP():
-                self.__sub_eop = True
-            else:
-                self.__sub_dmp = in2.value()
-                in2.drop()
-
-        if self.__sub_dmp is None:
+        sub_p = self.input("substring").receive()
+        if sub_p.isEOP():
             return False
 
-        self.output("result").send(v1.count(self.__sub_dmp))
+        sub = sub_p.value()
+        sub_p.drop()
+
+        self.output("output").send(string.count(sub))
+
+        return True
+
+
+class StringSplit(block.Block):
+    def __init__(self):
+        super(StringSplit, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        sub_port = self.addInput(str, "substring")
+        sub_param = self.addParam(str, "substring")
+        sub_port.linkParam(sub_param)
+        self.addOutput(str, "output")
+        self.addOutput(list, "outList")
+
+    def process(self):
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
+            return False
+
+        string = string_p.value()
+        string_p.drop()
+
+        sub_p = self.input("substring").receive()
+        if sub_p.isEOP():
+            return False
+
+        sub = sub_p.value()
+        sub_p.drop()
+
+        op = self.output("output")
+        out_list = string.split(sub)
+        for s in out_list:
+            op.send(s)
+
+        self.output("outList").send(out_list)
+
+        return True
+
+
+class StringJoin(block.Block):
+    def __init__(self):
+        super(StringJoin, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "strings")
+        joiner_port = self.addInput(str, "joiner")
+        joiner_param = self.addParam(str, "joiner")
+        joiner_port.linkParam(joiner_param)
+        self.addOutput(str, "output")
+
+    def process(self):
+        strings_p = self.input("strings").receive()
+        if strings_p.isEOP():
+            return False
+
+        sl = strings_p.value()
+        strings_p.drop()
+
+        joiner_p = self.input("joiner").receive()
+        if joiner_p.isEOP():
+            return False
+
+        j = joiner_p.value()
+        joiner_p.drop()
+
+        self.output("output").send(j.join(sl))
 
         return True
 
@@ -146,35 +180,32 @@ class RegexFindAll(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
-        self.addOutput(str, "result")
-
-    def run(self):
-        self.__pattern_eop = False
-        self.__pattern_dmp = None
-        super(RegexFindAll, self).run()
+        pattern_port = self.addInput(str, "pattern")
+        pattern_param = self.addParam(str, "pattern")
+        pattern_port.linkParam(pattern_param)
+        self.addOutput(str, "output")
+        self.addOutput(list, "outList")
 
     def process(self):
-        in1 = self.input("string").receive()
-        if in1.isEOP():
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
             return False
 
-        v1 = in1.value()
-        in1.drop()
+        string = string_p.value()
+        string_p.drop()
 
-        if not self.__pattern_eop:
-            in2 = self.input("pattern").receive()
-            if in2.isEOP():
-                self.__pattern_eop = True
-            else:
-                self.__pattern_dmp = in2.value()
-                in2.drop()
-
-        if self.__pattern_dmp is None:
+        pat_p = self.input("pattern").receive()
+        if pat_p.isEOP():
             return False
 
-        for r in re.findall(self.__pattern_dmp, v1):
-            self.output("result").send(r)
+        pat = pat_p.value()
+        pat_p.drop()
+
+        out_list = re.findall(pat, string)
+        for r in out_list:
+            self.output("output").send(r)
+
+        self.output("outList").send(out_list)
 
         return True
 
@@ -185,90 +216,72 @@ class RegexSub(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
-        self.addInput(str, "replace")
-        self.addOutput(str, "result")
-
-    def run(self):
-        self.__pattern_eop = False
-        self.__pattern_dmp = None
-        self.__replace_eop = False
-        self.__replace_dmp = None
-        super(RegexSub, self).run()
+        pattern_port = self.addInput(str, "pattern")
+        replace_port = self.addInput(str, "replace")
+        pattern_param = self.addParam(str, "pattern")
+        replace_param = self.addParam(str, "replace")
+        pattern_port.linkParam(pattern_param)
+        replace_port.linkParam(replace_param)
+        self.addOutput(str, "output")
 
     def process(self):
-        in1 = self.input("string").receive()
-        if in1.isEOP():
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
             return False
 
-        v1 = in1.value()
-        in1.drop()
+        string = string_p.value()
+        string_p.drop()
 
-        if not self.__pattern_eop:
-            in2 = self.input("pattern").receive()
-            if in2.isEOP():
-                self.__pattern_eop = True
-            else:
-                self.__pattern_dmp = in2.value()
-                in2.drop()
-
-        if self.__pattern_dmp is None:
+        pat_p = self.input("pattern").receive()
+        if pat_p.isEOP():
             return False
 
-        if not self.__replace_eop:
-            in2 = self.input("replace").receive()
-            if in2.isEOP():
-                self.__replace_eop = True
-            else:
-                self.__replace_dmp = in2.value()
-                in2.drop()
+        pat = pat_p.value()
+        pat_p.drop()
 
-        if self.__replace_dmp is None:
+        rep_p = self.input("replace").receive()
+        if rep_p.isEOP():
             return False
 
-        self.output("result").send(re.sub(self.__pattern_dmp, self.__replace_dmp, v1))
+        rep = rep_p.value()
+        rep_p.drop()
+
+        self.output("output").send(re.sub(pat, rep, string))
 
         return True
 
 
-class RegexSelector(block.Block):
+class RegexFork(block.Block):
     def __init__(self):
-        super(RegexSelector, self).__init__()
+        super(RegexFork, self).__init__()
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
+        pattern_port = self.addInput(str, "pattern")
+        pattern_param = self.addParam(str, "pattern")
+        pattern_port.linkParam(pattern_param)
         self.addOutput(str, "matched")
         self.addOutput(str, "unmatched")
 
-    def run(self):
-        self.__pattern_eop = False
-        self.__pattern_dmp = None
-        super(RegexSelector, self).run()
-
     def process(self):
-        in1 = self.input("string").receive()
-        if in1.isEOP():
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
             return False
 
-        v1 = in1.value()
-        in1.drop()
+        string = string_p.value()
+        string_p.drop()
 
-        if not self.__pattern_eop:
-            in2 = self.input("pattern").receive()
-            if in2.isEOP():
-                self.__pattern_eop = True
-            else:
-                self.__pattern_dmp = in2.value()
-                in2.drop()
-
-        if self.__pattern_dmp is None:
+        pat_p = self.input("pattern").receive()
+        if pat_p.isEOP():
             return False
 
-        if re.search(self.__pattern_dmp, v1):
-            self.output("matched").send(v1)
+        pat = pat_p.value()
+        pat_p.drop()
+
+        if re.search(pat, string):
+            self.output("matched").send(string)
         else:
-            self.output("unmatched").send(v1)
+            self.output("unmatched").send(string)
 
         return True
 
@@ -279,40 +292,34 @@ class RegexSearch(block.Block):
 
     def initialize(self):
         self.addInput(str, "string")
-        self.addInput(str, "pattern")
-        self.addOutput(str, "result")
-
-    def run(self):
-        self.__pattern_eop = False
-        self.__pattern_dmp = None
-        super(RegexSearch, self).run()
+        pattern_port = self.addInput(str, "pattern")
+        pattern_param = self.addParam(str, "pattern")
+        pattern_port.linkParam(pattern_param)
+        self.addOutput(str, "output")
 
     def process(self):
-        in1 = self.input("string").receive()
-        if in1.isEOP():
+        string_p = self.input("string").receive()
+        if string_p.isEOP():
             return False
 
-        v1 = in1.value()
-        in1.drop()
+        string = string_p.value()
+        string_p.drop()
 
-        if not self.__pattern_eop:
-            in2 = self.input("pattern").receive()
-            if in2.isEOP():
-                self.__pattern_eop = True
-            else:
-                self.__pattern_dmp = in2.value()
-                in2.drop()
-
-        if self.__pattern_dmp is None:
+        pat_p = self.input("pattern").receive()
+        if pat_p.isEOP():
             return False
 
-        res = re.search(self.__pattern_dmp, v1)
+        pat = pat_p.value()
+        pat_p.drop()
+
+        res = re.search(pat, string)
         if not res:
-            self.output("result").send("")
+            self.output("output").send("")
 
             return True
 
-        self.output("result").send(v1[res.start():res.end()])
+        self.output("output").send(string[res.start():res.end()])
+
         return True
 
 
@@ -335,17 +342,47 @@ class ToString(block.Block):
         return True
 
 
+class StringFormat(block.Block):
+    def __init__(self):
+        super(StringFormat, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "formatString")
+        self.addEnumParam("formatSyntax", ["printf", "python"], value=0)
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(str, "string")
+
+    def process(self):
+        fmt = self.param("formatString").get()
+        syn = self.param("formatSyntax").get()
+
+        val_p = self.input("value").receive()
+        if val_p.isEOP():
+            return False
+        val = val_p.value()
+        val_p.drop()
+
+        if syn == 0:
+            ret = fmt % val
+        else:
+            ret = fmt.format(val)
+
+        self.output("string").send(ret)
+
+        return True
+
+
 class FloatToString(block.Block):
     def __init__(self):
         super(FloatToString, self).__init__()
 
     def initialize(self):
-        self.addParam(int, "demical", value=3)
+        self.addParam(int, "decimal", value=3)
         self.addInput(float, "float")
         self.addOutput(str, "string")
 
     def process(self):
-        demi = self.param("demical").get()
+        demi = self.param("decimal").get()
         demi = 1 if demi < 1 else demi
         in_p = self.input("float").receive()
 
@@ -358,6 +395,10 @@ class FloatToString(block.Block):
         self.output("string").send("{0:.{demi}g}".format(v, demi=demi))
 
         return True
+
+    def run(self):
+        self.warn("FloatToString is deprecated, use StringFormat instead")
+        super(FloatToString, self).run()
 
 
 class StringToFloat(block.Block):
@@ -381,6 +422,10 @@ class StringToFloat(block.Block):
 
         return True
 
+    def run(self):
+        self.warn("StringToFloat is deprecated, use ToFloat instead")
+        super(StringToFloat, self).run()
+
 
 class StringLength(block.Block):
     def __init__(self):
@@ -402,6 +447,73 @@ class StringLength(block.Block):
         return True
 
 
+class StringIsEmpty(block.Block):
+    def __init__(self):
+        super(StringIsEmpty, self).__init__()
+
+    def initialize(self):
+        self.addParam(bool, "invert", value=False)
+        self.addInput(str, "string")
+        self.addOutput(bool, "empty")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        empty = (len(in_p.value()) == 0)
+        in_p.drop()
+
+        invert = self.param("invert").get()
+
+        self.output("empty").send(empty if not invert else not empty)
+
+        return True
+
+
+class StringCompare(block.Block):
+    def __init__(self):
+        super(StringCompare, self).__init__()
+
+    def initialize(self):
+        self.addParam(bool, "caseSensitive", value=True)
+        self.addParam(bool, "invert", value=False)
+        self.addInput(str, "string1")
+        string2_port = self.addInput(str, "string2")
+        string2_param = self.addParam(str, "string2")
+        string2_port.linkParam(string2_param)
+        self.addOutput(bool, "same")
+
+    def process(self):
+        in_s1 = self.input("string1").receive()
+
+        if in_s1.isEOP():
+            return False
+
+        s1 = in_s1.value()
+        in_s1.drop()
+
+        in_s2 = self.input("string2").receive()
+
+        if in_s2.isEOP():
+            return False
+
+        s2 = in_s2.value()
+        in_s2.drop()
+
+        caseSensitive = self.param("caseSensitive").get()
+        if not caseSensitive:
+            s1 = s1.lower()
+            s2 = s2.lower()
+
+        invert = self.param("invert").get()
+
+        self.output("same").send(s1 == s2 if not invert else s1 != s2)
+
+        return True
+
+
 class StringEval(block.Block):
     def __init__(self):
         super(StringEval, self).__init__()
@@ -419,5 +531,36 @@ class StringEval(block.Block):
         self.output("output").send(eval(in_p.value()))
 
         in_p.drop()
+
+        return True
+
+
+class StringStrip(block.Block):
+    def __init__(self):
+        super(StringStrip, self).__init__()
+
+    def initialize(self):
+        self.addInput(str, "string")
+        self.addEnumParam("where", ["left", "right", "both"], value=2)
+        self.addOutput(str, "output")
+
+    def process(self):
+        in_p = self.input("string").receive()
+
+        if in_p.isEOP():
+            return False
+
+        s = in_p.value()
+        in_p.drop()
+
+        where = self.param("where").get()
+        if where <= 0:
+            s = s.lstrip()
+        elif where == 1:
+            s = s.rstrip()
+        else:
+            s = s.strip()
+
+        self.output("output").send(s)
 
         return True

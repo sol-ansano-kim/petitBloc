@@ -3,6 +3,7 @@ from . import threadManager
 from . import const
 
 
+# TODO : each managers inherit base class
 class WorkerManager(object):
     __UseProcess = False
     __LogManager = threadManager.LogManager

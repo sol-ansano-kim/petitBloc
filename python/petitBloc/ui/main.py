@@ -189,7 +189,7 @@ class MainWindow(QtWidgets.QMainWindow):
         log_group.addAction(error_log)
         log_group.addAction(warn_log)
         log_group.addAction(debug_log)
-        error_log.setChecked(True)
+        warn_log.setChecked(True)
         no_log.triggered.connect(self.__noLogTriggered)
         error_log.triggered.connect(self.__errorLogTriggered)
         warn_log.triggered.connect(self.__warnLogTriggered)
@@ -243,6 +243,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__parm_editor.BlockRenamed.connect(self.__blockRenamed)
 
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        self.__graph.RefreshParamRequest.connect(self.__parm_editor.forceRefresh)
         self.__graph.ShowGraphRequest.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
         self.__graph.BoxCreated.connect(self.__boxCreated)
@@ -319,6 +320,8 @@ class MainWindow(QtWidgets.QMainWindow):
         grph = graph.SubNet(boxObject=boxBloc)
         grph.ShowGraphRequest.connect(self.__showGraphTab)
         grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        grph.RefreshParamRequest.connect(self.__parm_editor.forceRefresh)
+
         grph.ProxyPortAdded.connect(self.__addProxyPort)
         grph.ProxyPortRemoved.connect(self.__removeProxyPort)
         grph.BoxCreated.connect(self.__boxCreated)
@@ -443,6 +446,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__scene_state.setStates(*self.__graph.boxModel().getState())
         self.__progress.hide()
         self.__is_running = False
+        self.repaint()
 
     def __getParentGraph(self, path):
         return self.__getGraph(self.__parentName(path))
@@ -499,6 +503,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__networks[self.__graph.box()] = {"graph": self.__graph}
 
         self.__graph.CurrentNodeChanged.connect(self.__currentBlockChanged)
+        self.__graph.RefreshParamRequest.connect(self.__parm_editor.forceRefresh)
         self.__graph.ShowGraphRequest.connect(self.__showGraphTab)
         self.__graph.BoxDeleted.connect(self.__boxDeleted)
         self.__graph.BoxCreated.connect(self.__boxCreated)
@@ -637,6 +642,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__resetTabIndice()
         self.__setPath(path)
+
+    def fitInView(self):
+        self.__graph._focus()
 
     def __open(self):
         res = QtWidgets.QFileDialog.getOpenFileName(self, "Open", "", "*.blcs")

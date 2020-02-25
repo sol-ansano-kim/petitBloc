@@ -7,13 +7,15 @@ from . import proxy
 from . import blockManager
 from . import workerManager
 from . import const
+from . import version
+from . import patches
 import os
 
 
 ReBootNode = re.compile("^{}\/".format(const.RootBoxName))
 
 
-def __sortDataBtPath(data):
+def __sortDataByPath(data):
     return sorted(data, cmp=__blockCompare, key=operator.itemgetter("path"))
 
 
@@ -52,31 +54,6 @@ def __setVerboseLevel(l):
         workerManager.WorkerManager.SetLogLevel(const.LogLevel.Warn)
     elif l == 3:
         workerManager.WorkerManager.SetLogLevel(const.LogLevel.Debug)
-
-
-def __query(filePath):
-    data = Read(filePath)
-
-    if (data["blocks"]):
-        print("# List Blocks")
-    for b in data["blocks"]:
-        print("    '{}'({})".format(__addRootPath(b["path"]), b["type"]))
-
-        for k, v in b.get("params", {}).iteritems():
-            if v["expression"]:
-                print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v["expression"])))
-            else:
-                print("        {}@{}: {}".format(__addRootPath(b["path"]), k, str(v["value"])))
-        for k, v in b.get("extraParams", {}).iteritems():
-            if v["expression"]:
-                print("        {}@{}: {} ({})".format(__addRootPath(b["path"]), k, str(v["expression"]), str(v["type"])))
-            else:
-                print("        {}@{}: {} ({})".format(__addRootPath(b["path"]), k, str(v["value"]), str(v["type"])))
-
-    if data["connections"]:
-        print("# List Connections")
-    for con in data["connections"]:
-        print("    {} >> {}".format(__addRootPath(con["src"]), __addRootPath(con["path"])))
 
 
 def __read(filePath):
@@ -292,10 +269,152 @@ def __override(root, parameters):
             print("Warning : Failed to override parameter. Invalid value - {} : {}".format(type_class.__name__, value))
 
 
+def AllBlockTypes():
+    manager = blockManager.BlockManager()
+    return manager.blockNames()
+
+
+def BlockInfo(blockType):
+    manager = blockManager.BlockManager()
+    bc = manager.block(blockType)
+    bi = {}
+
+    if bc:
+        try:
+            bloc = bc()
+            bi["name"] = bloc.__class__.__name__
+            in_ports = {}
+            out_ports = {}
+            params = {}
+            bi["in_ports"] = in_ports
+            bi["out_ports"] = out_ports
+            bi["params"] = params
+            for p in bloc.inputs():
+                in_ports[p.name()] = {"type": p.typeClass().__name__}
+            for p in bloc.outputs():
+                out_ports[p.name()] = {"type": p.typeClass().__name__}
+            for p in bloc.params():
+                params[p.name()] = {"type": p.typeClass().__name__}
+
+        except Exception as e:
+            print("Warning : Could not create an instance of {}".format(blockType))
+            print(e)
+            return None
+
+    else:
+        print("Warning : Unknown block type : {}".format(blockType))
+        return None
+
+    return bi
+
+
+def __readBlocksFile(filePath):
+    with open(filePath, "r") as f:
+        data = json.load(f)
+
+    data["blocks"] = __sortDataByPath(data["blocks"])
+    data["connections"] = __sortDataByPath(data["connections"])
+    data["proxyPorts"] = __sortDataByPath(data["proxyPorts"])
+
+    patches.AttachPatch(data)
+
+    return data
+
+
+def GetParams(filePath, block=None):
+    params = {}
+    data = __readBlocksFile(filePath)
+
+    for b in data["blocks"]:
+        if b["type"] == box.SceneContext.__name__:
+            continue
+
+        bp = __addRootPath(b["path"])
+
+        if block is not None and bp != block:
+            continue
+
+        for k, v in b.get("params", {}).items():
+            params["{}@{}".format(bp, k)] = v
+        for k, v in b.get("extraParams", {}).items():
+            params["{}@{}".format(bp, k)] = v
+
+    return params
+
+
+def GetContextParams(filePath):
+    params = {}
+    data = __readBlocksFile(filePath)
+
+    for b in data["blocks"]:
+        if b["type"] == box.SceneContext.__name__:
+            for k, v in b.get("params", {}).items():
+                params[k] = v
+            for k, v in b.get("extraParams", {}).items():
+                params[k] = v
+
+            break
+
+    return params
+
+
+def GetConnections(filePath):
+    connections = []
+    data = __readBlocksFile(filePath)
+
+    for con in data["connections"]:
+        connections.append({"src": __addRootPath(con["src"]), "path": __addRootPath(con["path"])})
+
+    return connections
+
+
+def GetBlocks(filePath):
+    blocks = []
+    data = __readBlocksFile(filePath)
+
+    for b in data["blocks"]:
+        blocks.append({"path": __addRootPath(b["path"]), "type": b["type"]})
+
+    return blocks
+
+
+def QueryScene(filePath):
+    try:
+        data = __readBlocksFile(filePath)
+        infos = {"blocks": {}, "connections": []}
+
+        for b in data["blocks"]:
+            block_info = {"type": None, "params": {}, "extraParams": {}}
+            infos["blocks"][__addRootPath(b["path"])] = block_info
+            block_info["type"] = b["type"]
+
+            for k, v in b.get("params", {}).items():
+                block_info["params"][k] = v
+            for k, v in b.get("extraParams", {}).items():
+                block_info["extraParams"][k] = v
+
+        for con in data["connections"]:
+            infos["connections"].append({"src": __addRootPath(con["src"]), "path": __addRootPath(con["path"])})
+
+        return infos
+
+    except Exception as e:
+        print("ERROR : {}".format(str(e)))
+
+        return None
+
+
+def Read(filePath):
+    print("// Load : {}".format(filePath))
+
+    return __readBlocksFile(filePath)
+
+
 def Write(path, data):
-    data["blocks"] = __sortDataBtPath(data["blocks"])
-    data["connections"] = __sortDataBtPath(data["connections"])
-    data["proxyPorts"] = __sortDataBtPath(data["proxyPorts"])
+    data["blocks"] = __sortDataByPath(data["blocks"])
+    data["connections"] = __sortDataByPath(data["connections"])
+    data["proxyPorts"] = __sortDataByPath(data["proxyPorts"])
+    data["apiVersion"] = version.version()
 
     with open(path, "w") as f:
         json.dump(data, f, indent=4)
@@ -303,73 +422,13 @@ def Write(path, data):
     print("// Save : {}".format(path))
 
 
-def Read(path):
-    data = {}
-    with open(path, "r") as f:
-        data = json.load(f)
-
-    print("// Load : {}".format(path))
-
-    data["blocks"] = __sortDataBtPath(data["blocks"])
-    data["connections"] = __sortDataBtPath(data["connections"])
-    data["proxyPorts"] = __sortDataBtPath(data["proxyPorts"])
-
-    return data
-
-
-def BlockInfo(blockType):
-    manager = blockManager.BlockManager()
-    bc = manager.block(blockType)
-
-    if bc:
-        try:
-            bloc = bc()
-            print("# <{}>".format(bloc.__class__.__name__))
-
-            print("    InPort")
-            for inp in bloc.inputs():
-                print("        '{}' ({})".format(inp.name(), inp.typeClass().__name__))
-            print("    OutPort")
-            for inp in bloc.outputs():
-                print("        '{}' ({})".format(inp.name(), inp.typeClass().__name__))
-            print("    Parameter")
-            for param in bloc.params():
-                print("        '{}' ({})".format(param.name(), param.typeClass().__name__))
-
-        except Exception as e:
-            print("Warning : Could not create an instance of {}".format(blockType))
-            print(e)
-            return False
-
-    else:
-        print("Warning : Unknown block type : {}".format(blockType))
-        return False
-
-    return True
-
-
-def BlockList():
-    manager = blockManager.BlockManager()
-
-    print("# Block List")
-    for b in manager.blockNames():
-        print("    {}".format(b))
-
-
-def Query(filePath):
+def Run(filePath, contexts=None, parameters=None, maxProcess=1, multiProcessing=False, attrbutes=None, verbose=2):
     try:
-        __query(filePath)
+        if contexts is None:
+            contexts = []
+        if parameters is None:
+            parameters = []
 
-    except Exception as e:
-        print("ERROR : {}".format(str(e)))
-
-        return False
-
-    return True
-
-
-def Run(filePath, contexts=[], parameters=[], maxProcess=1, multiProcessing=False, attrbutes=[], verbose=1):
-    try:
         __setVerboseLevel(verbose)
 
         workerManager.WorkerManager.SetUseProcess(multiProcessing)
@@ -381,6 +440,7 @@ def Run(filePath, contexts=[], parameters=[], maxProcess=1, multiProcessing=Fals
 
         schedule = root.getSchedule()
         return workerManager.WorkerManager.RunSchedule(schedule, maxProcess=maxProcess)
+
     except Exception as e:
         print("ERROR : {}".format(str(e)))
 

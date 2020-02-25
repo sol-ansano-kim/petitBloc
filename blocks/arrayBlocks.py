@@ -7,21 +7,118 @@ class List(block.Block):
         super(List, self).__init__()
 
     def initialize(self):
-        self.addInput(anytype.AnyType, "value")
         self.addOutput(list, "list")
 
     def run(self):
-        array = []
+        self.output("list").send([])
 
-        inp = self.input("value")
-        while (True):
-            p = inp.receive()
-            if p.isEOP():
+
+class ToList(block.Block):
+    def __init__(self):
+        super(ToList, self).__init__()
+
+    def initialize(self):
+        self.addInput(anytype.AnyType, "value")
+        self.addInput(int, "groupBy", optional=True)
+        self.addOutput(list, "list")
+
+    def _exhaust_package(self, port, pkgtype=None):
+        p = port.receive()
+        while not p.isEOP():
+            if pkgtype:
+                v = p.value()
+                self.warn("ToList node '%s' dropped %s packet (%s)" % (self.name(), pkgtype, repr(v)))
+            p.drop()
+            p = port.receive()
+
+    def run(self):
+        gp = self.input("groupBy")
+        vp = self.input("value")
+
+        hasgrp = gp.isConnected()
+        count = None
+        err = None
+
+        grp_eop = False
+        val_eop = False
+
+        while not grp_eop:
+            if hasgrp:
+                grp_p = gp.receive()
+                grp_eop = grp_p.isEOP()
+                if not grp_eop:
+                    count = grp_p.value()
+                    if count < 0:
+                        err = "Invalid packet count %d" % count
+                        break
+                    grp_p.drop()
+                else:
+                    count = 0
+            else:
+                grp_eop = True
+
+            vc = 0
+            cur = 0
+            output = []
+
+            while (count is None or cur < count) and not val_eop:
+                val_p = vp.receive()
+                val_eop = val_p.isEOP()
+                if not val_eop:
+                    val = val_p.value()
+                    val_p.drop()
+                    vc += 1
+
+                if not val_eop:
+                    output.append(val)
+                else:
+                    break
+
+                cur += 1
+
+            if (count is not None and vc != count):
+                err = "Not enough values (got %d, expected %d)" % (vc, count)
                 break
+            elif count != 0:
+                self.output("list").send(output)
 
-            array.append(p.value())
+        if not grp_eop:
+            self._exhaust_package(gp, pkgtype=(None if err else "groupBy"))
 
-        self.output("list").send(array)
+        if not val_eop:
+            self._exhaust_package(vp, pkgtype=(None if err else "value"))
+
+        if err:
+            raise Exception(err)
+
+
+class ListHas(block.Block):
+    def __init__(self):
+        super(ListHas, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "list")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(bool, "has")
+
+    def process(self):
+        list_p = self.input("list").receive()
+        if list_p.isEOP():
+            return False
+
+        lst = list_p.value()
+        list_p.drop()
+
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        self.output("has").send(value in lst)
+
+        return True
 
 
 class ListGet(block.Block):
@@ -33,23 +130,7 @@ class ListGet(block.Block):
         self.addInput(int, "index")
         self.addOutput(anytype.AnyType, "value")
 
-    def run(self):
-        self.__index_eop = False
-        self.__index_dump = None
-        super(ListGet, self).run()
-
     def process(self):
-        if not self.__index_eop:
-            index_p = self.input("index").receive()
-            if index_p.isEOP():
-                self.__index_eop = True
-            else:
-                self.__index_dump = index_p.value()
-                index_p.drop()
-
-        if self.__index_dump is None:
-            return False
-
         arr_p = self.input("list").receive()
         if arr_p.isEOP():
             return False
@@ -57,7 +138,54 @@ class ListGet(block.Block):
         arr = arr_p.value()
         arr_p.drop()
 
-        self.output("value").send(arr[self.__index_dump])
+        index_p = self.input("index").receive()
+        if index_p.isEOP():
+            return False
+
+        index = index_p.value()
+        index_p.drop()
+
+        self.output("value").send(arr[index])
+
+        return True
+
+
+class ListSet(block.Block):
+    def __init__(self):
+        super(ListSet, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "inList")
+        self.addInput(int, "index")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "outList")
+
+    def process(self):
+        in_list_p = self.input("inList").receive()
+        if in_list_p.isEOP():
+            return False
+
+        in_list = in_list_p.value()
+        in_list_p.drop()
+
+        index_p = self.input("index").receive()
+        if index_p.isEOP():
+            return False
+
+        index = index_p.value()
+        index_p.drop()
+
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        in_list[index] = value
+
+        self.output("outList").send(in_list)
+
         return True
 
 
@@ -66,6 +194,8 @@ class ListIter(block.Block):
         super(ListIter, self).__init__()
 
     def initialize(self):
+        self.addOutput(int, "index")
+        self.addOutput(int, "length")
         self.addOutput(anytype.AnyType, "value")
         self.addInput(list, "list")
 
@@ -74,8 +204,13 @@ class ListIter(block.Block):
         if arr.isEOP():
             return False
 
-        for i in arr.value():
-            self.output("value").send(i)
+        values = arr.value()
+        arr.drop()
+
+        self.output("length").send(len(values))
+        for i, v in enumerate(values):
+            self.output("index").send(i)
+            self.output("value").send(v)
 
         return True
 
@@ -86,14 +221,14 @@ class ListLength(block.Block):
 
     def initialize(self):
         self.addInput(list, "list")
-        self.addOutput(int, "len")
+        self.addOutput(int, "length")
 
     def process(self):
         arr = self.input("list").receive()
         if arr.isEOP():
             return False
 
-        self.output("len").send(len(arr.value()))
+        self.output("length").send(len(arr.value()))
 
         return True
 
@@ -103,12 +238,12 @@ class ListAppend(block.Block):
         super(ListAppend, self).__init__()
 
     def initialize(self):
-        self.addInput(list, "list")
+        self.addInput(list, "inList")
         self.addInput(anytype.AnyType, "value")
         self.addOutput(list, "outList")
 
     def process(self):
-        arr_p = self.input("list").receive()
+        arr_p = self.input("inList").receive()
         if arr_p.isEOP():
             return False
 
@@ -129,6 +264,38 @@ class ListAppend(block.Block):
         return True
 
 
+class ListRemove(block.Block):
+    def __init__(self):
+        super(ListRemove, self).__init__()
+
+    def initialize(self):
+        self.addInput(list, "inList")
+        self.addInput(anytype.AnyType, "value")
+        self.addOutput(list, "outList")
+
+    def process(self):
+        arr_p = self.input("inList").receive()
+        if arr_p.isEOP():
+            return False
+
+        arr = arr_p.value()
+        arr_p.drop()
+
+        value_p = self.input("value").receive()
+        if value_p.isEOP():
+            return False
+
+        value = value_p.value()
+        value_p.drop()
+
+        if value in arr:
+            arr.remove(value)
+
+        self.output("outList").send(arr)
+
+        return True
+
+
 class ListExtend(block.Block):
     def __init__(self):
         super(ListExtend, self).__init__()
@@ -136,7 +303,7 @@ class ListExtend(block.Block):
     def initialize(self):
         self.addInput(list, "listA")
         self.addInput(list, "listB")
-        self.addOutput(list, "extended")
+        self.addOutput(list, "output")
 
     def process(self):
         arra_p = self.input("listA").receive()
@@ -155,7 +322,7 @@ class ListExtend(block.Block):
 
         arra.extend(arrb)
 
-        self.output("extended").send(arra)
+        self.output("output").send(arra)
 
         return True
 
@@ -177,3 +344,40 @@ class Range(block.Block):
 
         for n in range(self.param("start").get(), self.param("stop").get(), step):
             self.output(0).send(n)
+
+
+
+class ListFormat(block.Block):
+    def __init__(self):
+        super(ListFormat, self).__init__()
+
+    def initialize(self):
+        self.addParam(str, "prefix", value="")
+        self.addParam(str, "itemPrefix", value="")
+        self.addParam(str, "itemSuffix", value="")
+        self.addParam(str, "itemJoin", value=", ")
+        self.addParam(str, "suffix", value="")
+        self.addInput(list, "list")
+        self.addOutput(str, "output")
+
+    def process(self):
+        in_d = self.input("list").receive()
+        if in_d.isEOP():
+            return False
+        l = in_d.value()
+        in_d.drop()
+
+        ipf = self.param("itemPrefix").get()
+        ijn = self.param("itemJoin").get()
+        isf = self.param("itemSuffix").get()
+
+        out = self.param("prefix").get()
+        lst = []
+        for v in l:
+            lst.append(ipf + str(v) + isf)
+        out += ijn.join(lst)
+        out += self.param("suffix").get()
+
+        self.output("output").send(out)
+
+        return True
