@@ -81,6 +81,7 @@ LICENSE        text eol=lf
 # Project specifics
 bin/petitBloc   text eol=lf
 bin/petitBlocUI text eol=lf
+test/sub        text eol=lf
 *.qss           text eol=lf
 *.blcs          text eol=lf
 *.schema        text eol=lf
