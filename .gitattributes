@@ -82,3 +82,6 @@ LICENSE        text eol=lf
 bin/petitBloc   text eol=lf
 bin/petitBlocUI text eol=lf
 *.qss           text eol=lf
+*.blcs          text eol=lf
+*.schema        text eol=lf
+*.config        text eol=lf
