@@ -1,3 +1,11 @@
+# 1.3.1
+
+## Bug fix
+
+ - Fix recursively querying parameter issue
+ - fix current block upating issue
+
+
 # 1.3.0
 
 ## Mismatch packet count issue
