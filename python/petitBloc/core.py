@@ -556,3 +556,39 @@ class ComponentBase(object):
         
     def downstream(self, ignoreProxy=True):
         return []
+
+
+# TODO : thread safety?
+class ParameterQueryLock(object):
+    __Locked = {}
+
+    @staticmethod
+    def IsQuerying(path):
+        return path in ParameterQueryLock.__Locked and ParameterQueryLock.__Locked[path] > 0
+
+    def __init__(self, path):
+        super(ParameterQueryLock, self).__init__()
+        self.__path = path
+
+    def lock(self):
+        if self.__path in ParameterQueryLock.__Locked:
+            ParameterQueryLock.__Locked[self.__path] += 1
+
+        else:
+            ParameterQueryLock.__Locked[self.__path] = 1
+
+    def release(self):
+        if self.__path in ParameterQueryLock.__Locked:
+            ParameterQueryLock.__Locked[self.__path] -= 1
+            if ParameterQueryLock.__Locked[self.__path] < 1:
+                ParameterQueryLock.__Locked.pop(self.__path, None)
+
+    def __enter__(self):
+        self.lock()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.release()
+
+    def __del__(self):
+        self.release()

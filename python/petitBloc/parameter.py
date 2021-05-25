@@ -161,6 +161,9 @@ class Parameter(core.ParameterBase):
             if p == self:
                 continue
 
+            if core.ParameterQueryLock.IsQuerying(p.path()):
+                continue
+
             subs.append((pth, re.compile(pth.replace(".", "[.]").replace("\/", "[/]")), str(p.get())))
 
         subs.sort(cmp=lambda x, y: cmp(len(x[0]), len(y[0])), reverse=True)
@@ -205,24 +208,25 @@ class Parameter(core.ParameterBase):
         if not self.hasExpression():
             return self.__value
 
-        if self.__pre_evaluated_value is not None:
-            return self.__pre_evaluated_value
+        with core.ParameterQueryLock(self.path()):
+            if self.__pre_evaluated_value is not None:
+                return self.__pre_evaluated_value
 
-        value = self.__evalExpression(self.__expression)
+            value = self.__evalExpression(self.__expression)
 
-        if value is None:
+            if value is None:
+                return self.__type_class()
+
+            if isinstance(value, self.__type_class):
+                return value
+
+            if isinstance(value, Number) and issubclass(self.__type_class, Number):
+                return self.__type_class(value)
+
+            if isinstance(value, basestring) and issubclass(self.__type_class, basestring):
+                return str(value)
+
             return self.__type_class()
-
-        if isinstance(value, self.__type_class):
-            return value
-
-        if isinstance(value, Number) and issubclass(self.__type_class, Number):
-            return self.__type_class(value)
-
-        if isinstance(value, basestring) and issubclass(self.__type_class, basestring):
-            return str(value)
-
-        return self.__type_class()
 
     def set(self, value):
         if isinstance(value, self.__type_class):

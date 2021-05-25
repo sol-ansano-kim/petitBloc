@@ -33,6 +33,9 @@ class SceneContext(component.Component):
     def getContext(self):
         context = {}
         for p in self.params():
+            if core.ParameterQueryLock.IsQuerying(p.path()):
+                continue
+
             context[p.name()] = p.get()
 
         return context
