@@ -374,7 +374,11 @@ class Graph(nodz_main.Nodz):
                 self.__current_block = self.__context_node.block()
                 break
 
-            self.__current_block = self.__model.block(n)
+            b = self.__model.block(n)
+            if b is None:
+                continue
+
+            self.__current_block = b
 
             if self.__current_block.isBlank():
                 break
