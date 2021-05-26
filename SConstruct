@@ -1,7 +1,7 @@
 import os
 
 
-version = "1.3.1"
+version = "1.3.2"
 
 
 def GenerateVersion(target, source, env):

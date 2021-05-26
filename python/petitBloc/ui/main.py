@@ -589,17 +589,19 @@ class MainWindow(QtWidgets.QMainWindow):
         centery = 0
 
         for b in data.get("blocks", []):
-            pos = b.get("pos")
-            if pos:
-                centerx = (centerx + pos[0]) * 0.5 if centerx else pos[0]
-                centery = (centery + pos[1]) * 0.5 if centery else pos[1]
+            if graph.findNodeFromName(b["path"]):
+                pos = b.get("pos")
+                if pos:
+                    centerx = (centerx + pos[0]) * 0.5 if centerx else pos[0]
+                    centery = (centery + pos[1]) * 0.5 if centery else pos[1]
 
         for b in data.get("blocks", []):
-            pos = b.get("pos")
-            if pos:
-                b["pos"] = [pos[0] - centerx + cen_pos[0], pos[1] - centery + cen_pos[1]]
-            else:
-                b["pos"] = cen_pos
+            if graph.findNodeFromName(b["path"]):
+                pos = b.get("pos")
+                if pos:
+                    b["pos"] = [pos[0] - centerx + cen_pos[0], pos[1] - centery + cen_pos[1]]
+                else:
+                    b["pos"] = cen_pos
 
         self.__insertBlocks(data, root_box.path())
 
