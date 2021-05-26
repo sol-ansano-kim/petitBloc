@@ -45,6 +45,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__setStyleSheet()
         self.__max_thread = 1
         self.__warned = False
+        self.__is_copying = False
 
     def __setStyleSheet(self):
         qss_path = os.path.abspath(os.path.join(__file__, "../style.qss"))
@@ -311,12 +312,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.__networks.has_key(boxBloc):
             return
 
-        current_graph = self.__getCurrentGraph()
-        data = current_graph.copy()
-
-        self.__updatePositionData(data, current_graph.box().path())
-        current_graph._deleteSelectedNodes()
-
         grph = graph.SubNet(boxObject=boxBloc)
         grph.ShowGraphRequest.connect(self.__showGraphTab)
         grph.CurrentNodeChanged.connect(self.__currentBlockChanged)
@@ -329,7 +324,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.__networks[boxBloc] = {"graph": grph}
 
-        self.__pasteToGraph(grph, boxBloc, data, centerPos=QtCore.QPointF(int(grph.config["scene_width"] * 0.5), int(grph.config["scene_height"] * 0.5)))
+        if not self.__is_copying:
+            current_graph = self.__getCurrentGraph()
+            data = current_graph.copy()
+
+            self.__updatePositionData(data, current_graph.box().path())
+            current_graph._deleteSelectedNodes()
+
+            self.__pasteToGraph(grph, boxBloc, data, centerPos=QtCore.QPointF(int(grph.config["scene_width"] * 0.5), int(grph.config["scene_height"] * 0.5)))
 
     def __showGraphTab(self, bloc):
         widget_created = False
@@ -570,12 +572,14 @@ class MainWindow(QtWidgets.QMainWindow):
         graph._deleteSelectedNodes()
 
     def __paste(self):
+        self.__is_copying = True
         graph = self.__getCurrentGraph()
         root_box = graph.box()
 
         data = copy.deepcopy(self.__clipboard)
 
         self.__pasteToGraph(graph, root_box, data)
+        self.__is_copying = False
 
     def __pasteToGraph(self, graph, root_box, data, centerPos=None):
         if not centerPos:
@@ -585,17 +589,19 @@ class MainWindow(QtWidgets.QMainWindow):
         centery = 0
 
         for b in data.get("blocks", []):
-            pos = b.get("pos")
-            if pos:
-                centerx = (centerx + pos[0]) * 0.5 if centerx else pos[0]
-                centery = (centery + pos[1]) * 0.5 if centery else pos[1]
+            if graph.findNodeFromName(b["path"]):
+                pos = b.get("pos")
+                if pos:
+                    centerx = (centerx + pos[0]) * 0.5 if centerx else pos[0]
+                    centery = (centery + pos[1]) * 0.5 if centery else pos[1]
 
         for b in data.get("blocks", []):
-            pos = b.get("pos")
-            if pos:
-                b["pos"] = [pos[0] - centerx + cen_pos[0], pos[1] - centery + cen_pos[1]]
-            else:
-                b["pos"] = cen_pos
+            if graph.findNodeFromName(b["path"]):
+                pos = b.get("pos")
+                if pos:
+                    b["pos"] = [pos[0] - centerx + cen_pos[0], pos[1] - centery + cen_pos[1]]
+                else:
+                    b["pos"] = cen_pos
 
         self.__insertBlocks(data, root_box.path())
 
