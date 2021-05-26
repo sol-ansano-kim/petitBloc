@@ -1,3 +1,11 @@
+# 1.3.2
+
+## Bug fix
+
+ - Fix selected nodes moving issue when copy and paste box
+ - Paste nodes around cursor properly
+
+
 # 1.3.1
 
 ## Bug fix
