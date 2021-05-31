@@ -5,6 +5,7 @@ import threading
 import multiprocessing
 from . import const
 from . import subproc
+import traceback
 
 
 class SubprocessManager(object):
@@ -259,9 +260,9 @@ class ProcessWorker(threading.Thread):
 
         try:
             self.__obj.run()
-        except Exception as e:
+        except Exception:
             self.__success = False
-            LogManager.Error(self.__obj.path(), e)
+            LogManager.Error(self.__obj.path(), traceback.format_exc())
 
         res = self.__obj.output(const.BlockResultPortName)
         if res:
@@ -327,9 +328,9 @@ class ThreadManager(object):
 
         try:
             obj.run()
-        except Exception as e:
+        except Exception:
             success = False
-            LogManager.Error(obj.path(), e)
+            LogManager.Error(obj.path(), traceback.format_exc())
 
         res = obj.output(const.BlockResultPortName)
         if res:

@@ -3,6 +3,7 @@ import copy
 import multiprocessing
 from . import const
 from . import subproc
+import traceback
 
 
 class SubprocessManager(object):
@@ -266,9 +267,9 @@ class ProcessWorker(multiprocessing.Process):
 
         try:
             self.__obj.run()
-        except Exception as e:
+        except Exception:
             self.__has_error.value = 1
-            LogManager.Error(self.__obj.path(), e)
+            LogManager.Error(self.__obj.path(), traceback.format_exc())
 
         res = self.__obj.output(const.BlockResultPortName)
         if res:
