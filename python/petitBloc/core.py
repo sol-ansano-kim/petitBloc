@@ -36,9 +36,11 @@ class Any(object):
 
 DasTypeBase = Any
 UseDas = True
+DasCopy = copy.deepcopy
 try:
     import das
     DasTypeBase = das.types.TypeBase
+    DasCopy = das.copy
 except:
     UseDas = False
 
@@ -160,11 +162,18 @@ class PacketBase(object):
         return self.__type_class
 
     def value(self):
+        if isinstance(self.__value, DasTypeBase):
+            return DasCopy(self.__value)
+
         if isinstance(self.__value, (dict, list)):
             return copy.deepcopy(self.__value)
 
         if isinstance(self.__value, Any):
             v = self.__value.value()
+
+            if isinstance(v, DasTypeBase):
+                return DasCopy(v)
+
             if isinstance(v, (dict, list)):
                 return copy.deepcopy(v)
 

@@ -1,3 +1,14 @@
+# 1.3.3
+
+## Improve interface
+
+ - show detail of block
+
+## Bug fix
+
+ - Fix copying of das object
+
+
 # 1.3.2
 
 ## Bug fix
